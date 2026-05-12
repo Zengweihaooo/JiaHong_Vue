@@ -63,6 +63,51 @@ button {
   box-shadow: var(--jh-shadow);
 }
 
+.topbar__left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 24px;
+}
+
+.version-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--jh-line);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.version-nav__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--jh-text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 20px;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.version-nav__item:hover {
+  color: var(--jh-blue);
+  background: #f5f9ff;
+}
+
+.version-nav__item.is-active {
+  color: #ffffff;
+  background: linear-gradient(270deg, var(--jh-blue-light), var(--jh-blue));
+  box-shadow: 0 6px 12px -10px rgba(0, 110, 249, 0.65);
+}
+
 .topbar__right {
   position: absolute;
   top: 12px;
@@ -943,6 +988,21 @@ svg {
     gap: 12px;
   }
 
+  .topbar__left {
+    padding-left: 8px;
+  }
+
+  .version-nav {
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .version-nav__item {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
   .certificate {
     display: none;
   }
@@ -986,6 +1046,10 @@ svg {
 }
 
 @media (max-width: 620px) {
+  .topbar__left {
+    display: none;
+  }
+
   .main {
     padding: 16px;
   }

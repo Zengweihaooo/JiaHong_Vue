@@ -2,6 +2,32 @@ const validAppModes = new Set(["responsive", "fixed-left", "fixed-center"]);
 const requestedAppMode = window.JH_APP_MODE || "responsive";
 const appMode = validAppModes.has(requestedAppMode) ? requestedAppMode : "responsive";
 const assetUrl = (path) => new URL(path, document.currentScript.src).href;
+const siteBasePath = new URL(".", document.currentScript.src).pathname.replace(/\/$/, "");
+
+const versionRoutes = [
+  { label: "首页", path: "/", mode: "responsive" },
+  { label: "版本 1", path: "/1/", mode: "responsive" },
+  { label: "版本 2", path: "/2/", mode: "fixed-left" },
+  { label: "版本 3", path: "/3/", mode: "fixed-center" }
+];
+
+function getVersionHref(path) {
+  const base = siteBasePath || "";
+  if (path === "/") {
+    return `${base || ""}/`;
+  }
+  return `${base}${path}`;
+}
+
+function getCurrentVersionPath() {
+  const normalized = location.pathname.replace(/\/+$/, "") || "/";
+  const base = siteBasePath || "";
+  if (base && normalized.startsWith(base)) {
+    const rest = normalized.slice(base.length) || "/";
+    return rest.startsWith("/") ? rest : `/${rest}`;
+  }
+  return normalized;
+}
 
 const icons = {
   logo: `
@@ -165,8 +191,23 @@ function renderSidebar() {
 }
 
 function renderTopbar() {
+  const currentVersionPath = getCurrentVersionPath();
+  const versionNav = versionRoutes
+    .map((item) => {
+      const isActive =
+        currentVersionPath === item.path.replace(/\/+$/, "") ||
+        (item.path === "/" && currentVersionPath === "/");
+      return `<a class="version-nav__item${isActive ? " is-active" : ""}" href="${getVersionHref(item.path)}" data-mode="${item.mode}">${item.label}</a>`;
+    })
+    .join("");
+
   return `
     <header class="topbar">
+      <div class="topbar__left">
+        <nav class="version-nav" aria-label="页面版本导航">
+          ${versionNav}
+        </nav>
+      </div>
       <div class="topbar__right">
         <div class="certificate">
           <span>证书到期时间</span>
