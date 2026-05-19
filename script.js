@@ -1,8 +1,6 @@
 const assetUrl = (path) => new URL(path, document.currentScript.src).href;
 const siteBasePath = new URL(".", document.currentScript.src).pathname.replace(/\/$/, "");
-const fixedDesignWidth = 1440;
-const validAppModes = new Set(["responsive", "fixed-left", "fixed-center"]);
-const validAppViews = new Set(["home", "room", "text", "video"]);
+const validAppViews = new Set(["home", "room", "text", "video", "history"]);
 
 function getCurrentRoutePath() {
   const normalized = location.pathname.replace(/\/+$/, "") || "/";
@@ -14,37 +12,19 @@ function getCurrentRoutePath() {
   return normalized;
 }
 
-function inferAppMode() {
-  const currentPath = getCurrentRoutePath();
-  if (currentPath.startsWith("/2/") || currentPath === "/2") {
-    return "fixed-left";
-  }
-  if (currentPath.startsWith("/3/") || currentPath === "/3") {
-    return "fixed-center";
-  }
-  return "responsive";
-}
-
 function inferAppView() {
   const currentPath = getCurrentRoutePath();
   if (currentPath.includes("/video")) return "video";
   if (currentPath.includes("/text")) return "text";
+  if (currentPath.includes("/history")) return "history";
   if (currentPath.includes("/room")) return "room";
   return "home";
 }
 
-const requestedAppMode = window.JH_APP_MODE || inferAppMode();
-const appMode = validAppModes.has(requestedAppMode) ? requestedAppMode : inferAppMode();
 const requestedAppView = window.JH_APP_VIEW || inferAppView();
 const appView = validAppViews.has(requestedAppView) ? requestedAppView : "home";
 
-const versionRoutes = [
-  { label: "版本 1", path: "/", mode: "responsive", aliases: ["/", "/1"] },
-  { label: "版本 2", path: "/2/", mode: "fixed-left" },
-  { label: "版本 3", path: "/3/", mode: "fixed-center" }
-];
-
-function getVersionHref(path) {
+function getAppHref(path) {
   const base = siteBasePath || "";
   if (path === "/") {
     return `${base || ""}/`;
@@ -52,27 +32,24 @@ function getVersionHref(path) {
   return `${base}${path}`;
 }
 
-function getCurrentVersionBasePath() {
-  const currentPath = getCurrentRoutePath();
-  const match = currentPath.match(/^\/([123])(?:\/|$)/);
-  return match ? `/${match[1]}/` : "/1/";
-}
-
 function getRoomHref() {
-  return getVersionHref(`${getCurrentVersionBasePath()}room/`);
+  return getAppHref("/room/");
 }
 
 function getTextHref() {
-  return getVersionHref(`${getCurrentVersionBasePath()}text/`);
+  return getAppHref("/text/");
 }
 
 function getVideoHref() {
-  return getVersionHref(`${getCurrentVersionBasePath()}video/`);
+  return getAppHref("/video/");
+}
+
+function getHistoryHref(recordId = "ended-text") {
+  return `${getAppHref("/history/")}?record=${encodeURIComponent(recordId)}`;
 }
 
 function getHomeHref() {
-  const basePath = getCurrentVersionBasePath();
-  return getVersionHref(basePath === "/1/" ? "/" : basePath);
+  return getAppHref("/");
 }
 
 const icons = {
@@ -152,13 +129,122 @@ const quickActions = [
   { title: "排班管理", desc: "查看值班安排", icon: "quickCalendar" },
   { title: "医生佣金条", desc: "查看当月佣金明细", icon: "document" },
   { title: "历史问诊", desc: "历史病历查询", icon: "clock" },
-  { title: "", desc: "添加快捷入口", icon: "plus" }
+  { title: "", desc: "添加快捷入口", icon: "plus", isAdd: true }
 ];
+
+const quickEntryOptions = [
+  { title: "患者随访", desc: "查看待随访患者", icon: "user" },
+  { title: "风险提醒", desc: "查看用药风险项", icon: "shield" },
+  { title: "处方模板", desc: "管理常用处方", icon: "clipboard" }
+];
+
+const announcements = [
+  {
+    id: "doctor-release",
+    date: "2026-04-08",
+    title: "嘉虹健康医生端新功能发布",
+    publisher: "成都双流九州通互联网医院",
+    unread: true,
+    content: `一、图文问诊未回复弹框确认机制：图文问诊未回复弹框确认持续3秒。若顾客未回复，禁止开具处方。
+二、处方驳回流程调整：取消医生端驳回处方修改功能。药师端驳回处方的同时即作废该处方。医生开方前需谨慎核对，处方一旦错误将无驳回修改机会。
+三、风险检测提醒优化：提交处方前将展示患者用药风险检测结果，请根据检测信息完成处方核对。
+四、快捷用语分类更新：新增续方、安全用药、异常情况、售后服务等常用话术分类，便于医生快速响应患者咨询。`
+  },
+  {
+    id: "holiday-schedule",
+    date: "2026-04-01",
+    title: "清明节期间排班提醒",
+    publisher: "嘉虹健康运营中心",
+    unread: false,
+    content: `一、请各位医生在假期前完成排班确认，避免患者问诊等待时间过长。
+二、假期期间在线客服将保持值班，遇到系统异常可优先联系在线客服。
+三、如需临时调整出诊状态，请至少提前30分钟在医生端完成切换。`
+  },
+  {
+    id: "security-reminder",
+    date: "2026-03-25",
+    title: "医生账号安全提醒",
+    publisher: "嘉虹健康技术支持",
+    unread: false,
+    content: `一、请勿将医生账号、短信验证码或电子签名授权信息提供给他人使用。
+二、建议定期检查登录设备，如发现异常登录记录，请及时联系平台处理。
+三、处方相关操作需由医生本人完成，平台将持续加强账号安全校验。`
+  }
+];
+
+const latestAnnouncement = announcements[0];
 
 const services = [
   { key: "text", label: "图文问诊", enabled: true },
   { key: "video", label: "视频问诊", enabled: true },
   { key: "consult", label: "图文咨询", enabled: true }
+];
+
+const consultationRecords = [
+  {
+    id: "active-text",
+    type: "text",
+    typeLabel: "图文",
+    state: "ongoing",
+    title: "武汉市好药师大药房",
+    patient: "李女士",
+    age: "36岁",
+    preview: "您好！请问那个药怎么服用？",
+    time: "16:38",
+    badge: 1,
+    targetView: "text"
+  },
+  {
+    id: "active-video",
+    type: "video",
+    typeLabel: "视频",
+    state: "ongoing",
+    title: "成都双流九州通互联网医院",
+    patient: "周先生",
+    age: "42岁",
+    preview: "患者正在等待视频接诊",
+    time: "16:34",
+    badge: 1,
+    targetView: "video"
+  },
+  {
+    id: "ended-text",
+    type: "text",
+    typeLabel: "图文",
+    state: "ended",
+    title: "武汉市好药师大药房南岸店",
+    patient: "王女士",
+    age: "29岁",
+    preview: "已完成复诊开方，处方已流转药师审核",
+    time: "15:22",
+    diagnosis: "急性上呼吸道感染",
+    prescriptionNo: "RX202605190152",
+    endedAt: "2026-05-19 15:22",
+    trace: [
+      { label: "问诊结束", time: "15:18", detail: "医生完成图文问诊记录确认" },
+      { label: "处方提交", time: "15:20", detail: "阿奇霉素分散片等 2 项药品提交审核" },
+      { label: "药师审核", time: "15:22", detail: "处方审核通过，留痕记录已归档" }
+    ]
+  },
+  {
+    id: "ended-video",
+    type: "video",
+    typeLabel: "视频",
+    state: "ended",
+    title: "嘉虹健康视频问诊",
+    patient: "陈先生",
+    age: "51岁",
+    preview: "视频复诊结束，处方已完成电子签名",
+    time: "14:08",
+    diagnosis: "慢性支气管炎复诊",
+    prescriptionNo: "RX202605190108",
+    endedAt: "2026-05-19 14:08",
+    trace: [
+      { label: "视频接诊", time: "13:55", detail: "医生完成视频问诊和身份核验" },
+      { label: "处方签署", time: "14:05", detail: "电子签名完成，处方进入审核" },
+      { label: "审核归档", time: "14:08", detail: "药师审核通过，开方留痕可追溯" }
+    ]
+  }
 ];
 
 const quickReplyCategories = [
@@ -189,18 +275,23 @@ const serviceState = services.reduce((state, service) => {
 }, {});
 
 const dismissedBadgeStorageKey = "jh.dismissedMessageBadges";
-const currentNavigation = performance.getEntriesByType("navigation")[0];
+const safeSessionStorage =
+  typeof sessionStorage === "undefined"
+    ? { getItem: () => null, setItem: () => {}, removeItem: () => {} }
+    : sessionStorage;
+const currentNavigation =
+  typeof performance === "undefined" ? null : performance.getEntriesByType("navigation")[0];
 if (currentNavigation?.type === "reload") {
-  sessionStorage.removeItem(dismissedBadgeStorageKey);
+  safeSessionStorage.removeItem(dismissedBadgeStorageKey);
 }
 const dismissedMessageBadges = new Set(
-  JSON.parse(sessionStorage.getItem(dismissedBadgeStorageKey) || "[]")
+  JSON.parse(safeSessionStorage.getItem(dismissedBadgeStorageKey) || "[]")
 );
 
 function rememberDismissedMessageBadge(badgeKey) {
   if (!badgeKey) return;
   dismissedMessageBadges.add(badgeKey);
-  sessionStorage.setItem(
+  safeSessionStorage.setItem(
     dismissedBadgeStorageKey,
     JSON.stringify(Array.from(dismissedMessageBadges))
   );
@@ -243,13 +334,21 @@ function renderButton({ text, tone = "primary", size = "md", className = "", typ
   return `<button class="jh-btn${sizeClass} jh-btn--${safeTone}${className ? ` ${className}` : ""}" type="${type}"${disabled ? " disabled" : ""}>${text}</button>`;
 }
 
-function renderDurationChip(variant = "icon") {
+function renderDurationChip(variant = "icon", elapsedSeconds = 55) {
   const safeVariant = ["icon", "pill", "plain"].includes(variant) ? variant : "icon";
   return `
-    <span class="jh-duration-chip jh-duration-chip--${safeVariant}">
+    <span class="jh-duration-chip jh-duration-chip--${safeVariant}" data-duration-timer data-elapsed="${elapsedSeconds}">
       ${safeVariant === "icon" ? `<span class="jh-duration-chip__clock" aria-hidden="true"></span>` : ""}
-      <strong>问诊持续时长：00:00:55</strong>
+      <strong>问诊持续时长：${formatDuration(elapsedSeconds)}</strong>
     </span>`;
+}
+
+function formatDuration(totalSeconds) {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
 }
 
 function renderChatInput({ className = "" } = {}) {
@@ -474,15 +573,27 @@ function renderTopbar() {
           ${renderButton({ text: "医生招聘", tone: "outline-secondary", size: "md" })}
         </div>
         <div class="user-chip">
-          <div class="user-chip__body">
+          <button class="user-chip__body user-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
             <span class="avatar" aria-hidden="true">
               <img src="${assetUrl("assets/figma-home/avatar-source.png")}" alt="" />
             </span>
             <span>张医生</span>
-          </div>
+          </button>
+          ${renderUserMenu()}
         </div>
       </div>
     </header>`;
+}
+
+function renderUserMenu() {
+  return `
+    <div class="user-menu" role="menu" aria-hidden="true">
+      <button class="user-menu__item" type="button" role="menuitem" data-action="个人中心">个人中心</button>
+      <button class="user-menu__item" type="button" role="menuitem" data-action="账号安全">账号安全</button>
+      <button class="user-menu__item" type="button" role="menuitem" data-action="消息通知">消息通知</button>
+      <div class="user-menu__divider"></div>
+      <button class="user-menu__item user-menu__item--danger" type="button" role="menuitem" data-action="退出登录">退出登录</button>
+    </div>`;
 }
 
 function renderWaitingCard() {
@@ -525,6 +636,11 @@ function renderRoomCheckbox(label) {
   return renderCheckbox({ label, className: "room-check", labelClassName: "room-check__label" });
 }
 
+function renderRoomFilterButton({ text, type, state, active = false, wide = false }) {
+  const dataAttr = type ? `data-filter-type="${type}"` : `data-filter-state="${state}"`;
+  return `<button class="jh-btn jh-btn--md jh-btn--outline-secondary room-tag${wide ? " room-tag--wide" : ""}${active ? " is-active" : ""}" type="button" ${dataAttr}>${text}</button>`;
+}
+
 function renderRoomTopbar() {
   return `
     <header class="room-topbar">
@@ -553,10 +669,13 @@ function renderRoomTopbar() {
             <span class="room-user__divider" aria-hidden="true">
               <img src="${assetUrl("assets/figma-consult/topbar-divider.svg")}" alt="" />
             </span>
-            <span class="avatar" aria-hidden="true">
-              <img src="${assetUrl("assets/figma-consult/avatar-source.png")}" alt="" />
-            </span>
-            <span>张医生</span>
+            <button class="room-user__body user-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
+              <span class="avatar" aria-hidden="true">
+                <img src="${assetUrl("assets/figma-consult/avatar-source.png")}" alt="" />
+              </span>
+              <span>张医生</span>
+            </button>
+            ${renderUserMenu()}
           </div>
         </div>
       </div>
@@ -564,8 +683,16 @@ function renderRoomTopbar() {
 }
 
 function renderRoomSidebar() {
-  const hasMessages = appView === "text" || appView === "video";
-  const waitingCount = hasMessages ? 4 : 0;
+  const activeRecord =
+    appView === "video"
+      ? "active-video"
+      : appView === "text"
+        ? "active-text"
+        : appView === "history"
+          ? new URLSearchParams(location.search).get("record") || "ended-text"
+          : "";
+  const initialState = appView === "history" ? "ended" : "ongoing";
+  const waitingCount = consultationRecords.filter((record) => record.state === "ongoing").length;
   return `
     <aside class="room-sidebar" aria-label="问诊消息栏">
       <div class="room-sidebar__section room-sidebar__section--head">
@@ -579,40 +706,43 @@ function renderRoomSidebar() {
       </div>
       <div class="room-sidebar__section room-sidebar__section--filters">
         <div class="room-tags room-tags--type">
-          ${renderButton({ text: "全部", tone: "outline-secondary", size: "md", className: "room-tag is-active" })}
-          ${renderButton({ text: "图文", tone: "outline-secondary", size: "md", className: "room-tag" })}
-          ${renderButton({ text: "视频", tone: "outline-secondary", size: "md", className: "room-tag" })}
+          ${renderRoomFilterButton({ text: "全部", type: "all", active: true })}
+          ${renderRoomFilterButton({ text: "图文", type: "text" })}
+          ${renderRoomFilterButton({ text: "视频", type: "video" })}
         </div>
         <div class="room-tags room-tags--state">
-          ${renderButton({ text: "进行中", tone: "outline-secondary", size: "md", className: "room-tag room-tag--wide is-active" })}
-          ${renderButton({ text: "已结束", tone: "outline-secondary", size: "md", className: "room-tag room-tag--wide" })}
+          ${renderRoomFilterButton({ text: "进行中", state: "ongoing", active: initialState === "ongoing", wide: true })}
+          ${renderRoomFilterButton({ text: "已结束", state: "ended", active: initialState === "ended", wide: true })}
         </div>
       </div>
-      ${
-        hasMessages
-          ? `<div class="message-list" aria-label="会话列表">
-              ${renderMessageItem("图文", appView === "text", "text", 0)}
-              ${renderMessageItem("视频", appView === "video", "video", 1)}
-              ${renderMessageItem("图文", false, "text", 2)}
-              ${renderMessageItem("视频", false, "video", 3)}
-            </div>`
-          : ""
-      }
+      <div class="message-list" aria-label="会话列表" data-filter-type="all" data-filter-state="${initialState}">
+        ${renderMessageList({ state: initialState, activeRecord })}
+      </div>
     </aside>`;
 }
 
-function renderMessageItem(type, active, targetView, index = 0) {
-  const badgeKey = getMessageBadgeKey(type, targetView, index);
-  const showBadge = !active && !dismissedMessageBadges.has(badgeKey);
+function renderMessageList({ type = "all", state = "ongoing", activeRecord = "" } = {}) {
+  return consultationRecords
+    .filter((record) => (type === "all" || record.type === type) && record.state === state)
+    .map((record, index) => renderMessageItem(record, record.id === activeRecord, index))
+    .join("");
+}
+
+function renderMessageItem(record, active, index = 0) {
+  const badgeKey = getMessageBadgeKey(record.typeLabel, record.type, index);
+  const showBadge = record.badge && !active && !dismissedMessageBadges.has(badgeKey);
   return `
-    <button class="message-item${active ? " is-active" : ""}" type="button" data-target-view="${targetView}" data-badge-key="${badgeKey}">
+    <button class="message-item${active ? " is-active" : ""}" type="button" data-record-id="${record.id}" data-target-view="${record.targetView || ""}" data-record-state="${record.state}" data-badge-key="${badgeKey}">
       <span class="message-item__stripe" aria-hidden="true"></span>
       <span class="message-item__body">
-        <span class="message-item__type message-item__type--${type === "图文" ? "text" : "video"}">${type}</span>
-        <span class="message-item__title">武汉市好药师大药房</span>
-        <span class="message-item__preview">您好！请问那个药怎么...</span>
+        <span class="message-item__meta">
+          <span class="message-item__type message-item__type--${record.type}">${record.typeLabel}</span>
+          <span class="message-item__time">${record.time}</span>
+        </span>
+        <span class="message-item__title">${record.title}</span>
+        <span class="message-item__preview">${record.preview}</span>
       </span>
-      ${showBadge ? '<span class="message-item__badge">1</span>' : ""}
+      ${showBadge ? `<span class="message-item__badge">${record.badge}</span>` : ""}
     </button>`;
 }
 
@@ -632,9 +762,208 @@ function renderRoomMain() {
     </main>`;
 }
 
+function renderPrescriptionTraceMain(record = consultationRecords.find((item) => item.state === "ended")) {
+  return `
+    <main class="room-main">
+      <section class="text-card text-card--readonly" aria-label="历史问诊回看">
+        <div class="pharmacy-bar">
+          <div class="pharmacy-bar__left">
+            <h2>${record.title}</h2>
+            ${renderReadTag("read", "readonly-seal-tag").replace("已读", "已封存")}
+            ${renderLabelTag({ text: `${record.typeLabel}问诊`, tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
+          </div>
+          <div class="pharmacy-bar__right">
+            <span class="readonly-ended-time">结束时间：${record.endedAt}</span>
+          </div>
+        </div>
+        <div class="consult-workspace">
+          ${renderArchivedConsultationPanel(record)}
+          ${renderReadonlyPrescriptionPanel(record)}
+        </div>
+      </section>
+    </main>`;
+}
+
+function renderArchivedConsultationPanel(record) {
+  const chatList = `
+    <div class="archived-chat__list">
+      ${record.transcript
+        .map(
+          (item) => `
+            <div class="archived-chat__item archived-chat__item--${item.from}">
+              <strong>${item.name}</strong>
+              <p>${item.text}</p>
+            </div>`
+        )
+        .join("")}
+    </div>`;
+
+  return `
+    <section class="chat-panel archived-consult-panel" aria-label="历史聊天记录">
+      ${
+        record.type === "video"
+          ? `<div class="video-window archived-video-window">
+              <img class="video-window__main" src="${assetUrl("assets/video-main.png")}" alt="" />
+              <div class="video-window__pip">
+                <img src="${assetUrl("assets/video-doctor.png")}" alt="" />
+              </div>
+            </div>`
+          : ""
+      }
+      <div class="archived-consult-panel__head">
+        <h3>历史聊天记录</h3>
+        <span>只读回看</span>
+      </div>
+      ${chatList}
+      <div class="archived-consult-panel__disabled-input">问诊已结束，无法继续回复</div>
+    </section>`;
+}
+
+function renderReadonlyPrescriptionPanel(record) {
+  return `
+    <section class="prescription-panel prescription-panel--readonly" aria-label="只读处方信息">
+      <div class="patient-info">
+        <div class="patient-info__name">${record.patient}&nbsp;&nbsp;${record.age}</div>
+        <div class="patient-info__grid">
+          <span>问诊类型：${record.typeLabel}问诊</span>
+          <span>处方编号：${record.prescriptionNo}</span>
+          <span>结束时间：${record.endedAt}</span>
+          <span>状态：已封存</span>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="diagnosis-section">
+        <h3>疾病信息</h3>
+        <div class="readonly-field">
+          <span>诊断</span>
+          <strong>${record.diagnosis}</strong>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="medicine-section">
+        <h3>处方药品</h3>
+        <div class="archived-medicine-list">
+          ${record.medicines.map((medicine) => `<div>${medicine}</div>`).join("")}
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="readonly-trace-section">
+        <h3>开方留痕</h3>
+        <div class="trace-timeline">
+          ${record.trace
+            .map(
+              (item) => `
+                <span class="trace-timeline__item">
+                  <span class="trace-timeline__dot" aria-hidden="true"></span>
+                  <span>
+                    <strong>${item.label}<em>${item.time}</em></strong>
+                    <small>${item.detail}</small>
+                  </span>
+                </span>`
+            )
+            .join("")}
+        </div>
+      </div>
+      <div class="prescription-actions prescription-actions--readonly">
+        <span>已封存，仅支持查看</span>
+        ${renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" })}
+      </div>
+    </section>`;
+}
+
+function renderPrescriptionTraceCard(record) {
+  return `
+    <button class="prescription-trace-card" type="button" data-history-record-id="${record.id}" aria-label="查看${record.patient}开方历史">
+      <span class="prescription-trace-card__head">
+        <span>
+          <span class="prescription-trace-card__eyebrow">${record.typeLabel}问诊已结束</span>
+          <strong>${record.patient}｜${record.age}</strong>
+        </span>
+        ${renderReadTag("read", "prescription-trace-card__status").replace("已读", "已归档")}
+      </span>
+      <span class="prescription-trace-card__body">
+        <span class="trace-info-grid">
+          <span><em>诊断</em><strong>${record.diagnosis}</strong></span>
+          <span><em>处方编号</em><strong>${record.prescriptionNo}</strong></span>
+          <span><em>结束时间</em><strong>${record.endedAt}</strong></span>
+        </span>
+        <span class="trace-timeline">
+          ${record.trace
+            .map(
+              (item) => `
+                <span class="trace-timeline__item">
+                  <span class="trace-timeline__dot" aria-hidden="true"></span>
+                  <span>
+                    <strong>${item.label}<em>${item.time}</em></strong>
+                    <small>${item.detail}</small>
+                  </span>
+                </span>`
+            )
+            .join("")}
+        </span>
+      </span>
+      <span class="prescription-trace-card__footer">点击查看完整开方历史</span>
+    </button>`;
+}
+
+function renderHistoryPage() {
+  const recordId = new URLSearchParams(location.search).get("record") || "ended-text";
+  const record =
+    consultationRecords.find((item) => item.id === recordId && item.state === "ended") ||
+    consultationRecords.find((item) => item.id === "ended-text");
+  return `
+    <div class="app-shell room-shell history-shell app-shell--responsive">
+      ${renderRoomTopbar()}
+      ${renderRoomSidebar()}
+      <main class="room-main">
+        <section class="room-card prescription-history" aria-label="开方历史">
+          <div class="prescription-history__header">
+            <div>
+              <p>开方历史</p>
+              <h1>${record.patient}的处方留痕记录</h1>
+            </div>
+            ${renderButton({ text: "返回问诊室", tone: "outline-secondary", size: "md", className: "history-back" })}
+          </div>
+          <div class="prescription-history__summary">
+            <span><em>问诊类型</em><strong>${record.typeLabel}问诊</strong></span>
+            <span><em>诊断</em><strong>${record.diagnosis}</strong></span>
+            <span><em>处方编号</em><strong>${record.prescriptionNo}</strong></span>
+            <span><em>归档时间</em><strong>${record.endedAt}</strong></span>
+          </div>
+          <div class="prescription-history__content">
+            <section class="history-panel">
+              <h2>处方明细</h2>
+              <div class="history-medicine-table">
+                <div><strong>阿奇霉素分散片</strong><span>0.125g*6片｜口服｜1次/日｜1盒</span></div>
+                <div><strong>复方氨酚烷胺胶囊</strong><span>12粒｜口服｜2次/日｜1盒</span></div>
+              </div>
+            </section>
+            <section class="history-panel">
+              <h2>操作留痕</h2>
+              <div class="history-trace-list">
+                ${record.trace
+                  .map(
+                    (item) => `
+                      <div>
+                        <strong>${item.label}<span>${item.time}</span></strong>
+                        <p>${item.detail}</p>
+                      </div>`
+                  )
+                  .join("")}
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+      ${renderQuickReplyDialog()}
+      ${renderRiskWarningDialog()}
+      <div class="toast" role="status" aria-live="polite"></div>
+    </div>`;
+}
+
 function renderRoom() {
   return `
-    <div class="app-shell room-shell app-shell--${appMode}">
+    <div class="app-shell room-shell app-shell--responsive">
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
       ${renderRoomMain()}
@@ -653,7 +982,7 @@ function renderTextMain() {
             ${renderLabelTag({ text: "中药", tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
-            ${renderDurationChip("icon")}
+            ${renderDurationChip("icon", consultationRecords.find((record) => record.id === "active-text")?.elapsedSeconds || 55)}
             ${renderButton({ text: "取消问诊", tone: "danger", size: "md" })}
           </div>
         </div>
@@ -754,7 +1083,7 @@ function renderPrescriptionPanel(includeSecondMedicine = false) {
 
 function renderTextPage() {
   return `
-    <div class="app-shell room-shell text-shell app-shell--${appMode}">
+    <div class="app-shell room-shell text-shell app-shell--responsive">
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
       ${renderTextMain()}
@@ -799,7 +1128,7 @@ function renderVideoMain() {
             ${renderLabelTag({ text: "中药", tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
-            ${renderDurationChip("icon")}
+            ${renderDurationChip("icon", consultationRecords.find((record) => record.id === "active-video")?.elapsedSeconds || 55)}
             ${renderButton({ text: "取消问诊", tone: "danger", size: "md" })}
           </div>
         </div>
@@ -813,7 +1142,7 @@ function renderVideoMain() {
 
 function renderVideoPage() {
   return `
-    <div class="app-shell room-shell text-shell video-shell app-shell--${appMode}">
+    <div class="app-shell room-shell text-shell video-shell app-shell--responsive">
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
       ${renderVideoMain()}
@@ -854,25 +1183,105 @@ function renderNoticeCard() {
         <div class="notice-card__head">
           <div class="notice-card__title-row">
             <h2 class="card__title">最新公告</h2>
-            <span class="notice-card__date">2026-04-08</span>
+            <span class="notice-card__date">${latestAnnouncement.date}</span>
           </div>
           <div class="divider"></div>
         </div>
         <article class="announcement">
           <div class="announcement__top">
             <div class="announcement__title-row">
-              <h3 class="announcement__title">嘉虹健康医生端新功能发布</h3>
+              <h3 class="announcement__title">${latestAnnouncement.title}</h3>
               ${renderReadTag("unread", "announcement-tag")}
             </div>
-            <div class="announcement__body"> 一、图文问诊未回复弹框确认机制：图文问诊未回复弹框确认持续3秒。若顾客未回复，禁止开具处方。 
-二、处方驳回流程调整：取消医生端驳回处方修改功能。药师端驳回处方的同时即作废该处方。医生开方前需谨慎核对，处方一旦错误将无驳回修改机会。 
-<span class="link">……展开详情</span></div>
+            <div class="announcement__body">${latestAnnouncement.content.split("\n").slice(0, 2).join("\n")}
+<button class="announcement__detail-trigger" type="button" data-announcement-id="${latestAnnouncement.id}">……展开详情</button></div>
           </div>
-          <p class="announcement__footer">成都双流九州通互联网医院</p>
+          <p class="announcement__footer">${latestAnnouncement.publisher}</p>
         </article>
-        ${renderButton({ text: "查看全部公告", tone: "block-outline", size: "" })}
+        ${renderButton({ text: "查看全部公告", tone: "block-outline", size: "", className: "announcement-list-trigger" })}
       </div>
     </section>`;
+}
+
+function renderAnnouncementDialog() {
+  return `
+    <div class="announcement-overlay" aria-hidden="true">
+      <section class="announcement-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-dialog-title">
+        <header class="announcement-dialog__header">
+          <h2 id="announcement-dialog-title">公告详情</h2>
+          <button class="announcement-dialog__close" type="button" aria-label="关闭公告详情">
+            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
+          </button>
+        </header>
+        <div class="announcement-dialog__body">
+          <div class="announcement-dialog__meta">
+            <h3>${latestAnnouncement.title}</h3>
+            <span>${latestAnnouncement.date}</span>
+          </div>
+          <p>${latestAnnouncement.content}</p>
+          <div class="announcement-dialog__publisher">${latestAnnouncement.publisher}</div>
+        </div>
+      </section>
+    </div>`;
+}
+
+function renderAnnouncementListDialog() {
+  return `
+    <div class="announcement-list-overlay" aria-hidden="true">
+      <section class="announcement-list-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-list-title">
+        <header class="announcement-dialog__header">
+          <h2 id="announcement-list-title">全部公告</h2>
+          <button class="announcement-list-dialog__close announcement-dialog__close" type="button" aria-label="关闭全部公告">
+            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
+          </button>
+        </header>
+        <div class="announcement-list-dialog__body">
+          ${announcements
+            .map(
+              (announcement) => `
+                <button class="announcement-list-item" type="button" data-announcement-id="${announcement.id}">
+                  <span class="announcement-list-item__main">
+                    <span class="announcement-list-item__title">
+                      ${announcement.title}
+                      ${announcement.unread ? renderReadTag("unread", "announcement-list-item__tag") : renderReadTag("read", "announcement-list-item__tag")}
+                    </span>
+                    <span class="announcement-list-item__summary">${announcement.content.split("\n")[0]}</span>
+                  </span>
+                  <span class="announcement-list-item__date">${announcement.date}</span>
+                </button>`
+            )
+            .join("")}
+        </div>
+      </section>
+    </div>`;
+}
+
+function renderQuickEntryDialog() {
+  return `
+    <div class="quick-entry-overlay" aria-hidden="true">
+      <section class="quick-entry-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title">
+        <header class="announcement-dialog__header">
+          <h2 id="quick-entry-title">添加快捷入口</h2>
+          <button class="quick-entry-dialog__close announcement-dialog__close" type="button" aria-label="关闭添加快捷入口">
+            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
+          </button>
+        </header>
+        <div class="quick-entry-dialog__body">
+          ${quickEntryOptions
+            .map(
+              (option, index) => `
+                <button class="quick-entry-option" type="button" data-option-index="${index}">
+                  <span class="icon-box">${icons[option.icon]}</span>
+                  <span class="quick-entry-option__copy">
+                    <span class="quick-entry-option__title">${option.title}</span>
+                    <span class="quick-entry-option__desc">${option.desc}</span>
+                  </span>
+                </button>`
+            )
+            .join("")}
+        </div>
+      </section>
+    </div>`;
 }
 
 function renderQuickActions() {
@@ -883,7 +1292,7 @@ function renderQuickActions() {
         ${quickActions
           .map(
             (action) => `
-              <button class="quick-card" type="button" data-action="${action.desc}">
+              <button class="quick-card${action.isAdd ? " quick-card--add" : ""}" type="button" data-action="${action.desc}">
                 <span class="quick-card__body">
                   <span class="icon-box">${icons[action.icon]}</span>
                   ${
@@ -919,7 +1328,7 @@ function renderMain() {
 }
 
 function renderApp() {
-  document.body.classList.add(`page-mode-${appMode}`, `page-view-${appView}`);
+  document.body.classList.add("page-mode-responsive", `page-view-${appView}`);
   document.getElementById("app").innerHTML =
     appView === "room"
       ? renderRoom()
@@ -927,26 +1336,18 @@ function renderApp() {
         ? renderTextPage()
         : appView === "video"
           ? renderVideoPage()
+          : appView === "history"
+            ? renderHistoryPage()
       : `
-    <div class="app-shell app-shell--${appMode}">
+    <div class="app-shell app-shell--responsive">
       ${renderTopbar()}
       ${renderSidebar()}
       ${renderMain()}
+      ${renderAnnouncementDialog()}
+      ${renderAnnouncementListDialog()}
+      ${renderQuickEntryDialog()}
       <div class="toast" role="status" aria-live="polite"></div>
     </div>`;
-}
-
-function syncFixedViewport() {
-  if (appMode === "responsive") {
-    document.documentElement.style.removeProperty("--jh-fixed-offset-x");
-    return;
-  }
-
-  const viewportWidth = window.innerWidth;
-  const offsetX =
-    appMode === "fixed-center" ? Math.max(0, (viewportWidth - fixedDesignWidth) / 2) : 0;
-
-  document.documentElement.style.setProperty("--jh-fixed-offset-x", `${offsetX}px`);
 }
 
 function showToast(message) {
@@ -1008,6 +1409,174 @@ function closeRiskWarningDialog() {
   if (wasOpen) {
     enableEndConsultButton();
   }
+}
+
+function openAnnouncementDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".announcement-overlay");
+  if (!overlay) return;
+  const announcementId =
+    event?.currentTarget?.dataset?.announcementId || event?.target?.closest("[data-announcement-id]")?.dataset?.announcementId;
+  const announcement = announcements.find((item) => item.id === announcementId) || latestAnnouncement;
+  overlay.querySelector(".announcement-dialog__meta h3").textContent = announcement.title;
+  overlay.querySelector(".announcement-dialog__meta span").textContent = announcement.date;
+  overlay.querySelector(".announcement-dialog__body p").textContent = announcement.content;
+  overlay.querySelector(".announcement-dialog__publisher").textContent = announcement.publisher;
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  overlay.querySelector(".announcement-dialog__close")?.focus();
+}
+
+function closeAnnouncementDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".announcement-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("is-open");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+function openAnnouncementListDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".announcement-list-overlay");
+  if (!overlay) return;
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  overlay.querySelector(".announcement-list-dialog__close")?.focus();
+}
+
+function closeAnnouncementListDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".announcement-list-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("is-open");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+function openQuickEntryDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".quick-entry-overlay");
+  if (!overlay) return;
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  overlay.querySelector(".quick-entry-dialog__close")?.focus();
+}
+
+function closeQuickEntryDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const overlay = document.querySelector(".quick-entry-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("is-open");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+function toggleUserMenu(trigger, forceOpen) {
+  const menu = trigger.closest(".user-chip, .room-user")?.querySelector(".user-menu");
+  if (!menu) return;
+  const isOpen = menu.classList.contains("is-open");
+  const nextOpen = typeof forceOpen === "boolean" ? forceOpen : !isOpen;
+  document.querySelectorAll(".user-menu.is-open").forEach((node) => {
+    if (node !== menu) {
+      node.classList.remove("is-open");
+      node.setAttribute("aria-hidden", "true");
+      node.closest(".user-chip, .room-user")?.querySelector(".user-menu-trigger")?.setAttribute("aria-expanded", "false");
+    }
+  });
+  menu.classList.toggle("is-open", nextOpen);
+  menu.setAttribute("aria-hidden", String(!nextOpen));
+  trigger.setAttribute("aria-expanded", String(nextOpen));
+}
+
+function closeUserMenus() {
+  document.querySelectorAll(".user-menu.is-open").forEach((menu) => {
+    menu.classList.remove("is-open");
+    menu.setAttribute("aria-hidden", "true");
+    menu.closest(".user-chip, .room-user")?.querySelector(".user-menu-trigger")?.setAttribute("aria-expanded", "false");
+  });
+}
+
+function getRoomFilters() {
+  const messageList = document.querySelector(".message-list");
+  return {
+    type: messageList?.dataset.filterType || "all",
+    state: messageList?.dataset.filterState || "ongoing"
+  };
+}
+
+function updateRoomMessageList() {
+  const messageList = document.querySelector(".message-list");
+  if (!messageList) return;
+  const filters = getRoomFilters();
+  const activeId = document.querySelector(".message-item.is-active")?.dataset.recordId || "";
+  messageList.innerHTML = renderMessageList({ ...filters, activeRecord: activeId });
+  bindMessageItems();
+}
+
+function showPrescriptionTrace(record) {
+  const roomMain = document.querySelector(".room-main");
+  if (!roomMain) return;
+  roomMain.outerHTML = renderPrescriptionTraceMain(record);
+}
+
+function handleMessageItemClick(item) {
+  if (item.dataset.badgeKey) {
+    rememberDismissedMessageBadge(item.dataset.badgeKey);
+  }
+  item.querySelector(".message-item__badge")?.remove();
+  const messageList = item.closest(".message-list");
+  messageList?.querySelectorAll(".message-item").forEach((node) => node.classList.remove("is-active"));
+  item.classList.add("is-active");
+  const record = consultationRecords.find((entry) => entry.id === item.dataset.recordId);
+  if (record?.state === "ended") {
+    showPrescriptionTrace(record);
+    bindPrescriptionTraceCards();
+    return;
+  }
+  if (item.dataset.targetView === "video") {
+    window.location.href = getVideoHref();
+  } else if (item.dataset.targetView === "text") {
+    window.location.href = getTextHref();
+  }
+}
+
+function bindMessageItems() {
+  document.querySelectorAll(".message-item").forEach((item) => {
+    if (item.dataset.bound === "true") return;
+    item.dataset.bound = "true";
+    item.addEventListener("click", () => handleMessageItemClick(item));
+  });
+}
+
+function bindPrescriptionTraceCards() {
+  document.querySelectorAll(".prescription-history-open").forEach((button) => {
+    button.addEventListener("click", () => {
+      const recordId = document.querySelector(".message-item.is-active")?.dataset.recordId;
+      window.location.href = getHistoryHref(recordId);
+    });
+  });
+}
+
+function startOngoingTimers() {
+  window.clearInterval(startOngoingTimers.timer);
+  const tick = () => {
+    document.querySelectorAll("[data-ongoing-timer], [data-duration-timer]").forEach((node) => {
+      const nextSeconds = Number(node.dataset.elapsed || 0) + 1;
+      node.dataset.elapsed = String(nextSeconds);
+      const text = formatDuration(nextSeconds);
+      if (node.matches("[data-duration-timer]")) {
+        const label = node.querySelector("strong");
+        if (label) label.textContent = `问诊持续时长：${text}`;
+      } else {
+        node.textContent = `持续 ${text}`;
+      }
+    });
+  };
+  startOngoingTimers.timer = window.setInterval(tick, 1000);
 }
 
 function bindInteractions() {
@@ -1115,6 +1684,81 @@ function bindInteractions() {
     });
   }
 
+  const announcementOverlay = document.querySelector(".announcement-overlay");
+  const announcementListOverlay = document.querySelector(".announcement-list-overlay");
+  const quickEntryOverlay = document.querySelector(".quick-entry-overlay");
+  document.querySelectorAll(".announcement__detail-trigger").forEach((button) => {
+    button.addEventListener("click", openAnnouncementDialog);
+  });
+  document.querySelectorAll(".announcement-list-trigger").forEach((button) => {
+    button.addEventListener("click", openAnnouncementListDialog);
+  });
+
+  if (announcementOverlay) {
+    announcementOverlay
+      .querySelector(".announcement-dialog__close")
+      ?.addEventListener("click", closeAnnouncementDialog);
+    announcementOverlay.addEventListener("click", (event) => {
+      if (event.target === announcementOverlay) {
+        closeAnnouncementDialog(event);
+      }
+    });
+    announcementOverlay.querySelector(".announcement-dialog")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  if (announcementListOverlay) {
+    announcementListOverlay
+      .querySelector(".announcement-list-dialog__close")
+      ?.addEventListener("click", closeAnnouncementListDialog);
+    announcementListOverlay.addEventListener("click", (event) => {
+      if (event.target === announcementListOverlay) {
+        closeAnnouncementListDialog(event);
+      }
+    });
+    announcementListOverlay.querySelector(".announcement-list-dialog")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    announcementListOverlay.querySelectorAll(".announcement-list-item").forEach((item) => {
+      item.addEventListener("click", (event) => {
+        closeAnnouncementListDialog(event);
+        openAnnouncementDialog(event);
+      });
+    });
+  }
+
+  if (quickEntryOverlay) {
+    quickEntryOverlay
+      .querySelector(".quick-entry-dialog__close")
+      ?.addEventListener("click", closeQuickEntryDialog);
+    quickEntryOverlay.addEventListener("click", (event) => {
+      if (event.target === quickEntryOverlay) {
+        closeQuickEntryDialog(event);
+      }
+    });
+    quickEntryOverlay.querySelector(".quick-entry-dialog")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    quickEntryOverlay.querySelectorAll(".quick-entry-option").forEach((optionButton) => {
+      optionButton.addEventListener("click", (event) => {
+        const option = quickEntryOptions[Number(optionButton.dataset.optionIndex)];
+        if (!option) return;
+        const addCard = document.querySelector(".quick-card--add");
+        if (addCard) {
+          addCard.classList.remove("quick-card--add");
+          addCard.dataset.action = option.desc;
+          addCard.querySelector(".icon-box").innerHTML = icons[option.icon];
+          addCard.querySelector(".quick-card__title")?.remove();
+          addCard.querySelector(".quick-card__desc")?.insertAdjacentHTML("beforebegin", `<span class="quick-card__title">${option.title}</span>`);
+          addCard.querySelector(".quick-card__desc").textContent = option.desc;
+        }
+        closeQuickEntryDialog(event);
+        showToast(`已添加${option.title}`);
+      });
+    });
+  }
+
   const consultCard = document.querySelector(".consult-card");
   if (consultCard) {
     consultCard.addEventListener("click", () => {
@@ -1123,18 +1767,41 @@ function bindInteractions() {
   }
 
   document.querySelectorAll(".quick-card").forEach((card) => {
-    card.addEventListener("click", () => {
+    card.addEventListener("click", (event) => {
+      if (card.classList.contains("quick-card--add")) {
+        openQuickEntryDialog(event);
+        return;
+      }
       showToast(card.dataset.action);
     });
   });
 
   document
-    .querySelectorAll(".topbar__actions .jh-btn, .room-service-btn, .notice-card .jh-btn--block-outline")
+    .querySelectorAll(".topbar__actions .jh-btn, .room-service-btn")
     .forEach((button) => {
       button.addEventListener("click", () => {
         showToast(button.textContent.trim());
       });
     });
+
+  document.querySelectorAll(".user-menu-trigger").forEach((trigger) => {
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleUserMenu(trigger);
+    });
+  });
+
+  document.querySelectorAll(".user-menu__item").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeUserMenus();
+      showToast(item.dataset.action || item.textContent.trim());
+    });
+  });
+
+  document.addEventListener("click", closeUserMenus);
 
   const roomRefresh = document.querySelector(".room-refresh");
   if (roomRefresh) {
@@ -1148,6 +1815,27 @@ function bindInteractions() {
       const group = tag.closest(".room-tags");
       group.querySelectorAll(".room-tag").forEach((node) => node.classList.remove("is-active"));
       tag.classList.add("is-active");
+      const messageList = document.querySelector(".message-list");
+      if (messageList) {
+        if (tag.dataset.filterType) {
+          messageList.dataset.filterType = tag.dataset.filterType;
+        }
+        if (tag.dataset.filterState) {
+          messageList.dataset.filterState = tag.dataset.filterState;
+        }
+        updateRoomMessageList();
+        const filters = getRoomFilters();
+        if (filters.state === "ended") {
+          const firstEnded = consultationRecords.find(
+            (record) => (filters.type === "all" || record.type === filters.type) && record.state === "ended"
+          );
+          if (firstEnded) {
+            showPrescriptionTrace(firstEnded);
+            document.querySelector(`.message-item[data-record-id="${firstEnded.id}"]`)?.classList.add("is-active");
+            bindPrescriptionTraceCards();
+          }
+        }
+      }
     });
   });
 
@@ -1160,17 +1848,13 @@ function bindInteractions() {
     });
   });
 
-  document.querySelectorAll(".message-item").forEach((item) => {
-    item.addEventListener("click", () => {
-      if (item.dataset.badgeKey) {
-        rememberDismissedMessageBadge(item.dataset.badgeKey);
-      }
-      item.querySelector(".message-item__badge")?.remove();
-      if (item.dataset.targetView === "video") {
-        window.location.href = getVideoHref();
-      } else if (item.dataset.targetView === "text") {
-        window.location.href = getTextHref();
-      }
+  bindMessageItems();
+
+  bindPrescriptionTraceCards();
+
+  document.querySelectorAll(".history-back").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.location.href = getRoomHref();
     });
   });
 
@@ -1178,11 +1862,14 @@ function bindInteractions() {
     if (event.key === "Escape") {
       closeQuickReplyDialog();
       closeRiskWarningDialog();
+      closeAnnouncementDialog(event);
+      closeAnnouncementListDialog(event);
+      closeQuickEntryDialog(event);
+      closeUserMenus();
     }
   });
 }
 
-syncFixedViewport();
 renderApp();
 bindInteractions();
-window.addEventListener("resize", syncFixedViewport);
+startOngoingTimers();
