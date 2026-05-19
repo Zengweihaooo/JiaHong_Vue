@@ -12,6 +12,7 @@
 - `src/shared/core.js`：跨层共享的轻量工具，包括路由识别、查询参数读取、页面跳转 URL、静态资源 URL。
 - `src/domain/consultationStateMachine.js`：问诊领域状态机，集中约束流程流转。
 - `src/domain/consultationQueue.js`：会话列表和待接诊队列的统一计算口径。
+- `src/domain/archivedConsultation.js`：已结束问诊归档模型标准化，补齐历史聊天、操作留痕、诊断和处方编号回退值。
 - `src/domain/prescriptionCatalog.js`：处方编辑候选诊断、药品和拼音排序规则。
 - `src/infrastructure/api/httpClient.js`：统一 JSON 请求封装。
 - `src/infrastructure/api/mockApi.js`：Mock API 门面，模拟真实接口延迟和返回结构。
@@ -83,6 +84,7 @@ domain
 - 点击会话时路由携带 `record` 参数，图文/视频页按同一个 `recordId` 渲染药店、患者、聊天、诊断和用药信息。
 - 进行中的消息列表最多展示 6 条，Mock 运行态新增会话会随机插入列表位置并做数量裁剪，避免列表无限增长或类型固定分组。
 - 未读状态按 `record.id` 持久化，不再按列表位置计算，新增会话插入后不会导致徽标错位。
+- 问诊结束时由 `archivedConsultation.js` 统一生成可回看的归档记录，确保新结束或历史 Mock 记录都有聊天历史和操作留痕；已结束视频记录只保留历史消息与处方信息，不再渲染视频预览框。
 
 ## 数据结构
 

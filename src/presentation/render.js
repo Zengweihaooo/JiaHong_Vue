@@ -1,4 +1,5 @@
 import { assetUrl, appView, getHomeHref, getRoomHref, getTextHref, getVideoHref, getHistoryHref, getRecordParam } from "../shared/core.js";
+import { normalizeArchivedConsultationRecord } from "../domain/archivedConsultation.js";
 import { getMessageListRecords } from "../domain/consultationQueue.js";
 import { icons } from "./ui/icons.js";
 import { renderData, renderRuntime } from "./renderContext.js";
@@ -564,32 +565,30 @@ export function getConsultMainClass() {
 
 export function renderPrescriptionTraceMain(record = renderData.consultationRecords.find((item) => item.state === "ended")) {
   const mainClass = getConsultMainClass();
+  const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
   return `
     <main class="${mainClass}">
       <section class="text-card text-card--readonly" aria-label="历史问诊回看">
         <div class="pharmacy-bar">
           <div class="pharmacy-bar__left">
-            <h2>${record.title}</h2>
+            <h2>${archivedRecord.title}</h2>
             ${renderReadTag("read", "readonly-seal-tag").replace("已读", "已封存")}
-            ${renderLabelTag({ text: `${record.typeLabel}问诊`, tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
+            ${renderLabelTag({ text: `${archivedRecord.typeLabel}问诊`, tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
-            <span class="readonly-ended-time">结束时间：${record.endedAt}</span>
+            <span class="readonly-ended-time">结束时间：${archivedRecord.endedAt}</span>
           </div>
         </div>
         <div class="consult-workspace">
-          ${renderArchivedConsultationPanel(record)}
-          ${renderReadonlyPrescriptionPanel(record)}
+          ${renderArchivedConsultationPanel(archivedRecord)}
+          ${renderReadonlyPrescriptionPanel(archivedRecord)}
         </div>
       </section>
     </main>`;
 }
 
 export function renderArchivedChatThread(record) {
-  const transcript = record.transcript || [];
-  if (!transcript.length) {
-    return `<div class="chat-thread chat-thread--archived"></div>`;
-  }
+  const transcript = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]).transcript;
 
   return `
     <div class="chat-thread chat-thread--archived">
@@ -608,16 +607,6 @@ export function renderArchivedChatThread(record) {
 export function renderArchivedConsultationPanel(record) {
   return `
     <section class="chat-panel archived-consult-panel" aria-label="历史聊天记录">
-      ${
-        record.type === "video"
-          ? `<div class="video-window archived-video-window">
-              <img class="video-window__main" src="${assetUrl("assets/video-main.png")}" alt="" />
-              <div class="video-window__pip">
-                <img src="${assetUrl("assets/video-doctor.png")}" alt="" />
-              </div>
-            </div>`
-          : ""
-      }
       <div class="archived-consult-panel__scroll">
         ${renderArchivedChatThread(record)}
       </div>
@@ -636,23 +625,24 @@ export function renderReadonlyPrescriptionPanel(record) {
 
 
 export function renderPrescriptionTraceCard(record) {
+  const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
   return `
-    <button class="prescription-trace-card" type="button" data-history-record-id="${record.id}" aria-label="查看${record.patient}开方历史">
+    <button class="prescription-trace-card" type="button" data-history-record-id="${archivedRecord.id}" aria-label="查看${archivedRecord.patient}开方历史">
       <span class="prescription-trace-card__head">
         <span>
-          <span class="prescription-trace-card__eyebrow">${record.typeLabel}问诊已结束</span>
-          <strong>${record.patient}｜${record.age}</strong>
+          <span class="prescription-trace-card__eyebrow">${archivedRecord.typeLabel}问诊已结束</span>
+          <strong>${archivedRecord.patient}｜${archivedRecord.age}</strong>
         </span>
         ${renderReadTag("read", "prescription-trace-card__status").replace("已读", "已归档")}
       </span>
       <span class="prescription-trace-card__body">
         <span class="trace-info-grid">
-          <span><em>诊断</em><strong>${record.diagnosis}</strong></span>
-          <span><em>处方编号</em><strong>${record.prescriptionNo}</strong></span>
-          <span><em>结束时间</em><strong>${record.endedAt}</strong></span>
+          <span><em>诊断</em><strong>${archivedRecord.diagnosis}</strong></span>
+          <span><em>处方编号</em><strong>${archivedRecord.prescriptionNo}</strong></span>
+          <span><em>结束时间</em><strong>${archivedRecord.endedAt}</strong></span>
         </span>
         <span class="trace-timeline">
-          ${record.trace
+          ${archivedRecord.trace
             .map(
               (item) => `
                 <span class="trace-timeline__item">
@@ -675,6 +665,8 @@ export function renderHistoryPage() {
   const record =
     renderData.consultationRecords.find((item) => item.id === recordId && item.state === "ended") ||
     renderData.consultationRecords.find((item) => item.id === "ended-text");
+  const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
+  const medicines = archivedRecord.prescriptionMedicines || [];
   return `
     <div class="app-shell room-shell history-shell app-shell--responsive">
       ${renderRoomTopbar()}
@@ -684,32 +676,36 @@ export function renderHistoryPage() {
           <div class="prescription-history__header">
             <div>
               <p>开方历史</p>
-              <h1>${record.patient}的处方留痕记录</h1>
+              <h1>${archivedRecord.patient}的处方留痕记录</h1>
             </div>
             ${renderButton({ text: "返回问诊室", tone: "outline-secondary", size: "md", className: "history-back" })}
           </div>
           <div class="prescription-history__summary">
-            <span><em>问诊类型</em><strong>${record.typeLabel}问诊</strong></span>
-            <span><em>诊断</em><strong>${record.diagnosis}</strong></span>
-            <span><em>处方编号</em><strong>${record.prescriptionNo}</strong></span>
-            <span><em>归档时间</em><strong>${record.endedAt}</strong></span>
+            <span><em>问诊类型</em><strong>${archivedRecord.typeLabel}问诊</strong></span>
+            <span><em>诊断</em><strong>${archivedRecord.diagnosis}</strong></span>
+            <span><em>处方编号</em><strong>${archivedRecord.prescriptionNo}</strong></span>
+            <span><em>归档时间</em><strong>${archivedRecord.endedAt}</strong></span>
           </div>
           <div class="prescription-history__content">
             <section class="history-panel">
               <h2>处方明细</h2>
               <div class="history-medicine-table">
-                ${(record.prescriptionMedicines || [])
-                  .map(
-                    (medicine) =>
-                      `<div><strong>${medicine.name}</strong><span>${medicine.spec}｜${medicine.usage}｜${medicine.frequency}｜${medicine.quantity}${medicine.unit}</span></div>`
-                  )
-                  .join("")}
+                ${
+                  medicines.length
+                    ? medicines
+                        .map(
+                          (medicine) =>
+                            `<div><strong>${medicine.name}</strong><span>${medicine.spec}｜${medicine.usage}｜${medicine.frequency}｜${medicine.quantity}${medicine.unit}</span></div>`
+                        )
+                        .join("")
+                    : `<div><strong>暂无处方药品</strong><span>本次问诊未生成处方明细</span></div>`
+                }
               </div>
             </section>
             <section class="history-panel">
               <h2>操作留痕</h2>
               <div class="history-trace-list">
-                ${record.trace
+                ${archivedRecord.trace
                   .map(
                     (item) => `
                       <div>

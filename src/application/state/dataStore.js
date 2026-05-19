@@ -1,3 +1,5 @@
+import { normalizeArchivedConsultationRecord } from "../../domain/archivedConsultation.js";
+
 export const appData = {
   schemaVersion: null,
   doctor: null,
@@ -90,6 +92,9 @@ export function updateConsultationRecordState(recordId, state) {
   if (state !== "ongoing") {
     record.badge = 0;
     record.unreadCount = 0;
+  }
+  if (state === "ended") {
+    Object.assign(record, normalizeArchivedConsultationRecord(record, ongoingChatState[recordId]));
   }
   return record;
 }
