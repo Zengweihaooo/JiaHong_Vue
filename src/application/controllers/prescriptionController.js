@@ -1,24 +1,20 @@
-import { compareByPinyin, diagnosisSuggestionPool, medicineSuggestionPool } from "../../domain/prescriptionCatalog.js";
+import { searchDiagnosisCatalog, searchMedicineCatalog } from "../../infrastructure/api/appApi.js";
 import { getActiveConsultationRecord } from "./consultationController.js";
 
-export function getDiagnosisOptions(keyword = "") {
+export async function getDiagnosisOptions(keyword = "") {
   const record = getActiveConsultationRecord();
-  const normalizedKeyword = keyword.trim().toLowerCase();
-  const existingTags = new Set(record?.diagnosisTags || []);
-  return diagnosisSuggestionPool
-    .filter((diagnosis) => !existingTags.has(diagnosis))
-    .filter((diagnosis) => !normalizedKeyword || diagnosis.toLowerCase().includes(normalizedKeyword))
-    .sort(compareByPinyin);
+  const response = await searchDiagnosisCatalog({
+    keyword,
+    exclude: record?.diagnosisTags || []
+  });
+  return response.items;
 }
 
 export function addDiagnosisToActiveRecord(diagnosisText = "") {
   const record = getActiveConsultationRecord();
   if (!record) return { ok: false, message: "当前会话不可编辑" };
   normalizeRecordDiagnosis(record);
-  const nextDiagnosis =
-    diagnosisText.trim() ||
-    diagnosisSuggestionPool.find((diagnosis) => !record.diagnosisTags.includes(diagnosis)) ||
-    `补充诊断${record.diagnosisTags.length + 1}`;
+  const nextDiagnosis = diagnosisText.trim() || `补充诊断${record.diagnosisTags.length + 1}`;
   if (record.diagnosisTags.includes(nextDiagnosis)) {
     return { ok: false, record, message: "该诊断已存在" };
   }
@@ -36,21 +32,23 @@ export function removeDiagnosisFromActiveRecord(tag) {
   return { ok: true, record, message: "诊断已更新" };
 }
 
-export function getMedicineOptions(keyword = "") {
+export async function getMedicineOptions(keyword = "") {
   const record = getActiveConsultationRecord();
-  const normalizedKeyword = keyword.trim().toLowerCase();
-  const existingMedicines = new Set((record?.prescriptionMedicines || []).map((medicine) => medicine.name));
-  return medicineSuggestionPool
-    .filter((medicine) => !existingMedicines.has(medicine.name))
-    .filter((medicine) => !normalizedKeyword || medicine.name.toLowerCase().includes(normalizedKeyword))
-    .sort((left, right) => compareByPinyin(left.name, right.name));
+  const response = await searchMedicineCatalog({
+    keyword,
+    exclude: (record?.prescriptionMedicines || []).map((medicine) => medicine.name)
+  });
+  return response.items;
 }
 
-export function addMedicineToActiveRecord(keyword = "") {
+export async function addMedicineToActiveRecord(input = "") {
   const record = getActiveConsultationRecord();
   if (!record) return { ok: false, message: "当前会话不可编辑" };
   record.prescriptionMedicines = record.prescriptionMedicines || [];
-  const suggestion = findMedicineSuggestion(keyword);
+  const keyword = typeof input === "string" ? input.trim() : input?.name || "";
+  if (!keyword) return { ok: false, record, message: "请输入药品名称" };
+  const options = typeof input === "object" && input ? [input] : await getMedicineOptions(keyword);
+  const suggestion = options.find((medicine) => medicine.name === keyword) || options[0];
   if (!suggestion) return { ok: false, record, message: "未找到匹配药品" };
   if (record.prescriptionMedicines.some((medicine) => medicine.name === suggestion.name)) {
     return { ok: false, record, message: "该药品已在处方中" };
@@ -92,10 +90,4 @@ function normalizeMedicines(record) {
     ...medicine,
     index: index + 1
   }));
-}
-
-function findMedicineSuggestion(keyword) {
-  const normalizedKeyword = keyword.trim().toLowerCase();
-  if (!normalizedKeyword) return null;
-  return medicineSuggestionPool.find((medicine) => medicine.name.toLowerCase().includes(normalizedKeyword));
 }

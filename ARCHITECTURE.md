@@ -13,11 +13,15 @@
 - `src/domain/consultationStateMachine.js`：问诊领域状态机，集中约束流程流转。
 - `src/domain/consultationQueue.js`：会话列表和待接诊队列的统一计算口径。
 - `src/domain/archivedConsultation.js`：已结束问诊归档模型标准化，补齐历史聊天、操作留痕、诊断和处方编号回退值。
-- `src/domain/prescriptionCatalog.js`：处方编辑候选诊断、药品和拼音排序规则。
+- `src/domain/prescriptionCatalog.js`：处方目录相关纯规则，目前只保留拼音排序比较器。
 - `src/infrastructure/api/httpClient.js`：统一 JSON 请求封装。
 - `src/infrastructure/api/mockApi.js`：Mock API 门面，模拟真实接口延迟和返回结构。
 - `src/infrastructure/api/appApi.js`：应用 API facade，应用层只依赖这里；未来替换真实接口优先改这里。
 - `src/infrastructure/mocks/app-bootstrap.json`：页面启动所需 Mock 数据源。
+- `src/infrastructure/mocks/local-clinical-catalog.json`：本地临床处方目录库，覆盖常见疾病和常用药，当前疾病/药品搜索的主数据源。
+- `src/infrastructure/mocks/prescription-catalog.json`：疾病和药品候选目录 Mock 数据源。
+- `src/infrastructure/mocks/nhsa-medicine-catalog.json`：从国家医保信息业务编码标准数据库动态维护公开查询页拉取的医保药品本地样本。
+- `tools/fetch-nhsa-medicine-sample.mjs`：开发用医保药品样本同步脚本，按关键词从官方公开查询接口拉取小样本。
 - `src/application/state/dataStore.js`：内存数据仓库，只保存 API hydrate 后的数据，不写业务样例。
 - `src/application/state/runtimeState.js`：运行态状态，例如服务开关、消息徽标、问诊状态机实例。
 - `src/application/store/appStore.js`：应用启动 store，负责拉取 bootstrap 数据并初始化运行态。
@@ -128,6 +132,8 @@ domain
 
 - `getAppBootstrap()`：加载启动 Mock 数据。
 - `generatePatientAutoReply({ recordId, doctorMessage, record, chat })`：模拟后端病人自动回复，按医生消息和当前病例随机生成患者回复。
+- `searchDiagnosisCatalog({ keyword, exclude })`：模拟疾病目录检索，优先读取本地临床目录库，再用原 Mock 目录补齐候选。
+- `searchMedicineCatalog({ keyword, exclude })`：模拟药品目录检索，优先读取本地临床目录库，再用原 Mock 药品补齐候选。
 - `updateServiceAvailability(serviceKey, enabled)`：模拟服务开关保存。
 - `updateConsultationStatus(recordId, event)`：模拟问诊流程状态同步。
 

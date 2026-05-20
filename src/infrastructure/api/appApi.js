@@ -2,7 +2,9 @@ export {
   getAppBootstrap,
   generatePatientAutoReply,
   getRealtimeSnapshot,
+  searchDiagnosisCatalog,
+  searchMedicineCatalog,
   updateConsultationStatus,
   updateDoctorStatus,
   updateServiceAvailability
-} from "./mockApi.js";
+} from "./mockApi.js?v=20260520-15";

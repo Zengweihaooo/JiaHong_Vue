@@ -114,6 +114,31 @@
         "title": "处方模板",
         "desc": "管理常用处方",
         "icon": "clipboard"
+      },
+      {
+        "title": "排班管理",
+        "desc": "查看值班安排",
+        "icon": "quickCalendar"
+      },
+      {
+        "title": "历史问诊",
+        "desc": "历史病历查询",
+        "icon": "clock"
+      },
+      {
+        "title": "佣金明细",
+        "desc": "查看医生佣金",
+        "icon": "document"
+      },
+      {
+        "title": "问诊记录",
+        "desc": "检索患者问诊",
+        "icon": "clipboard"
+      },
+      {
+        "title": "出诊管理",
+        "desc": "维护出诊服务",
+        "icon": "briefcase"
       }
     ],
     "announcements": [
@@ -249,6 +274,68 @@
             "risk": "低"
           }
         ]
+      },
+      {
+        "id": "active-consult-medication",
+        "type": "consult",
+        "typeLabel": "咨询",
+        "state": "ongoing",
+        "title": "嘉虹健康图文咨询",
+        "patient": "郑女士",
+        "age": "31岁",
+        "patientGender": "女",
+        "preview": "想咨询一下过敏性鼻炎反复打喷嚏，家里药能不能继续用。",
+        "time": "16:41",
+        "badge": 1,
+        "unreadCount": 1,
+        "targetView": "text",
+        "elapsedSeconds": 138,
+        "diagnosis": "过敏性鼻炎",
+        "diagnosisTags": [
+          "过敏性鼻炎",
+          "用药咨询"
+        ],
+        "patientDetail": {
+          "weight": "49",
+          "pregnancy": "否",
+          "phone": "13758607216",
+          "liverAbnormal": "否",
+          "idCard": "420106199505167216",
+          "kidneyAbnormal": "否",
+          "allergies": "无"
+        },
+        "prescriptionMedicines": []
+      },
+      {
+        "id": "active-consult-child",
+        "type": "consult",
+        "typeLabel": "咨询",
+        "state": "ongoing",
+        "title": "嘉虹健康图文咨询",
+        "patient": "吴女士",
+        "age": "34岁",
+        "patientGender": "女",
+        "preview": "孩子低热一天，精神还可以，想问问先观察还是需要用药。",
+        "time": "16:37",
+        "badge": 1,
+        "unreadCount": 1,
+        "targetView": "text",
+        "elapsedSeconds": 224,
+        "diagnosis": "小儿发热",
+        "diagnosisTags": [
+          "小儿发热",
+          "儿童用药咨询"
+        ],
+        "patientDetail": {
+          "weight": "18",
+          "pregnancy": "否",
+          "phone": "13958604982",
+          "liverAbnormal": "否",
+          "idCard": "420106199208114982",
+          "kidneyAbnormal": "否",
+          "allergies": "无"
+        },
+        "prescriptionMedicines": []
       },
       {
         "id": "ended-text",
@@ -468,6 +555,40 @@
             "id": "active-video-msg-2",
             "from": "patient",
             "text": "咳嗽三天，有黄痰，晚上咳得厉害，没有胸闷，体温 37.4。",
+            "recalled": false
+          }
+        ]
+      },
+      "active-consult-medication": {
+        "sessionDate": "2026-05-19 16:41:32",
+        "messages": [
+          {
+            "id": "active-consult-medication-msg-1",
+            "from": "doctor",
+            "text": "您好，请问目前主要是鼻痒、喷嚏还是流涕？家里现在有哪几种药？",
+            "recalled": false
+          },
+          {
+            "id": "active-consult-medication-msg-2",
+            "from": "patient",
+            "text": "主要是连续打喷嚏和清鼻涕，家里有氯雷他定和鼻喷剂，不确定能不能一起用。",
+            "recalled": false
+          }
+        ]
+      },
+      "active-consult-child": {
+        "sessionDate": "2026-05-19 16:37:18",
+        "messages": [
+          {
+            "id": "active-consult-child-msg-1",
+            "from": "doctor",
+            "text": "您好，孩子现在体温多少？有没有咳嗽、呕吐、腹泻或精神明显变差？",
+            "recalled": false
+          },
+          {
+            "id": "active-consult-child-msg-2",
+            "from": "patient",
+            "text": "最高 37.8，精神还可以，偶尔咳两声，没有呕吐腹泻，所以想先问问怎么处理。",
             "recalled": false
           }
         ]

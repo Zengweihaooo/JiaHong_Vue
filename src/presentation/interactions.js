@@ -1,4 +1,4 @@
-import { appView, getHistoryHref, getRoomHref, getTextHref, getVideoHref } from "../shared/core.js";
+import { appView, assetUrl, getHistoryHref, getRoomHref, getTextHref, getVideoHref } from "../shared/core.js";
 import {
   getActiveConsultationRecord,
   getActiveOngoingRecordId,
@@ -22,10 +22,8 @@ import { getAnnouncementById, getQuickEntryOption } from "../application/control
 import { refreshRealtimeState } from "../application/controllers/realtimeController.js";
 import {
   getDoctorStatus,
-  getNextDoctorStatus,
   getServiceAvailability,
   getServiceAvailabilityEntries,
-  getToggledDoctorStatus,
   getWaitingQueueState,
   setDoctorStatusState,
   setServiceAvailabilityState,
@@ -53,6 +51,74 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => {
     toast.classList.remove("is-visible");
   }, 1500);
+}
+
+function stopEvent(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+}
+
+function setOverlayOpen(overlayOrSelector, open, { focusSelector = "" } = {}) {
+  const overlay =
+    typeof overlayOrSelector === "string" ? document.querySelector(overlayOrSelector) : overlayOrSelector;
+  if (!overlay) return null;
+  overlay.classList.toggle("is-open", open);
+  overlay.setAttribute("aria-hidden", String(!open));
+  if (open && focusSelector) {
+    overlay.querySelector(focusSelector)?.focus();
+  }
+  return overlay;
+}
+
+function openOverlay(selector, focusSelector, event) {
+  stopEvent(event);
+  return setOverlayOpen(selector, true, { focusSelector });
+}
+
+function closeOverlay(selector, event) {
+  stopEvent(event);
+  return setOverlayOpen(selector, false);
+}
+
+function bindOverlayDismiss(overlay, { close, closeSelector, dialogSelector } = {}) {
+  if (!overlay || overlay.dataset.overlayBound === "true") return;
+  overlay.dataset.overlayBound = "true";
+  if (closeSelector) {
+    overlay.querySelector(closeSelector)?.addEventListener("click", close);
+  }
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) close(event);
+  });
+  if (dialogSelector) {
+    overlay.querySelector(dialogSelector)?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  }
+}
+
+function setPopupMenuOpen(menu, open, containerSelector, triggerSelector) {
+  menu.classList.toggle("is-open", open);
+  menu.setAttribute("aria-hidden", String(!open));
+  menu.closest(containerSelector)?.querySelector(triggerSelector)?.setAttribute("aria-expanded", String(open));
+}
+
+function closePopupMenus({ menuSelector, containerSelector, triggerSelector }) {
+  document.querySelectorAll(`${menuSelector}.is-open`).forEach((menu) => {
+    setPopupMenuOpen(menu, false, containerSelector, triggerSelector);
+  });
+}
+
+function togglePopupMenu(trigger, { menuSelector, containerSelector, triggerSelector }, forceOpen) {
+  const menu = trigger.closest(containerSelector)?.querySelector(menuSelector);
+  if (!menu) return;
+  const isOpen = menu.classList.contains("is-open");
+  const nextOpen = typeof forceOpen === "boolean" ? forceOpen : !isOpen;
+  document.querySelectorAll(`${menuSelector}.is-open`).forEach((node) => {
+    if (node !== menu) {
+      setPopupMenuOpen(node, false, containerSelector, triggerSelector);
+    }
+  });
+  setPopupMenuOpen(menu, nextOpen, containerSelector, triggerSelector);
 }
 
 function setServiceTileState(tile, enabled, { sync = true } = {}) {
@@ -85,7 +151,17 @@ function applyRuntimeStateToDom() {
   });
 
   document.querySelectorAll(".room-status").forEach((button) => {
-    button.setAttribute("aria-label", `出诊状态：${statusLabel}`);
+    button.setAttribute("aria-label", `出诊状态：${statusLabel}，展开状态菜单`);
+  });
+
+  document.querySelectorAll(".doctor-status-trigger").forEach((button) => {
+    button.setAttribute("aria-label", `出诊状态：${statusLabel}，展开状态菜单`);
+  });
+
+  document.querySelectorAll(".doctor-status-menu__item").forEach((item) => {
+    const active = item.dataset.doctorStatus === status;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-checked", String(active));
   });
 
   document.querySelectorAll(".jh-switch").forEach((button) => {
@@ -113,19 +189,53 @@ function changeDoctorStatus(nextStatus, { sync = true } = {}) {
   });
 }
 
+function setSidebarCollapsed(collapsed) {
+  const shell = document.querySelector(".app-shell");
+  shell?.classList.toggle("is-sidebar-collapsed", collapsed);
+  shell?.classList.toggle("is-sidebar-expanded", !collapsed);
+  document.querySelector(".sidebar-toggle")?.setAttribute("aria-expanded", String(!collapsed));
+  document.querySelector(".sidebar-toggle")?.setAttribute("aria-label", collapsed ? "展开主菜单" : "收起主菜单");
+}
+
+function bindSidebarToggle() {
+  document.querySelectorAll(".sidebar-toggle").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", () => {
+      const shell = button.closest(".app-shell");
+      const sidebarWidth = document.querySelector(".sidebar")?.getBoundingClientRect().width || 0;
+      const isCollapsed = shell?.classList.contains("is-sidebar-collapsed") || sidebarWidth <= 80;
+      setSidebarCollapsed(!isCollapsed);
+    });
+  });
+}
+
+function bindSidebarScrollIsolation() {
+  document.querySelectorAll(".sidebar").forEach((sidebar) => {
+    if (sidebar.dataset.scrollBound === "true") return;
+    sidebar.dataset.scrollBound = "true";
+    sidebar.addEventListener(
+      "wheel",
+      (event) => {
+        const content = sidebar.querySelector(".sidebar__content");
+        if (!content) return;
+        if (content.scrollHeight > content.clientHeight) {
+          content.scrollTop += event.deltaY;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      { passive: false }
+    );
+  });
+}
+
 function openQuickReplyDialog() {
-  const overlay = document.querySelector(".quick-reply-overlay");
-  if (!overlay) return;
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".quick-reply-dialog__close")?.focus();
+  openOverlay(".quick-reply-overlay", ".quick-reply-dialog__close");
 }
 
 function closeQuickReplyDialog() {
-  const overlay = document.querySelector(".quick-reply-overlay");
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  closeOverlay(".quick-reply-overlay");
 }
 
 function enableEndConsultButton() {
@@ -142,17 +252,14 @@ function openRiskWarningDialog() {
   openRiskReviewForActiveConsultation()?.catch(() => {
     showToast("问诊状态同步失败");
   });
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".risk-warning-dialog__close")?.focus();
+  setOverlayOpen(overlay, true, { focusSelector: ".risk-warning-dialog__close" });
 }
 
 function closeRiskWarningDialog() {
   const overlay = document.querySelector(".risk-warning-overlay");
   if (!overlay) return;
   const wasOpen = overlay.classList.contains("is-open");
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  setOverlayOpen(overlay, false);
   if (wasOpen) {
     submitPrescriptionForActiveConsultation()?.catch(() => {
       showToast("处方状态同步失败");
@@ -162,18 +269,11 @@ function closeRiskWarningDialog() {
 }
 
 function openConsultConfirmDialog(kind) {
-  const overlay = document.querySelector(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`);
-  if (!overlay) return;
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".consult-confirm-submit")?.focus();
+  openOverlay(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`, ".consult-confirm-submit");
 }
 
 function closeConsultConfirmDialog(kind) {
-  const overlay = document.querySelector(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`);
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  closeOverlay(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`);
 }
 
 function closeAllConsultConfirmDialogs() {
@@ -197,10 +297,9 @@ async function handleConsultConfirm(kind) {
 }
 
 function bindConsultConfirmDialogs() {
-  if (bindConsultConfirmDialogs.bound) return;
-  bindConsultConfirmDialogs.bound = true;
-
   document.querySelectorAll(".consult-confirm-overlay").forEach((overlay) => {
+    if (overlay.dataset.confirmBound === "true") return;
+    overlay.dataset.confirmBound = "true";
     const kind = overlay.dataset.confirmKind;
     overlay.querySelector(".consult-confirm-dialog__close")?.addEventListener("click", () => {
       closeConsultConfirmDialog(kind);
@@ -229,8 +328,7 @@ function bindConsultConfirmDialogs() {
 }
 
 function openAnnouncementDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
+  stopEvent(event);
   const overlay = document.querySelector(".announcement-overlay");
   if (!overlay) return;
   const announcementId =
@@ -240,80 +338,111 @@ function openAnnouncementDialog(event) {
   overlay.querySelector(".announcement-dialog__meta span").textContent = announcement.date;
   overlay.querySelector(".announcement-dialog__body p").textContent = announcement.content;
   overlay.querySelector(".announcement-dialog__publisher").textContent = announcement.publisher;
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".announcement-dialog__close")?.focus();
+  setOverlayOpen(overlay, true, { focusSelector: ".announcement-dialog__close" });
 }
 
 function closeAnnouncementDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
-  const overlay = document.querySelector(".announcement-overlay");
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  closeOverlay(".announcement-overlay", event);
 }
 
 function openAnnouncementListDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
-  const overlay = document.querySelector(".announcement-list-overlay");
-  if (!overlay) return;
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".announcement-list-dialog__close")?.focus();
+  openOverlay(".announcement-list-overlay", ".announcement-list-dialog__close", event);
 }
 
 function closeAnnouncementListDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
-  const overlay = document.querySelector(".announcement-list-overlay");
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  closeOverlay(".announcement-list-overlay", event);
 }
 
 function openQuickEntryDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
-  const overlay = document.querySelector(".quick-entry-overlay");
-  if (!overlay) return;
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
-  overlay.querySelector(".quick-entry-dialog__close")?.focus();
+  openOverlay(".quick-entry-overlay", ".quick-entry-dialog__close", event);
 }
 
 function closeQuickEntryDialog(event) {
-  event?.preventDefault();
-  event?.stopPropagation();
-  const overlay = document.querySelector(".quick-entry-overlay");
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  closeOverlay(".quick-entry-overlay", event);
 }
 
+const userMenuConfig = {
+  menuSelector: ".user-menu",
+  containerSelector: ".user-chip, .room-user",
+  triggerSelector: ".user-menu-trigger"
+};
+
+const doctorStatusMenuConfig = {
+  menuSelector: ".doctor-status-menu",
+  containerSelector: ".doctor-status-control",
+  triggerSelector: ".doctor-status-trigger"
+};
+
 function toggleUserMenu(trigger, forceOpen) {
-  const menu = trigger.closest(".user-chip, .room-user")?.querySelector(".user-menu");
-  if (!menu) return;
-  const isOpen = menu.classList.contains("is-open");
-  const nextOpen = typeof forceOpen === "boolean" ? forceOpen : !isOpen;
-  document.querySelectorAll(".user-menu.is-open").forEach((node) => {
-    if (node !== menu) {
-      node.classList.remove("is-open");
-      node.setAttribute("aria-hidden", "true");
-      node.closest(".user-chip, .room-user")?.querySelector(".user-menu-trigger")?.setAttribute("aria-expanded", "false");
-    }
-  });
-  menu.classList.toggle("is-open", nextOpen);
-  menu.setAttribute("aria-hidden", String(!nextOpen));
-  trigger.setAttribute("aria-expanded", String(nextOpen));
+  togglePopupMenu(trigger, userMenuConfig, forceOpen);
 }
 
 function closeUserMenus() {
-  document.querySelectorAll(".user-menu.is-open").forEach((menu) => {
-    menu.classList.remove("is-open");
-    menu.setAttribute("aria-hidden", "true");
-    menu.closest(".user-chip, .room-user")?.querySelector(".user-menu-trigger")?.setAttribute("aria-expanded", "false");
+  closePopupMenus(userMenuConfig);
+}
+
+function closeDoctorStatusMenus() {
+  closePopupMenus(doctorStatusMenuConfig);
+}
+
+function toggleDoctorStatusMenu(trigger, forceOpen) {
+  togglePopupMenu(trigger, doctorStatusMenuConfig, forceOpen);
+}
+
+function bindDoctorStatusMenus() {
+  if (bindDoctorStatusMenus.bound) return;
+  bindDoctorStatusMenus.bound = true;
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest(".doctor-status-trigger");
+    if (trigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeUserMenus();
+      toggleDoctorStatusMenu(trigger);
+      return;
+    }
+
+    const item = event.target.closest(".doctor-status-menu__item");
+    if (item) {
+      event.preventDefault();
+      event.stopPropagation();
+      changeDoctorStatus(item.dataset.doctorStatus);
+      closeDoctorStatusMenus();
+      return;
+    }
+
+    if (!event.target.closest(".doctor-status-menu")) {
+      closeDoctorStatusMenus();
+    }
+  });
+}
+
+function bindUserMenus() {
+  if (bindUserMenus.bound) return;
+  bindUserMenus.bound = true;
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest(".user-menu-trigger");
+    if (trigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleUserMenu(trigger);
+      return;
+    }
+
+    const item = event.target.closest(".user-menu__item");
+    if (item) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeUserMenus();
+      showToast(item.dataset.action || item.textContent.trim());
+      return;
+    }
+
+    if (!event.target.closest(".user-menu")) {
+      closeUserMenus();
+    }
   });
 }
 
@@ -386,14 +515,54 @@ function handleMessageItemClick(item) {
     }
   }
 
-  if (item.dataset.targetView === "video") {
+  const targetView = item.dataset.targetView || (record?.type === "video" ? "video" : record ? "text" : "");
+  if (targetView === "video") {
     if (record?.id) {
       activateVideoConsultation(record.id);
     }
-    window.location.href = getVideoHref(record?.id);
-  } else if (item.dataset.targetView === "text") {
-    window.location.href = getTextHref(record?.id);
+    if (!openConsultationInCurrentPage(record, "video")) {
+      window.location.href = getVideoHref(record?.id);
+    }
+  } else if (targetView === "text") {
+    if (!openConsultationInCurrentPage(record, "text")) {
+      window.location.href = getTextHref(record?.id);
+    }
   }
+}
+
+function updateConsultRoute(targetView, recordId) {
+  const href = targetView === "video" ? getVideoHref(recordId) : getTextHref(recordId);
+  const nextUrl = new URL(href, window.location.href);
+  if (nextUrl.href !== window.location.href) {
+    window.history.pushState({ view: targetView, recordId }, "", nextUrl);
+  }
+}
+
+function setConsultPageMode(targetView) {
+  document.title = targetView === "video" ? "嘉虹健康视频问诊" : "嘉虹健康图文问诊";
+  document.body.classList.remove("page-view-room", "page-view-text", "page-view-video", "page-view-history");
+  document.body.classList.add(`page-view-${targetView}`);
+  const shell = document.querySelector(".app-shell");
+  if (!shell) return;
+  shell.classList.add("room-shell", "text-shell");
+  shell.classList.toggle("video-shell", targetView === "video");
+  shell.classList.remove("history-shell");
+}
+
+function openConsultationInCurrentPage(record, targetView) {
+  if (!record?.id || !document.querySelector(".room-shell")) return false;
+  const main = getConsultMainElement();
+  if (!main) return false;
+
+  updateConsultRoute(targetView, record.id);
+  setConsultPageMode(targetView);
+  setConsultShellReadonly(false);
+  main.outerHTML = targetView === "video" ? renderVideoMain() : renderTextMain();
+  bindConsultWorkspace();
+  bindChatMessageMenu();
+  bindConsultConfirmDialogs();
+  startOngoingTimers();
+  return true;
 }
 
 function bindMessageItems() {
@@ -401,6 +570,11 @@ function bindMessageItems() {
     if (item.dataset.bound === "true") return;
     item.dataset.bound = "true";
     item.addEventListener("click", () => handleMessageItemClick(item));
+    item.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      handleMessageItemClick(item);
+    });
   });
 }
 
@@ -532,6 +706,75 @@ function sendChatInputMessage(input) {
   appendMockPatientReply(sent.chatKey, sent.message);
 }
 
+const maxQuickActionCards = 8;
+
+function renderQuickCardRemoveButton(title) {
+  return `
+    <button class="quick-card__remove" type="button" aria-label="移除快捷入口：${title}">
+      <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
+    </button>`;
+}
+
+function renderQuickCardMarkup({ title = "", desc = "添加快捷入口", icon = "plus", isAdd = false } = {}) {
+  const classes = `quick-card${isAdd ? " quick-card--add" : " quick-card--custom"}`;
+  return `
+    <div class="${classes}" role="button" tabindex="0" data-action="${desc}"${isAdd ? "" : ' data-custom-quick-entry="true"'}>
+      ${isAdd ? "" : renderQuickCardRemoveButton(title)}
+      <span class="quick-card__body">
+        <span class="icon-box">${icons[icon]}</span>
+        ${title ? `<span class="quick-card__title">${title}</span>` : ""}
+        <span class="quick-card__desc">${desc}</span>
+      </span>
+    </div>`;
+}
+
+function getQuickActionCount(grid = document) {
+  return grid.querySelectorAll(".quick-card:not(.quick-card--add)").length;
+}
+
+function ensureQuickAddCard(grid) {
+  const addCard = grid.querySelector(".quick-card--add");
+  const shouldShowAdd = getQuickActionCount(grid) < maxQuickActionCards;
+  if (shouldShowAdd && !addCard) {
+    grid.insertAdjacentHTML("beforeend", renderQuickCardMarkup({ isAdd: true }));
+  } else if (!shouldShowAdd) {
+    addCard?.remove();
+  }
+}
+
+function addCustomQuickCard(option) {
+  const grid = document.querySelector(".quick-grid");
+  if (!grid) return false;
+  if (getQuickActionCount(grid) >= maxQuickActionCards) {
+    showToast(`最多添加${maxQuickActionCards}个快捷入口`);
+    return false;
+  }
+  const addCard = grid.querySelector(".quick-card--add");
+  const markup = renderQuickCardMarkup(option);
+  if (addCard) {
+    addCard.insertAdjacentHTML("beforebegin", markup);
+  } else {
+    grid.insertAdjacentHTML("beforeend", markup);
+  }
+  ensureQuickAddCard(grid);
+  return true;
+}
+
+function removeCustomQuickCard(card) {
+  const grid = card.closest(".quick-grid");
+  card.remove();
+  if (grid) ensureQuickAddCard(grid);
+}
+
+function activateQuickCard(card, event) {
+  if (event?.target.closest(".quick-card__remove")) return;
+  if (card.classList.contains("quick-card--add")) {
+    openQuickEntryDialog(event);
+    return;
+  }
+  showToast(card.dataset.action);
+}
+
 function bindChatMessageMenu() {
   const menu = document.querySelector(".chat-message-menu");
   if (!menu || menu.dataset.bound === "true") return;
@@ -569,11 +812,14 @@ function refreshActivePrescriptionPanel(record = getActiveConsultationRecord()) 
   bindConsultWorkspace();
 }
 
-function renderDiagnosisDropdown(input) {
+async function renderDiagnosisDropdown(input) {
   const panel = input.closest(".prescription-panel");
   const dropdown = panel?.querySelector(".diagnosis-options");
   if (!dropdown) return;
-  const options = getDiagnosisOptions(input.value);
+  const requestId = `${Date.now()}-${Math.random()}`;
+  input.dataset.diagnosisRequestId = requestId;
+  const options = await getDiagnosisOptions(input.value);
+  if (input.dataset.diagnosisRequestId !== requestId) return;
   dropdown.innerHTML = "";
   options.forEach((diagnosis) => {
     const button = document.createElement("button");
@@ -600,11 +846,14 @@ function closeDiagnosisDropdown(input) {
   input.setAttribute("aria-expanded", "false");
 }
 
-function renderMedicineDropdown(input) {
+async function renderMedicineDropdown(input) {
   const panel = input.closest(".prescription-panel");
   const dropdown = panel?.querySelector(".medicine-options");
   if (!dropdown) return;
-  const options = getMedicineOptions(input.value);
+  const requestId = `${Date.now()}-${Math.random()}`;
+  input.dataset.medicineRequestId = requestId;
+  const options = await getMedicineOptions(input.value);
+  if (input.dataset.medicineRequestId !== requestId) return;
   dropdown.innerHTML = "";
   options.forEach((medicine) => {
     const button = document.createElement("button");
@@ -615,7 +864,7 @@ function renderMedicineDropdown(input) {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      handlePrescriptionResult(addMedicineToActiveRecord(medicine.name));
+      handlePrescriptionResult(addMedicineToActiveRecord(medicine));
     });
     dropdown.appendChild(button);
   });
@@ -631,7 +880,8 @@ function closeMedicineDropdown(input) {
   input.setAttribute("aria-expanded", "false");
 }
 
-function handlePrescriptionResult(result) {
+async function handlePrescriptionResult(resultOrPromise) {
+  const result = await resultOrPromise;
   if (result?.record) {
     refreshActivePrescriptionPanel(result.record);
   }
@@ -982,6 +1232,8 @@ export function bindInteractions() {
   subscribeToRuntimeState(applyRuntimeStateToDom);
   applyRuntimeStateToDom();
   bindDragScrollContainers();
+  bindSidebarToggle();
+  bindSidebarScrollIsolation();
 
   document.querySelectorAll(".menu-item").forEach((item) => {
     item.addEventListener("click", () => {
@@ -992,15 +1244,13 @@ export function bindInteractions() {
     });
   });
 
-  document.querySelectorAll(".jh-switch").forEach((switchButton) => {
-    switchButton.addEventListener("click", () => {
-      changeDoctorStatus(getToggledDoctorStatus());
-    });
-  });
+  bindDoctorStatusMenus();
 
-  document.querySelectorAll(".room-status").forEach((button) => {
-    button.addEventListener("click", () => {
-      changeDoctorStatus(getNextDoctorStatus());
+  document.querySelectorAll(".jh-switch").forEach((switchButton) => {
+    if (switchButton.dataset.bound === "true") return;
+    switchButton.dataset.bound = "true";
+    switchButton.addEventListener("click", () => {
+      changeDoctorStatus(getDoctorStatus() === "offline" ? "online" : "offline");
     });
   });
 
@@ -1028,11 +1278,9 @@ export function bindInteractions() {
   const quickReplyOverlay = document.querySelector(".quick-reply-overlay");
 
   if (quickReplyOverlay) {
-    quickReplyOverlay.querySelector(".quick-reply-dialog__close")?.addEventListener("click", closeQuickReplyDialog);
-    quickReplyOverlay.addEventListener("click", (event) => {
-      if (event.target === quickReplyOverlay) {
-        closeQuickReplyDialog();
-      }
+    bindOverlayDismiss(quickReplyOverlay, {
+      close: closeQuickReplyDialog,
+      closeSelector: ".quick-reply-dialog__close"
     });
 
     quickReplyOverlay.querySelectorAll(".quick-reply-category").forEach((category) => {
@@ -1059,11 +1307,9 @@ export function bindInteractions() {
   const riskWarningOverlay = document.querySelector(".risk-warning-overlay");
 
   if (riskWarningOverlay) {
-    riskWarningOverlay.querySelector(".risk-warning-dialog__close")?.addEventListener("click", closeRiskWarningDialog);
-    riskWarningOverlay.addEventListener("click", (event) => {
-      if (event.target === riskWarningOverlay) {
-        closeRiskWarningDialog();
-      }
+    bindOverlayDismiss(riskWarningOverlay, {
+      close: closeRiskWarningDialog,
+      closeSelector: ".risk-warning-dialog__close"
     });
   }
 
@@ -1078,30 +1324,18 @@ export function bindInteractions() {
   });
 
   if (announcementOverlay) {
-    announcementOverlay
-      .querySelector(".announcement-dialog__close")
-      ?.addEventListener("click", closeAnnouncementDialog);
-    announcementOverlay.addEventListener("click", (event) => {
-      if (event.target === announcementOverlay) {
-        closeAnnouncementDialog(event);
-      }
-    });
-    announcementOverlay.querySelector(".announcement-dialog")?.addEventListener("click", (event) => {
-      event.stopPropagation();
+    bindOverlayDismiss(announcementOverlay, {
+      close: closeAnnouncementDialog,
+      closeSelector: ".announcement-dialog__close",
+      dialogSelector: ".announcement-dialog"
     });
   }
 
   if (announcementListOverlay) {
-    announcementListOverlay
-      .querySelector(".announcement-list-dialog__close")
-      ?.addEventListener("click", closeAnnouncementListDialog);
-    announcementListOverlay.addEventListener("click", (event) => {
-      if (event.target === announcementListOverlay) {
-        closeAnnouncementListDialog(event);
-      }
-    });
-    announcementListOverlay.querySelector(".announcement-list-dialog")?.addEventListener("click", (event) => {
-      event.stopPropagation();
+    bindOverlayDismiss(announcementListOverlay, {
+      close: closeAnnouncementListDialog,
+      closeSelector: ".announcement-list-dialog__close",
+      dialogSelector: ".announcement-list-dialog"
     });
     announcementListOverlay.querySelectorAll(".announcement-list-item").forEach((item) => {
       item.addEventListener("click", (event) => {
@@ -1112,32 +1346,18 @@ export function bindInteractions() {
   }
 
   if (quickEntryOverlay) {
-    quickEntryOverlay
-      .querySelector(".quick-entry-dialog__close")
-      ?.addEventListener("click", closeQuickEntryDialog);
-    quickEntryOverlay.addEventListener("click", (event) => {
-      if (event.target === quickEntryOverlay) {
-        closeQuickEntryDialog(event);
-      }
-    });
-    quickEntryOverlay.querySelector(".quick-entry-dialog")?.addEventListener("click", (event) => {
-      event.stopPropagation();
+    bindOverlayDismiss(quickEntryOverlay, {
+      close: closeQuickEntryDialog,
+      closeSelector: ".quick-entry-dialog__close",
+      dialogSelector: ".quick-entry-dialog"
     });
     quickEntryOverlay.querySelectorAll(".quick-entry-option").forEach((optionButton) => {
       optionButton.addEventListener("click", (event) => {
         const option = getQuickEntryOption(optionButton.dataset.optionIndex);
         if (!option) return;
-        const addCard = document.querySelector(".quick-card--add");
-        if (addCard) {
-          addCard.classList.remove("quick-card--add");
-          addCard.dataset.action = option.desc;
-          addCard.querySelector(".icon-box").innerHTML = icons[option.icon];
-          addCard.querySelector(".quick-card__title")?.remove();
-          addCard.querySelector(".quick-card__desc")?.insertAdjacentHTML("beforebegin", `<span class="quick-card__title">${option.title}</span>`);
-          addCard.querySelector(".quick-card__desc").textContent = option.desc;
-        }
+        const added = addCustomQuickCard(option);
         closeQuickEntryDialog(event);
-        showToast(`已添加${option.title}`);
+        if (added) showToast(`已添加${option.title}`);
       });
     });
   }
@@ -1149,13 +1369,30 @@ export function bindInteractions() {
     });
   }
 
-  document.querySelectorAll(".quick-card").forEach((card) => {
-    card.addEventListener("click", (event) => {
-      if (card.classList.contains("quick-card--add")) {
-        openQuickEntryDialog(event);
+  document.querySelectorAll(".quick-grid").forEach((grid) => {
+    if (grid.dataset.bound === "true") return;
+    grid.dataset.bound = "true";
+    grid.addEventListener("click", (event) => {
+      const removeButton = event.target.closest(".quick-card__remove");
+      if (removeButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const card = removeButton.closest(".quick-card--custom");
+        if (!card) return;
+        removeCustomQuickCard(card);
+        showToast("已移除快捷入口");
         return;
       }
-      showToast(card.dataset.action);
+      const card = event.target.closest(".quick-card");
+      if (!card || !grid.contains(card)) return;
+      activateQuickCard(card, event);
+    });
+    grid.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const card = event.target.closest(".quick-card");
+      if (!card || !grid.contains(card)) return;
+      event.preventDefault();
+      activateQuickCard(card, event);
     });
   });
 
@@ -1167,24 +1404,7 @@ export function bindInteractions() {
       });
     });
 
-  document.querySelectorAll(".user-menu-trigger").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleUserMenu(trigger);
-    });
-  });
-
-  document.querySelectorAll(".user-menu__item").forEach((item) => {
-    item.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      closeUserMenus();
-      showToast(item.dataset.action || item.textContent.trim());
-    });
-  });
-
-  document.addEventListener("click", closeUserMenus);
+  bindUserMenus();
 
   const roomRefresh = document.querySelector(".room-refresh");
   if (roomRefresh) {
@@ -1252,6 +1472,7 @@ export function bindInteractions() {
       closeAnnouncementListDialog(event);
       closeQuickEntryDialog(event);
       closeUserMenus();
+      closeDoctorStatusMenus();
       closeChatMessageMenu();
       closeAllConsultConfirmDialogs();
     }

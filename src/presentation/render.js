@@ -98,7 +98,6 @@ export function renderQuickReplyDialog() {
               )
               .join("")}
           </div>
-          <div class="quick-reply-scrollbar" aria-hidden="true"></div>
         </div>
         <footer class="quick-reply-dialog__footer">点击快捷用语即可发送</footer>
       </section>
@@ -268,14 +267,14 @@ export function renderLabelTag({ text = "默认标签", tone = "light", size = "
   return `<span class="jh-tag jh-tag--${safeTone} jh-tag--${safeSize}${weightClass}${className ? ` ${className}` : ""}">${text}</span>`;
 }
 
-export function renderStatusBadge(status = "online", className = "") {
+export function renderStatusBadge(status = "online", className = "", { live = true } = {}) {
   const statusMap = {
     online: "在线",
     busy: "忙碌",
     offline: "离线"
   };
   const safeStatus = Object.prototype.hasOwnProperty.call(statusMap, status) ? status : "online";
-  return `<span class="jh-status-badge jh-status-badge--${safeStatus}${className ? ` ${className}` : ""}" data-status-text>${statusMap[safeStatus]}</span>`;
+  return `<span class="jh-status-badge jh-status-badge--${safeStatus}${className ? ` ${className}` : ""}"${live ? " data-status-text" : ""}>${statusMap[safeStatus]}</span>`;
 }
 
 export function getDoctorStatusLabel(status = renderRuntime.doctorStatus) {
@@ -285,6 +284,31 @@ export function getDoctorStatusLabel(status = renderRuntime.doctorStatus) {
     offline: "离线"
   };
   return labels[status] || labels.offline;
+}
+
+export function renderDoctorStatusMenu() {
+  const options = [
+    { value: "online", label: "在线" },
+    { value: "busy", label: "忙碌" },
+    { value: "offline", label: "离线" }
+  ];
+  return `
+    <div class="doctor-status-menu" role="menu" aria-hidden="true">
+      ${options
+        .map(
+          (option) => `
+            <button
+              class="doctor-status-menu__item${renderRuntime.doctorStatus === option.value ? " is-active" : ""}"
+              type="button"
+              role="menuitemradio"
+              aria-checked="${renderRuntime.doctorStatus === option.value}"
+              data-doctor-status="${option.value}"
+            >
+              ${renderStatusBadge(option.value, "", { live: false })}
+            </button>`
+        )
+        .join("")}
+    </div>`;
 }
 
 export function renderReadTag(status = "unread", className = "") {
@@ -321,7 +345,11 @@ export function renderSidebar() {
     <aside class="sidebar" aria-label="主菜单">
       <div class="sidebar__brand">${icons.logo}</div>
       <nav class="sidebar__content">${renderMenu()}</nav>
-      <div class="sidebar__footer">${icons.menu}</div>
+      <div class="sidebar__footer">
+        <button class="sidebar-toggle" type="button" aria-label="收起主菜单" aria-expanded="true">
+          ${icons.menu}
+        </button>
+      </div>
     </aside>`;
 }
 
@@ -402,6 +430,32 @@ export function renderRoomCheckbox(label) {
   return renderCheckbox({ label, className: "room-check", labelClassName: "room-check__label" });
 }
 
+function getOrderedRoomServices() {
+  const order = ["video", "text"];
+  return renderData.services.filter((service) => order.includes(service.key)).sort((left, right) => {
+    const leftIndex = order.indexOf(left.key);
+    const rightIndex = order.indexOf(right.key);
+    return (leftIndex === -1 ? order.length : leftIndex) - (rightIndex === -1 ? order.length : rightIndex);
+  });
+}
+
+function renderRoomServiceSwitches() {
+  return getOrderedRoomServices()
+    .map(
+      (service) => `
+        <button
+          class="room-service-check${renderRuntime.serviceState[service.key] ? " is-selected" : ""}"
+          type="button"
+          role="checkbox"
+          aria-checked="${Boolean(renderRuntime.serviceState[service.key])}"
+          data-service-key="${service.key}"
+        >
+          ${renderRoomCheckbox(service.label)}
+        </button>`
+    )
+    .join("");
+}
+
 export function renderRoomFilterButton({ text, type, state, active = false, wide = false }) {
   const dataAttr = type ? `data-filter-type="${type}"` : `data-filter-state="${state}"`;
   return `<button class="jh-btn jh-btn--md jh-btn--outline-secondary room-tag${wide ? " room-tag--wide" : ""}${active ? " is-active" : ""}" type="button" ${dataAttr}>${text}</button>`;
@@ -417,19 +471,17 @@ export function renderRoomTopbar() {
         </a>
         <div class="room-topbar__right">
           ${renderButton({ text: "在线客服", tone: "primary", size: "md", className: "room-service-btn" })}
-          <button class="room-status" type="button" aria-label="出诊状态：${getDoctorStatusLabel()}">
-            ${renderStatusBadge(renderRuntime.doctorStatus, "room-status__badge")}
-            <span class="room-status__chevron" aria-hidden="true">
-              <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
-            </span>
-          </button>
+          <div class="doctor-status-control room-status-control">
+            <button class="room-status doctor-status-trigger" type="button" aria-label="出诊状态：${getDoctorStatusLabel()}，展开状态菜单" aria-expanded="false" aria-haspopup="menu">
+              ${renderStatusBadge(renderRuntime.doctorStatus, "room-status__badge")}
+              <span class="room-status__chevron doctor-status-trigger__chevron" aria-hidden="true">
+                <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
+              </span>
+            </button>
+            ${renderDoctorStatusMenu()}
+          </div>
           <div class="room-service-switches" aria-label="服务类型">
-            <button class="room-service-check${renderRuntime.serviceState.video ? " is-selected" : ""}" type="button" role="checkbox" aria-checked="${Boolean(renderRuntime.serviceState.video)}" data-service-key="video">
-              ${renderRoomCheckbox("视频问诊")}
-            </button>
-            <button class="room-service-check${renderRuntime.serviceState.text ? " is-selected" : ""}" type="button" role="checkbox" aria-checked="${Boolean(renderRuntime.serviceState.text)}" data-service-key="text">
-              ${renderRoomCheckbox("图文问诊")}
-            </button>
+            ${renderRoomServiceSwitches()}
           </div>
           <div class="room-user">
             <span class="room-user__divider" aria-hidden="true">
@@ -474,6 +526,7 @@ export function renderRoomSidebar() {
           ${renderRoomFilterButton({ text: "全部", type: "all", active: true })}
           ${renderRoomFilterButton({ text: "图文", type: "text" })}
           ${renderRoomFilterButton({ text: "视频", type: "video" })}
+          ${renderRoomFilterButton({ text: "咨询", type: "consult" })}
         </div>
         <div class="room-tags room-tags--state">
           ${renderRoomFilterButton({ text: "进行中", state: "ongoing", active: initialState === "ongoing", wide: true })}
@@ -731,32 +784,46 @@ export function renderRoom() {
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
       ${renderRoomMain()}
+      ${renderQuickReplyDialog()}
+      ${renderRiskWarningDialog()}
+      ${renderConsultConfirmDialogs()}
+      ${renderChatMessageMenu()}
       <div class="toast" role="status" aria-live="polite"></div>
     </div>`;
 }
 
-export function renderTextMain() {
-  const record = getActiveConsultationRecord("text");
+function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, prescriptionPanel }) {
   return `
     <main class="text-main">
-      <section class="text-card" aria-label="图文问诊">
+      <section class="text-card" aria-label="${label}">
         <div class="pharmacy-bar">
           <div class="pharmacy-bar__left">
-            <h2>${record?.title || "图文问诊"}</h2>
+            <h2>${title}</h2>
             ${renderRiskTag({ text: "迎检", size: "lg", className: "risk-tag--inspection" })}
             ${renderLabelTag({ text: "中药", tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
-            ${renderDurationChip("icon", record?.elapsedSeconds ?? 0)}
+            ${renderDurationChip("icon", elapsedSeconds)}
             ${renderButton({ text: "取消问诊", tone: "danger", size: "md", className: "cancel-consult-trigger" })}
           </div>
         </div>
         <div class="consult-workspace">
-          ${renderChatPanel(record?.id)}
-          ${renderPrescriptionPanel({ record })}
+          ${chatPanel}
+          ${prescriptionPanel}
         </div>
       </section>
     </main>`;
+}
+
+export function renderTextMain() {
+  const record = getActiveConsultationRecord("text");
+  return renderConsultMainShell({
+    label: "图文问诊",
+    title: record?.title || "图文问诊",
+    elapsedSeconds: record?.elapsedSeconds ?? 0,
+    chatPanel: renderChatPanel(record?.id),
+    prescriptionPanel: renderPrescriptionPanel({ record })
+  });
 }
 
 
@@ -1007,19 +1074,22 @@ export function renderPrescriptionPanel(options = {}) {
     </section>`;
 }
 
-
-export function renderTextPage() {
+function renderConsultPage({ shellClass = "", main }) {
   return `
-    <div class="app-shell room-shell text-shell app-shell--responsive">
+    <div class="app-shell room-shell${shellClass ? ` ${shellClass}` : ""} app-shell--responsive">
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
-      ${renderTextMain()}
+      ${main}
       ${renderQuickReplyDialog()}
       ${renderRiskWarningDialog()}
       ${renderConsultConfirmDialogs()}
       ${renderChatMessageMenu()}
       <div class="toast" role="status" aria-live="polite"></div>
     </div>`;
+}
+
+export function renderTextPage() {
+  return renderConsultPage({ shellClass: "text-shell", main: renderTextMain() });
 }
 
 export const videoMediaState = {
@@ -1103,40 +1173,17 @@ export function renderVideoChatPanel() {
 
 export function renderVideoMain() {
   const record = getActiveConsultationRecord("video");
-  return `
-    <main class="text-main">
-      <section class="text-card" aria-label="视频问诊">
-        <div class="pharmacy-bar">
-          <div class="pharmacy-bar__left">
-            <h2>${record?.title || "视频问诊"}</h2>
-            ${renderRiskTag({ text: "迎检", size: "lg", className: "risk-tag--inspection" })}
-            ${renderLabelTag({ text: "中药", tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
-          </div>
-          <div class="pharmacy-bar__right">
-            ${renderDurationChip("icon", record?.elapsedSeconds ?? 0)}
-            ${renderButton({ text: "取消问诊", tone: "danger", size: "md", className: "cancel-consult-trigger" })}
-          </div>
-        </div>
-        <div class="consult-workspace">
-          ${renderVideoChatPanel()}
-          ${renderPrescriptionPanel({ record })}
-        </div>
-      </section>
-    </main>`;
+  return renderConsultMainShell({
+    label: "视频问诊",
+    title: record?.title || "视频问诊",
+    elapsedSeconds: record?.elapsedSeconds ?? 0,
+    chatPanel: renderVideoChatPanel(),
+    prescriptionPanel: renderPrescriptionPanel({ record })
+  });
 }
 
 export function renderVideoPage() {
-  return `
-    <div class="app-shell room-shell text-shell video-shell app-shell--responsive">
-      ${renderRoomTopbar()}
-      ${renderRoomSidebar()}
-      ${renderVideoMain()}
-      ${renderQuickReplyDialog()}
-      ${renderRiskWarningDialog()}
-      ${renderConsultConfirmDialogs()}
-      ${renderChatMessageMenu()}
-      <div class="toast" role="status" aria-live="polite"></div>
-    </div>`;
+  return renderConsultPage({ shellClass: "text-shell video-shell", main: renderVideoMain() });
 }
 
 export function renderServiceCard() {
@@ -1146,7 +1193,7 @@ export function renderServiceCard() {
         <div class="status-row">
           <div class="status-row__left">
             <span>出诊状态</span>
-          ${renderStatusBadge(renderRuntime.doctorStatus)}
+            ${renderStatusBadge(renderRuntime.doctorStatus)}
         </div>
         ${renderSwitch({ checked: renderRuntime.doctorStatus !== "offline", label: "切换出诊状态" })}
       </div>
@@ -1279,7 +1326,7 @@ export function renderQuickActions() {
         ${renderData.quickActions
           .map(
             (action) => `
-              <button class="quick-card${action.isAdd ? " quick-card--add" : ""}" type="button" data-action="${action.desc}">
+              <div class="quick-card${action.isAdd ? " quick-card--add" : ""}" role="button" tabindex="0" data-action="${action.desc}">
                 <span class="quick-card__body">
                   <span class="icon-box">${icons[action.icon]}</span>
                   ${
@@ -1289,7 +1336,7 @@ export function renderQuickActions() {
                   }
                   <span class="quick-card__desc">${action.desc}</span>
                 </span>
-              </button>`
+              </div>`
           )
           .join("")}
       </div>

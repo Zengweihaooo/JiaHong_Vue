@@ -9,7 +9,9 @@ const baseWaitingQueue = {
   total: 2,
   byType: { text: 1, video: 1, consult: 0 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260520-15", import.meta.url);
+const localClinicalCatalogUrl = new URL("../mocks/local-clinical-catalog.json", import.meta.url);
+const prescriptionCatalogUrl = new URL("../mocks/prescription-catalog.json", import.meta.url);
 
 function readRuntimeState() {
   try {
@@ -99,10 +101,9 @@ function buildWaitingQueue(runtimeRecords) {
   const addedVideo = ongoingRuntimeRecords.filter((record) => record.type === "video").length;
   const text = Math.min(baseWaitingQueue.byType.text + addedText, 3);
   const video = Math.min(baseWaitingQueue.byType.video + addedVideo, 3);
-  const consult = baseWaitingQueue.byType.consult;
   return {
-    total: Math.min(text + video + consult, maxRuntimeConsultations),
-    byType: { text, video, consult },
+    total: Math.min(text + video, maxRuntimeConsultations),
+    byType: { text, video, consult: baseWaitingQueue.byType.consult },
     updatedAt: new Date().toISOString()
   };
 }
@@ -183,6 +184,83 @@ function writeRuntimeChat(recordId, chat) {
       [recordId]: chat
     }
   });
+}
+
+function compareByPinyin(left, right) {
+  return new Intl.Collator("zh-Hans-u-co-pinyin").compare(left, right);
+}
+
+function normalizeKeyword(keyword = "") {
+  return keyword.trim().toLowerCase();
+}
+
+function normalizeExcluded(exclude = []) {
+  return new Set((Array.isArray(exclude) ? exclude : []).filter(Boolean));
+}
+
+function getMedicineSearchText(medicine = {}) {
+  return [
+    medicine.name,
+    medicine.spec,
+    medicine.category,
+    ...(medicine.aliases || []),
+    ...(medicine.indications || [])
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function mergeDiagnosisCatalogs(primaryDiagnoses = [], fallbackDiagnoses = []) {
+  return Array.from(new Set([...primaryDiagnoses, ...fallbackDiagnoses].filter(Boolean)));
+}
+
+function mergeMedicineCatalogs(primaryMedicines = [], fallbackMedicines = []) {
+  const seen = new Set();
+  return [...primaryMedicines, ...fallbackMedicines].filter((medicine) => {
+    const key = `${medicine.name}-${medicine.spec}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function searchDiagnosisCatalog({ keyword = "", exclude = [] } = {}) {
+  await delay(60);
+  const clinicalCatalog = await fetchJson(localClinicalCatalogUrl);
+  const catalog = await fetchJson(prescriptionCatalogUrl);
+  const normalizedKeyword = normalizeKeyword(keyword);
+  const excluded = normalizeExcluded(exclude);
+  const diagnoses = mergeDiagnosisCatalogs(clinicalCatalog.diagnoses || [], catalog.diagnoses || []);
+  const items = diagnoses
+    .filter((diagnosis) => !excluded.has(diagnosis))
+    .filter((diagnosis) => !normalizedKeyword || diagnosis.toLowerCase().includes(normalizedKeyword))
+    .sort(compareByPinyin);
+
+  return {
+    items,
+    total: items.length,
+    keyword
+  };
+}
+
+export async function searchMedicineCatalog({ keyword = "", exclude = [] } = {}) {
+  await delay(60);
+  const clinicalCatalog = await fetchJson(localClinicalCatalogUrl);
+  const catalog = await fetchJson(prescriptionCatalogUrl);
+  const normalizedKeyword = normalizeKeyword(keyword);
+  const excluded = normalizeExcluded(exclude);
+  const medicines = mergeMedicineCatalogs(clinicalCatalog.medicines || [], catalog.medicines || []);
+  const items = medicines
+    .filter((medicine) => !excluded.has(medicine.name))
+    .filter((medicine) => !normalizedKeyword || getMedicineSearchText(medicine).includes(normalizedKeyword))
+    .sort((left, right) => compareByPinyin(left.name, right.name));
+
+  return {
+    items,
+    total: items.length,
+    keyword
+  };
 }
 
 export async function getAppBootstrap() {

@@ -1,4 +1,4 @@
-import { getAppBootstrap } from "../../infrastructure/api/appApi.js";
+import { getAppBootstrap } from "../../infrastructure/api/appApi.js?v=20260520-15";
 import { consultationRecords, doctor, hydrateAppData, services } from "../state/dataStore.js";
 import { initRuntimeState } from "../state/runtimeState.js";
 

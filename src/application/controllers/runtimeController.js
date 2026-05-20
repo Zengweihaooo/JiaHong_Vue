@@ -10,19 +10,8 @@ import {
   waitingQueueState
 } from "../state/runtimeState.js";
 
-const doctorStatusOrder = ["online", "busy", "offline"];
-
 export function getDoctorStatus() {
   return doctorStatusState.status;
-}
-
-export function getNextDoctorStatus() {
-  const currentIndex = Math.max(0, doctorStatusOrder.indexOf(getDoctorStatus()));
-  return doctorStatusOrder[(currentIndex + 1) % doctorStatusOrder.length];
-}
-
-export function getToggledDoctorStatus() {
-  return getDoctorStatus() === "offline" ? "online" : "offline";
 }
 
 export function setDoctorStatusState(nextStatus, { sync = true } = {}) {
