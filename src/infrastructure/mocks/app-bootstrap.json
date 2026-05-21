@@ -296,12 +296,24 @@
         ],
         "consultationAttribute": "without-medicine",
         "consultInfo": {
-          "description": "颈部酸痛僵硬，转头活动受限，久坐后痛感加重",
+          "description": "反复打喷嚏、流清水样鼻涕，早晚明显，想咨询是否为过敏性鼻炎。",
           "attachments": [
-            "附件1",
-            "附件2",
-            "附件3",
-            "附件4"
+            {
+              "title": "附件1",
+              "image": "assets/consult-materials/allergic-rhinitis.png"
+            },
+            {
+              "title": "附件2",
+              "image": "assets/consult-materials/skin-rash.png"
+            },
+            {
+              "title": "附件3",
+              "image": "assets/consult-materials/sore-throat.png"
+            },
+            {
+              "title": "附件4",
+              "image": "assets/figma-consult/attachment-preview.png"
+            }
           ]
         },
         "treatmentAdvice": "",
@@ -339,8 +351,18 @@
         "consultInfo": {
           "description": "孩子低热一天，精神还可以，想问问先观察还是需要用药。",
           "attachments": [
-            "附件1",
-            "附件2"
+            {
+              "title": "附件1",
+              "image": "assets/consult-materials/pediatric-fever.png"
+            },
+            {
+              "title": "附件2",
+              "image": "assets/consult-materials/sore-throat.png"
+            },
+            {
+              "title": "附件3",
+              "image": "assets/figma-consult/attachment-preview.png"
+            }
           ]
         },
         "treatmentAdvice": "",

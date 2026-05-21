@@ -281,11 +281,29 @@ function openConsultAttachmentDialog(button, event) {
   const index = button?.dataset.consultAttachmentIndex || "1";
   const total = button?.dataset.consultAttachmentTotal || "4";
   const title = button?.dataset.consultAttachmentTitle || `附件${index}`;
+  const image = button?.dataset.consultAttachmentImage || "";
   const titleNode = overlay.querySelector("[data-consult-attachment-dialog-title]");
   const pagerNode = overlay.querySelector("[data-consult-attachment-dialog-pager]");
+  const imageNode = overlay.querySelector(".consult-attachment-dialog__image");
   if (titleNode) titleNode.textContent = title;
   if (pagerNode) pagerNode.textContent = `${index}/${total}`;
+  if (imageNode && image) {
+    imageNode.src = image;
+    imageNode.alt = title;
+  }
+  overlay.dataset.consultAttachmentIndex = index;
   setOverlayOpen(overlay, true, { focusSelector: ".consult-attachment-dialog__close" });
+}
+
+function switchConsultAttachment(direction, event) {
+  stopEvent(event);
+  const overlay = document.querySelector(".consult-attachment-overlay");
+  if (!overlay) return;
+  const buttons = Array.from(document.querySelectorAll(".consult-attachment"));
+  if (!buttons.length) return;
+  const currentIndex = Number(overlay.dataset.consultAttachmentIndex || "1") - 1;
+  const nextIndex = (currentIndex + direction + buttons.length) % buttons.length;
+  openConsultAttachmentDialog(buttons[nextIndex]);
 }
 
 function closeConsultAttachmentDialog(event) {
@@ -1398,6 +1416,12 @@ export function bindInteractions() {
       closeSelector: ".consult-attachment-dialog__close",
       dialogSelector: ".consult-attachment-dialog"
     });
+    consultAttachmentOverlay.querySelector(".consult-attachment-dialog__page--prev")?.addEventListener("click", (event) => {
+      switchConsultAttachment(-1, event);
+    });
+    consultAttachmentOverlay.querySelector(".consult-attachment-dialog__page--next")?.addEventListener("click", (event) => {
+      switchConsultAttachment(1, event);
+    });
   }
 
   const announcementOverlay = document.querySelector(".announcement-overlay");
@@ -1452,6 +1476,14 @@ export function bindInteractions() {
 
   const consultCard = document.querySelector(".consult-card");
   if (consultCard) {
+    const setSelected = (selected) => {
+      consultCard.classList.toggle("is-selected", selected);
+    };
+    consultCard.addEventListener("pointerdown", () => setSelected(true));
+    consultCard.addEventListener("pointerup", () => setSelected(false));
+    consultCard.addEventListener("pointercancel", () => setSelected(false));
+    consultCard.addEventListener("pointerleave", () => setSelected(false));
+    consultCard.addEventListener("blur", () => setSelected(false));
     consultCard.addEventListener("click", () => {
       window.location.href = getRoomHref();
     });

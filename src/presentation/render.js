@@ -942,10 +942,27 @@ export function renderChatThread(chatKey = getActiveChatKey(), { threadClass = "
 }
 
 function getConsultInfo(record = {}) {
-  const attachments = record.consultInfo?.attachments?.length ? record.consultInfo.attachments : ["附件1", "附件2", "附件3", "附件4"];
+  const attachments = record.consultInfo?.attachments?.length
+    ? record.consultInfo.attachments
+    : [
+        { title: "附件1", image: "assets/consult-materials/allergic-rhinitis.png" },
+        { title: "附件2", image: "assets/consult-materials/pediatric-fever.png" },
+        { title: "附件3", image: "assets/consult-materials/sore-throat.png" },
+        { title: "附件4", image: "assets/consult-materials/skin-rash.png" }
+      ];
   return {
     description: record.consultInfo?.description || "颈部酸痛僵硬，转头活动受限，久坐后痛感加重",
-    attachments
+    attachments: attachments.map((attachment, index) =>
+      typeof attachment === "string"
+        ? {
+            title: attachment,
+            image: "assets/figma-consult/attachment-preview.png"
+          }
+        : {
+            title: attachment.title || `附件${index + 1}`,
+            image: attachment.image || "assets/figma-consult/attachment-preview.png"
+          }
+    )
   };
 }
 
@@ -965,9 +982,9 @@ export function renderConsultInfoCard(record) {
           ${consultInfo.attachments
             .map(
               (attachment, index) => `
-                <button class="consult-attachment" type="button" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment)}">
+                <button class="consult-attachment" type="button" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment.title)}" data-consult-attachment-image="${assetUrl(attachment.image)}">
                   <img src="${assetUrl("assets/figma-consult/attachment.svg")}" alt="" aria-hidden="true" />
-                  <span>${escapeHtml(attachment)}</span>
+                  <span>${escapeHtml(attachment.title)}</span>
                 </button>`
             )
             .join("")}

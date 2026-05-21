@@ -10,7 +10,7 @@ const baseWaitingQueue = {
   total: 2,
   byType: { text: 1, video: 1, consult: 0 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260521-15", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260521-18", import.meta.url);
 const localClinicalCatalogUrl = new URL("../mocks/local-clinical-catalog.json", import.meta.url);
 const prescriptionCatalogUrl = new URL("../mocks/prescription-catalog.json", import.meta.url);
 const runtimeStorage = getSessionStorage();
