@@ -847,6 +847,8 @@ export function renderChatPanel(chatKey = getActiveChatKey(), { record = null } 
 
 export const defaultPrescriptionMedicines = [];
 
+const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
+
 export const defaultPatientDetail = {
   weight: "--",
   pregnancy: "--",
@@ -874,6 +876,41 @@ export function renderMedicineTableRow(row, readonly = false) {
     if (readonly) return `<span class="table-input">${escapeHtml(value)}</span>`;
     return `<input class="table-input medicine-edit-field" type="text" value="${escapeHtml(value)}" aria-label="${label}" data-medicine-field="${field}" />`;
   };
+  const renderUnitSelector = () => {
+    const value = row.unit ?? "";
+    if (readonly) return `<span class="table-input">${escapeHtml(value)}</span>`;
+    const selectedValue = value || medicineUnitOptions[0];
+    const optionValues = Array.from(new Set([selectedValue, ...medicineUnitOptions].filter(Boolean)));
+    return `
+      <div class="medicine-unit-control">
+        <button
+          class="table-input medicine-unit-select"
+          type="button"
+          aria-label="单位"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          data-medicine-field="unit"
+        >
+          <span>${escapeHtml(selectedValue)}</span>
+        </button>
+        <div class="medicine-unit-options" role="listbox" hidden>
+          ${optionValues
+            .map(
+              (unit) => `
+                <button
+                  class="medicine-unit-option${unit === selectedValue ? " is-active" : ""}"
+                  type="button"
+                  role="option"
+                  aria-selected="${unit === selectedValue ? "true" : "false"}"
+                  data-medicine-unit="${escapeHtml(unit)}"
+                >
+                  ${escapeHtml(unit)}
+                </button>`
+            )
+            .join("")}
+        </div>
+      </div>`;
+  };
 
   return `
     <div class="medicine-table__row" data-medicine-index="${row.index}" data-medicine-name="${escapeHtml(row.name)}">
@@ -885,7 +922,7 @@ export function renderMedicineTableRow(row, readonly = false) {
       ${renderEditableBox("frequency", "服用频次")}
       ${renderEditableBox("dose", "用量")}
       <span>${escapeHtml(row.quantity)}</span>
-      ${renderEditableBox("unit", "单位")}
+      ${renderUnitSelector()}
       ${renderRiskTag({ text: row.risk, size: "sm", className: "risk-small" })}
       ${
         readonly

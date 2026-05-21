@@ -5272,6 +5272,93 @@ body.page-view-room {
   white-space: nowrap;
 }
 
+.medicine-unit-control {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.medicine-unit-select {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  line-height: 22px;
+  outline: 0;
+}
+
+.medicine-unit-select span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.medicine-unit-select:hover,
+.medicine-unit-select[aria-expanded="true"] {
+  border-color: var(--jh-search-field-hover-border);
+}
+
+.medicine-unit-select:focus-visible {
+  border-color: var(--jh-search-field-active-border);
+}
+
+.medicine-unit-options {
+  position: fixed;
+  top: var(--medicine-unit-menu-top, 0);
+  left: var(--medicine-unit-menu-left, 0);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 64px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 16px 40px -16px rgba(16, 42, 67, 0.14),
+    0 4px 8px -2px rgba(16, 42, 67, 0.08);
+}
+
+.medicine-unit-options[hidden] {
+  display: none;
+}
+
+.medicine-unit-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 24px;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--jh-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: center;
+}
+
+.medicine-unit-option:hover,
+.medicine-unit-option:focus-visible {
+  background: var(--jh-btn-outline-hover-bg);
+  outline: 0;
+}
+
+.medicine-unit-option.is-active,
+.medicine-unit-option.is-active:hover,
+.medicine-unit-option.is-active:focus-visible {
+  background: var(--jh-blue);
+  color: #ffffff;
+}
+
 .medicine-edit-field {
   background: #ffffff;
   font: inherit;

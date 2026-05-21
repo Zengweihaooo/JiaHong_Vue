@@ -49,7 +49,7 @@ import {
   stopEvent,
   togglePopupMenu
 } from "./ui/interactionPrimitives.js";
-import { attachLocalCamera, setLocalCameraEnabled, setLocalMicrophoneEnabled } from "./ui/localMedia.js";
+import { attachLocalCamera, getLocalMediaStatus, setLocalCameraEnabled, setLocalMicrophoneEnabled } from "./ui/localMedia.js";
 import { formatDuration, getActiveChatKey, getDoctorStatusLabel, renderChatThread, renderConsultationPanel, renderMessageList, renderPrescriptionPanel, renderPrescriptionTraceMain, renderRoomMain, renderTextMain, renderVideoMain, renderVideoMediaIcon, videoMediaState } from "./render.js";
 
 const videoConsultationLockedMessage = "请先结束当前视频问诊，再进入新的视频问诊";
@@ -888,6 +888,48 @@ function closeMedicineDropdown(input) {
   input.setAttribute("aria-expanded", "false");
 }
 
+function closeMedicineUnitDropdown(control) {
+  const dropdown = control?.querySelector(".medicine-unit-options");
+  const trigger = control?.querySelector(".medicine-unit-select");
+  if (!dropdown || !trigger) return;
+  dropdown.hidden = true;
+  trigger.setAttribute("aria-expanded", "false");
+}
+
+function closeMedicineUnitDropdowns(exceptControl = null) {
+  document.querySelectorAll(".medicine-unit-control").forEach((control) => {
+    if (control !== exceptControl) closeMedicineUnitDropdown(control);
+  });
+}
+
+function positionOpenMedicineUnitDropdowns() {
+  document.querySelectorAll('.medicine-unit-select[aria-expanded="true"]').forEach((trigger) => {
+    positionMedicineUnitDropdown(trigger.closest(".medicine-unit-control"));
+  });
+}
+
+function positionMedicineUnitDropdown(control) {
+  const trigger = control?.querySelector(".medicine-unit-select");
+  const dropdown = control?.querySelector(".medicine-unit-options");
+  if (!trigger || !dropdown) return;
+  const triggerRect = trigger.getBoundingClientRect();
+  const menuWidth = dropdown.offsetWidth || 64;
+  const left = Math.min(triggerRect.right + 8, window.innerWidth - menuWidth - 8);
+  const top = Math.max(8, triggerRect.top - 8);
+  dropdown.style.setProperty("--medicine-unit-menu-left", `${Math.max(8, left)}px`);
+  dropdown.style.setProperty("--medicine-unit-menu-top", `${top}px`);
+}
+
+function openMedicineUnitDropdown(control) {
+  const dropdown = control?.querySelector(".medicine-unit-options");
+  const trigger = control?.querySelector(".medicine-unit-select");
+  if (!dropdown || !trigger) return;
+  closeMedicineUnitDropdowns(control);
+  dropdown.hidden = false;
+  trigger.setAttribute("aria-expanded", "true");
+  positionMedicineUnitDropdown(control);
+}
+
 async function handlePrescriptionResult(resultOrPromise) {
   const result = await resultOrPromise;
   if (result?.record) {
@@ -959,7 +1001,12 @@ function bindPrescriptionEditor() {
       if (!event.target.closest(".medicine-search-combobox")) {
         document.querySelectorAll(".medicine-search input").forEach((input) => closeMedicineDropdown(input));
       }
+      if (!event.target.closest(".medicine-unit-control")) {
+        closeMedicineUnitDropdowns();
+      }
     });
+    window.addEventListener("resize", () => closeMedicineUnitDropdowns());
+    document.addEventListener("scroll", positionOpenMedicineUnitDropdowns, true);
   }
   panel.querySelectorAll(".medicine-delete-btn").forEach((button) => {
     button.addEventListener("pointerdown", (event) => {
@@ -973,6 +1020,71 @@ function bindPrescriptionEditor() {
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+    });
+  });
+  panel.querySelectorAll(".medicine-unit-select").forEach((button) => {
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const control = button.closest(".medicine-unit-control");
+      const expanded = button.getAttribute("aria-expanded") === "true";
+      if (expanded) {
+        closeMedicineUnitDropdown(control);
+      } else {
+        openMedicineUnitDropdown(control);
+      }
+    });
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("keydown", (event) => {
+      const control = button.closest(".medicine-unit-control");
+      if (event.key === "Escape") {
+        closeMedicineUnitDropdown(control);
+        button.focus();
+      }
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMedicineUnitDropdown(control);
+        control?.querySelector(".medicine-unit-option.is-active, .medicine-unit-option")?.focus();
+      }
+    });
+  });
+  panel.querySelectorAll(".medicine-unit-option[data-medicine-unit]").forEach((option) => {
+    option.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const control = option.closest(".medicine-unit-control");
+      const row = option.closest("[data-medicine-index]");
+      const trigger = control?.querySelector(".medicine-unit-select");
+      const unit = option.dataset.medicineUnit || "";
+      updateMedicineFieldInActiveRecord(
+        row?.dataset.medicineIndex,
+        "unit",
+        unit,
+        getRouteConsultationContext()
+      );
+      if (trigger) {
+        trigger.querySelector("span").textContent = unit;
+      }
+      control?.querySelectorAll(".medicine-unit-option").forEach((item) => {
+        const active = item === option;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-selected", String(active));
+      });
+      closeMedicineUnitDropdown(control);
+    });
+    option.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    option.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        const control = option.closest(".medicine-unit-control");
+        closeMedicineUnitDropdown(control);
+        control?.querySelector(".medicine-unit-select")?.focus();
+      }
     });
   });
   panel.querySelectorAll(".medicine-edit-field[data-medicine-field]").forEach((input) => {
@@ -1161,17 +1273,27 @@ function syncVideoWindowControls(videoWindow) {
   });
 }
 
-async function setupLocalCamera(videoWindow) {
+async function setupLocalCamera(videoWindow, { forceRetry = false } = {}) {
   const video = videoWindow.querySelector("[data-local-camera]");
   const pip = videoWindow.querySelector(".video-window__pip--local");
   const status = videoWindow.querySelector("[data-camera-status]");
-  if (!video || video.dataset.cameraBound === "true") return;
+  if (!video || (video.dataset.cameraBound === "true" && !forceRetry)) return;
 
   video.dataset.cameraBound = "true";
-  pip?.classList.add("is-camera-loading");
-  if (status) status.textContent = "正在连接摄像头";
+  const mediaStatus = getLocalMediaStatus();
+  const shouldShowLoading = forceRetry || mediaStatus.status === "idle" || mediaStatus.status === "pending";
+  pip?.classList.toggle("is-camera-loading", shouldShowLoading);
+  if (status) {
+    status.textContent = mediaStatus.hasStream
+      ? "医生摄像头已连接"
+      : shouldShowLoading
+        ? "正在连接摄像头"
+        : mediaStatus.reason === "NotAllowedError"
+          ? "摄像头权限未开启"
+          : "无法连接摄像头";
+  }
 
-  const result = await attachLocalCamera(video, videoMediaState);
+  const result = await attachLocalCamera(video, { ...videoMediaState, forceRetry });
   pip?.classList.remove("is-camera-loading");
   pip?.classList.toggle("is-camera-ready", result.ok);
   pip?.classList.toggle("is-camera-error", !result.ok);
@@ -1198,9 +1320,7 @@ function bindVideoControls() {
           videoMediaState.cameraOn = !videoMediaState.cameraOn;
           showToast(videoMediaState.cameraOn ? "摄像头已开启" : "摄像头已关闭");
           if (videoMediaState.cameraOn && videoWindow.querySelector(".video-window__pip--local.is-camera-error")) {
-            const localVideo = videoWindow.querySelector("[data-local-camera]");
-            if (localVideo) localVideo.dataset.cameraBound = "false";
-            setupLocalCamera(videoWindow);
+            setupLocalCamera(videoWindow, { forceRetry: true });
           }
         } else if (button.dataset.videoAction === "toggle-mic") {
           videoMediaState.micOn = !videoMediaState.micOn;
