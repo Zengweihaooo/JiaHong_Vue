@@ -1,8 +1,39 @@
 import { assetUrl, appView, getHomeHref, getRoomHref, getTextHref, getVideoHref, getHistoryHref, getSessionIdParam } from "../shared/core.js";
 import { normalizeArchivedConsultationRecord } from "../domain/archivedConsultation.js";
 import { getMessageListRecords } from "../domain/consultationQueue.js";
+import {
+  formatDuration,
+  getDoctorStatusLabel as getPrimitiveDoctorStatusLabel,
+  renderButton,
+  renderCheckbox,
+  renderDurationChip,
+  renderLabelTag,
+  renderReadTag,
+  renderRiskTag,
+  renderStatusBadge,
+  renderSwitch
+} from "./components/primitives.js";
+import {
+  renderConsultConfirmDialogs,
+  renderQuickReplyDialogView,
+  renderRiskWarningDialogView
+} from "./components/dialogs.js";
 import { icons } from "./ui/icons.js";
 import { renderData, renderRuntime } from "./renderContext.js";
+
+export {
+  formatDuration,
+  renderButton,
+  renderCheckbox,
+  renderCheckboxMark,
+  renderDurationChip,
+  renderLabelTag,
+  renderReadTag,
+  renderRiskTag,
+  renderStatusBadge,
+  renderSwitch
+} from "./components/primitives.js";
+export { renderConsultConfirmDialogs } from "./components/dialogs.js";
 
 function getDefaultOngoingRenderRecord(type = appView) {
   return (
@@ -16,62 +47,8 @@ function getDefaultEndedRenderRecord() {
   return renderData.consultationRecords.find((record) => record.state === "ended");
 }
 
-export function renderCheckboxMark() {
-  return `<img class="jh-checkbox__mark" src="${assetUrl("assets/figma-home/checkmark.svg")}" alt="" aria-hidden="true" />`;
-}
-
-export function renderCheckbox({ label, className = "", labelClassName = "" } = {}) {
-  return `
-    <span class="jh-checkbox${className ? ` ${className}` : ""}">
-      <span class="jh-checkbox__icon" aria-hidden="true">${renderCheckboxMark()}</span>
-      ${label ? `<span class="jh-checkbox__label${labelClassName ? ` ${labelClassName}` : ""}">${label}</span>` : ""}
-    </span>`;
-}
-
-export function renderSwitch({ checked = false, label = "切换开关", className = "" } = {}) {
-  return `<button class="jh-switch${checked ? " is-on" : ""}${className ? ` ${className}` : ""}" type="button" aria-label="${label}" aria-pressed="${checked}"></button>`;
-}
-
-export function renderButton({ text, tone = "primary", size = "md", className = "", type = "button", disabled = false } = {}) {
-  const safeTone = [
-    "primary",
-    "outline-primary",
-    "outline-secondary",
-    "block-outline",
-    "danger",
-    "soft-danger",
-    "neutral",
-    "text"
-  ].includes(tone)
-    ? tone
-    : "primary";
-  const sizeClass = ["sm", "md", "lg"].includes(size) ? ` jh-btn--${size}` : "";
-  return `<button class="jh-btn${sizeClass} jh-btn--${safeTone}${className ? ` ${className}` : ""}" type="${type}"${disabled ? " disabled" : ""}>${text}</button>`;
-}
-
-export function renderDurationChip(variant = "icon", elapsedSeconds = 0) {
-  const safeVariant = ["icon", "pill", "plain"].includes(variant) ? variant : "icon";
-  const durationText = formatDuration(elapsedSeconds);
-  return `
-    <span class="jh-duration-chip jh-duration-chip--${safeVariant}" data-duration-timer data-elapsed="${elapsedSeconds}" aria-label="问诊持续时长：${durationText}">
-      ${
-        safeVariant === "icon"
-          ? `<svg class="jh-duration-chip__clock" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-              <path d="M9 3.75V9.08229L12.6818 10.8597" stroke="#E36D6D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="0.7" y="0.7" width="16.6" height="16.6" rx="8.3" stroke="#E36D6D" stroke-width="1.4"/>
-            </svg>`
-          : ""
-      }
-      <strong><span class="jh-duration-chip__prefix">问诊持续时长：</span><span class="jh-duration-chip__value">${durationText}</span></strong>
-    </span>`;
-}
-
-export function formatDuration(totalSeconds) {
-  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+export function getDoctorStatusLabel(status = renderRuntime.doctorStatus) {
+  return getPrimitiveDoctorStatusLabel(status);
 }
 
 export function renderChatInput({ className = "" } = {}) {
@@ -88,167 +65,16 @@ export function renderChatInput({ className = "" } = {}) {
 }
 
 export function renderQuickReplyDialog() {
-  return `
-    <div class="quick-reply-overlay" aria-hidden="true">
-      <section class="quick-reply-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-reply-title">
-        <header class="quick-reply-dialog__header">
-          <h2 id="quick-reply-title">快捷用语</h2>
-          <button class="quick-reply-dialog__close" type="button" aria-label="关闭快捷用语">
-            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" />
-          </button>
-        </header>
-        <div class="quick-reply-dialog__body">
-          <nav class="quick-reply-categories" aria-label="快捷回复分类">
-            ${renderData.quickReplyCategories
-              .map(
-                (category, index) => `
-                  <button class="quick-reply-category${index === 0 ? " is-active" : ""}" type="button">
-                    ${category}
-                  </button>`
-              )
-              .join("")}
-          </nav>
-          <div class="quick-reply-list" role="list">
-            ${renderData.quickReplyMessages
-              .map(
-                (message) => `
-                  <button class="quick-reply-message" type="button" role="listitem">
-                    <span>${message}</span>
-                  </button>`
-              )
-              .join("")}
-          </div>
-        </div>
-        <footer class="quick-reply-dialog__footer">点击快捷用语填入输入框</footer>
-      </section>
-    </div>`;
-}
-
-const consultConfirmConfig = {
-  cancel: {
-    title: "取消问诊",
-    message: "确定要取消本次问诊吗？取消后将退出当前会话，未保存内容不会保留。",
-    confirmText: "确定取消"
-  },
-  end: {
-    title: "结束问诊",
-    message: "确定要结束本次问诊吗？结束后将无法继续与患者沟通。",
-    confirmText: "确定结束"
-  }
-};
-
-export function renderConsultConfirmDialogs() {
-  return Object.entries(consultConfirmConfig)
-    .map(
-      ([kind, config]) => `
-    <div class="consult-confirm-overlay" data-confirm-kind="${kind}" aria-hidden="true">
-      <section
-        class="consult-confirm-dialog"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="consult-confirm-title-${kind}"
-        aria-describedby="consult-confirm-desc-${kind}"
-      >
-        <header class="consult-confirm-dialog__header">
-          <h2 id="consult-confirm-title-${kind}">${config.title}</h2>
-          <button type="button" class="consult-confirm-dialog__close" aria-label="关闭">
-            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" />
-          </button>
-        </header>
-        <div class="consult-confirm-dialog__body">
-          <p id="consult-confirm-desc-${kind}">${config.message}</p>
-        </div>
-        <footer class="consult-confirm-dialog__footer">
-          ${renderButton({ text: "再想想", tone: "outline-secondary", size: "md", className: "consult-confirm-dismiss" })}
-          ${renderButton({ text: config.confirmText, tone: "danger", size: "md", className: "consult-confirm-submit" })}
-        </footer>
-      </section>
-    </div>`
-    )
-    .join("");
+  return renderQuickReplyDialogView({
+    categories: renderData.quickReplyCategories,
+    messages: renderData.quickReplyMessages
+  });
 }
 
 export function renderRiskWarningDialog() {
   const record = getActiveConsultationRecord();
   const medicines = record?.prescriptionMedicines?.length ? record.prescriptionMedicines : [];
-  const legendItems = [
-    { status: "must", label: "必须处理" },
-    { status: "severe", label: "严重警告" },
-    { status: "general", label: "一般警告" }
-  ];
-  const headers = [
-    "药品名称",
-    "患者条件",
-    "重复用药",
-    "用法用量",
-    "给药途径",
-    "相互作用",
-    "生化指标",
-    "配伍",
-    "过敏",
-    "孕产",
-    "其他"
-  ];
-  const rows = medicines.map((medicine, index) => ({
-    name: medicine.name,
-    warnings: index === 0 ? { 2: "must", 5: medicine.risk === "低" ? "general" : "severe" } : { 4: "general" }
-  }));
-
-  return `
-    <div class="risk-warning-overlay" aria-hidden="true">
-      <section class="risk-warning-dialog" role="dialog" aria-modal="true" aria-labelledby="risk-warning-title">
-        <header class="risk-warning-dialog__header">
-          <h2 id="risk-warning-title">风险检测提醒</h2>
-          <button class="risk-warning-dialog__close" type="button" aria-label="关闭风险检测提醒">
-            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" />
-          </button>
-        </header>
-        <div class="risk-warning-dialog__legend" aria-label="风险状态说明">
-          ${legendItems
-            .map(
-              (item) => `
-                <div class="risk-warning-legend-item">
-                  <span class="risk-warning-legend-item__icon" aria-hidden="true">
-                    <span class="risk-warning-status risk-warning-status--${item.status}"></span>
-                  </span>
-                  <span class="risk-warning-legend-item__label">${item.label}</span>
-                </div>`
-            )
-            .join("")}
-        </div>
-        <div class="risk-warning-dialog__table-wrap">
-          <div class="risk-warning-table" role="table" aria-label="风险检测提醒">
-            <div class="risk-warning-row risk-warning-row--head" role="row">
-              ${headers.map((header) => `<div class="risk-warning-cell" role="columnheader">${header}</div>`).join("")}
-            </div>
-            ${(rows.length ? rows : [{ name: "暂无用药数据", warnings: {} }])
-              .map(
-                (row) => `
-                  <div class="risk-warning-row" role="row">
-                    <div class="risk-warning-cell risk-warning-cell--name" role="cell">${row.name}</div>
-                    ${headers
-                      .slice(1)
-                      .map((_, index) => {
-                        const status = row.warnings[index + 1];
-                        return `<div class="risk-warning-cell risk-warning-cell--status" role="cell">${
-                          status ? `<span class="risk-warning-status risk-warning-status--${status}" aria-hidden="true"></span>` : ""
-                        }</div>`;
-                      })
-                      .join("")}
-                  </div>`
-              )
-              .join("")}
-          </div>
-        </div>
-        <div class="risk-warning-dialog__divider"></div>
-        <div class="risk-warning-dialog__message-wrap">
-          <div class="risk-warning-message">
-            <p>[警示信息]${rows[0]?.name || "当前药品"}需完成风险核对</p>
-            <p>[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。</p>
-          </div>
-        </div>
-      </section>
-    </div>`;
+  return renderRiskWarningDialogView({ medicines });
 }
 
 export function renderAiReplyOptions(options = []) {
@@ -325,32 +151,6 @@ export function renderPrescriptionRemarkSelect() {
     </label>`;
 }
 
-export function renderLabelTag({ text = "默认标签", tone = "light", size = "sm", weight = "regular", className = "" } = {}) {
-  const safeTone = ["dark", "light", "focus"].includes(tone) ? tone : "light";
-  const safeSize = ["sm", "md", "lg"].includes(size) ? size : "sm";
-  const weightClass = weight === "bold" ? " jh-tag--bold" : "";
-  return `<span class="jh-tag jh-tag--${safeTone} jh-tag--${safeSize}${weightClass}${className ? ` ${className}` : ""}">${text}</span>`;
-}
-
-export function renderStatusBadge(status = "online", className = "", { live = true } = {}) {
-  const statusMap = {
-    online: "在线",
-    busy: "忙碌",
-    offline: "离线"
-  };
-  const safeStatus = Object.prototype.hasOwnProperty.call(statusMap, status) ? status : "online";
-  return `<span class="jh-status-badge jh-status-badge--${safeStatus}${className ? ` ${className}` : ""}"${live ? " data-status-text" : ""}>${statusMap[safeStatus]}</span>`;
-}
-
-export function getDoctorStatusLabel(status = renderRuntime.doctorStatus) {
-  const labels = {
-    online: "在线",
-    busy: "忙碌",
-    offline: "离线"
-  };
-  return labels[status] || labels.offline;
-}
-
 export function renderDoctorStatusMenu() {
   const options = [
     { value: "online", label: "在线" },
@@ -374,17 +174,6 @@ export function renderDoctorStatusMenu() {
         )
         .join("")}
     </div>`;
-}
-
-export function renderReadTag(status = "unread", className = "") {
-  const safeStatus = status === "read" ? "read" : "unread";
-  const label = safeStatus === "read" ? "已读" : "未读";
-  return `<span class="jh-read-tag jh-read-tag--${safeStatus}${className ? ` ${className}` : ""}">${label}</span>`;
-}
-
-export function renderRiskTag({ text = "高", size = "sm", className = "" } = {}) {
-  const safeSize = size === "lg" ? "lg" : "sm";
-  return `<span class="jh-risk-tag jh-risk-tag--${safeSize}${className ? ` ${className}` : ""}">${text}</span>`;
 }
 
 export function renderMenu() {
@@ -847,6 +636,7 @@ export function renderRoom() {
       ${renderRiskWarningDialog()}
       ${renderConsultConfirmDialogs()}
       ${renderChatMessageMenu()}
+      ${renderConsultAttachmentDialog()}
       <div class="toast" role="status" aria-live="polite"></div>
     </div>`;
 }

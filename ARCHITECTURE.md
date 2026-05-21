@@ -35,8 +35,11 @@
 - `src/presentation/renderContext.js`：渲染上下文适配层，集中把应用状态暴露给渲染层。
 - `src/presentation/render.js`：HTML 渲染函数，输入来自渲染上下文，不直接发请求或操作 DOM。
 - `src/presentation/interactions.js`：事件绑定和 DOM 响应，只把用户动作转交给 application controllers/render/ui 模块。
+- `src/presentation/components/primitives.js`：基础 HTML 组件模板，例如按钮、开关、标签、状态徽标和计时 chip；不读取业务状态。
+- `src/presentation/components/dialogs.js`：弹窗类 HTML 组件模板，例如快捷回复、问诊确认和风险检测提醒；由 `render.js` 注入页面数据。
 - `src/presentation/ui/icons.js`：应用图标 HTML 模板。
 - `src/presentation/ui/dom.js`：DOM 查询、局部替换和应用挂载等浏览器适配操作。
+- `src/presentation/ui/interactionPrimitives.js`：交互层通用 DOM 原语，例如 toast、弹层开关和浮层菜单状态管理。
 - `src/presentation/ui/localMedia.js`：浏览器摄像头和麦克风适配层，负责本地媒体流申请和轨道启停。
 
 ## 依赖方向
@@ -69,7 +72,9 @@ domain
 - `src/application/controllers/*` 之间保持并列，不互相 import；共享查询逻辑下沉到 state selectors 或 domain 纯函数。
 - `src/application/controllers/*` 不读取浏览器路由、URL 查询参数或跳转地址；当前页面上下文由 presentation 层传入。
 - `src/presentation/render.js` 不直接操作 DOM，不直接请求 API，不直接修改 data store 或 runtime state。
+- `src/presentation/components/*` 优先保持为可传参复用的模板组件；基础组件不读取 `renderData` / `renderRuntime`，复杂组件由 `render.js` 注入数据。
 - `src/presentation/interactions.js` 不直接 import data store、`mockApi.js` 或业务状态机；需要业务动作时新增/复用 controller。
+- `src/presentation/ui/*` 只封装浏览器/DOM 适配能力，不引入 application controllers 或业务数据。
 - 页面要替换 Mock API 时优先改 `src/infrastructure/api/appApi.js` 的导出，不穿透改 controllers。
 
 ## 实时 Mock 状态
