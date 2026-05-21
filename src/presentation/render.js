@@ -119,7 +119,7 @@ export function renderQuickReplyDialog() {
               .join("")}
           </div>
         </div>
-        <footer class="quick-reply-dialog__footer">点击快捷用语即可发送</footer>
+        <footer class="quick-reply-dialog__footer">点击快捷用语填入输入框</footer>
       </section>
     </div>`;
 }
@@ -1072,7 +1072,7 @@ export function renderMedicineTableRow(row, readonly = false) {
       <span>${row.index}</span>
       <span>${escapeHtml(row.name)}</span>
       <span>${escapeHtml(row.type)}</span>
-      ${renderEditableBox("spec", "规格")}
+      <span class="medicine-spec-text">${escapeHtml(row.spec)}</span>
       ${renderEditableBox("usage", "用法")}
       ${renderEditableBox("frequency", "服用频次")}
       ${renderEditableBox("dose", "用量")}
@@ -1223,7 +1223,7 @@ export function renderConsultationPanel(options = {}) {
   const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
   const diagnosisTags =
     record
-      ? record.diagnosisTags || [record.diagnosis].filter(Boolean)
+      ? (record.diagnosisTags || [record.diagnosis].filter(Boolean)).filter((tag) => !tag.includes("咨询"))
       : [];
   const medicines = record?.prescriptionMedicines?.length ? record.prescriptionMedicines : [];
 
@@ -1237,7 +1237,7 @@ export function renderConsultationPanel(options = {}) {
       <div class="diagnosis-section consultation-diagnosis-section">
         <h3>诊断意见</h3>
         <div class="diagnosis-row">
-          <label><span>*</span>诊&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;断</label>
+          <label><span>*</span>诊断</label>
           ${readonly ? `<span class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select--readonly" aria-disabled="true">${diagnosisTags[0] || ""}</span>` : renderDiagnosisSelectInput()}
           <div class="diagnosis-input">
             ${renderDiagnosisTags(diagnosisTags, readonly)}
@@ -1523,15 +1523,32 @@ export function renderQuickEntryDialog() {
     </div>`;
 }
 
+function renderQuickEntryCardEditButton() {
+  return `
+    <button class="quick-entry-card__edit" type="button" aria-label="编辑高频操作入口" aria-pressed="false">
+      <span class="quick-entry-card__edit-icon" aria-hidden="true"></span>
+      <span class="quick-entry-card__edit-text">编辑</span>
+    </button>`;
+}
+
 export function renderQuickActions() {
   return `
     <section class="card quick-entry-card" aria-label="高频操作入口">
-      <h2 class="card__title">高频操作入口</h2>
+      <div class="quick-entry-card__header">
+        <h2 class="card__title">高频操作入口</h2>
+        ${renderQuickEntryCardEditButton()}
+      </div>
       <div class="quick-grid">
         ${renderData.quickActions
           .map(
             (action) => `
-              <div class="quick-card${action.isAdd ? " quick-card--add" : ""}" role="button" tabindex="0" data-action="${action.desc}">
+              <div class="quick-card${action.isAdd ? " quick-card--add" : " quick-card--custom"}" role="button" tabindex="0" data-action="${action.desc}">
+                ${
+                  action.isAdd
+                    ? ""
+                    : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${action.title}"></button>
+                       <button class="quick-card__drag" type="button" aria-label="拖动排序：${action.title}" draggable="true"></button>`
+                }
                 <span class="quick-card__body">
                   <span class="icon-box">${icons[action.icon]}</span>
                   ${

@@ -377,12 +377,16 @@ function closeAnnouncementListDialog(event) {
   closeOverlay(".announcement-list-overlay", event);
 }
 
-function openQuickEntryDialog(event) {
-  openOverlay(".quick-entry-overlay", ".quick-entry-dialog__close", event);
+function openQuickEntryDialog(event, editingCard = null) {
+  quickEntryEditingCard = editingCard;
+  const overlay = openOverlay(".quick-entry-overlay", ".quick-entry-dialog__close", event);
+  const title = overlay?.querySelector("#quick-entry-title");
+  if (title) title.textContent = quickEntryEditingCard ? "编辑快捷入口" : "添加快捷入口";
 }
 
 function closeQuickEntryDialog(event) {
   closeOverlay(".quick-entry-overlay", event);
+  quickEntryEditingCard = null;
 }
 
 const userMenuConfig = {
@@ -675,12 +679,7 @@ function handleChatMessageMenuAction(action) {
   } else if (action === "copy") {
     copyChatMessageText(message.text);
   } else if (action === "quote") {
-    const input = document.querySelector(".jh-chat-input textarea");
-    if (input) {
-      const quoteLine = `引用：${message.text}`;
-      input.value = input.value.trim() ? `${input.value.trim()}\n${quoteLine}` : quoteLine;
-      input.focus();
-    }
+    fillChatInput(`引用：${message.text}`, { append: true });
     showToast("已引用到输入框");
   }
 
@@ -697,6 +696,18 @@ function appendActiveDoctorChatMessage(text) {
   const thread = document.querySelector(`[data-chat-key="${chatKey}"]`);
   if (thread) thread.scrollTop = thread.scrollHeight;
   return { chatKey, message };
+}
+
+function fillChatInput(text = "", { append = false } = {}) {
+  const input = document.querySelector(".jh-chat-input textarea");
+  if (!input) return false;
+  const nextText = String(text).trim();
+  if (!nextText) return false;
+  input.value = append && input.value.trim() ? `${input.value.trim()}\n${nextText}` : nextText;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus();
+  input.setSelectionRange?.(input.value.length, input.value.length);
+  return true;
 }
 
 async function appendMockPatientReply(chatKey, doctorMessage) {
@@ -728,19 +739,18 @@ function sendChatInputMessage(input) {
 }
 
 const maxQuickActionCards = 8;
-
-function renderQuickCardRemoveButton(title) {
-  return `
-    <button class="quick-card__remove" type="button" aria-label="移除快捷入口：${title}">
-      <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
-    </button>`;
-}
+let quickEntryEditingCard = null;
 
 function renderQuickCardMarkup({ title = "", desc = "添加快捷入口", icon = "plus", isAdd = false } = {}) {
   const classes = `quick-card${isAdd ? " quick-card--add" : " quick-card--custom"}`;
   return `
     <div class="${classes}" role="button" tabindex="0" data-action="${desc}"${isAdd ? "" : ' data-custom-quick-entry="true"'}>
-      ${isAdd ? "" : renderQuickCardRemoveButton(title)}
+      ${
+        isAdd
+          ? ""
+          : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${title}"></button>
+             <button class="quick-card__drag" type="button" aria-label="拖动排序：${title}" draggable="true"></button>`
+      }
       <span class="quick-card__body">
         <span class="icon-box">${icons[icon]}</span>
         ${title ? `<span class="quick-card__title">${title}</span>` : ""}
@@ -781,6 +791,12 @@ function addCustomQuickCard(option) {
   return true;
 }
 
+function replaceQuickCard(card, option) {
+  if (!card || !option) return false;
+  card.outerHTML = renderQuickCardMarkup(option);
+  return true;
+}
+
 function removeCustomQuickCard(card) {
   const grid = card.closest(".quick-grid");
   card.remove();
@@ -788,9 +804,13 @@ function removeCustomQuickCard(card) {
 }
 
 function activateQuickCard(card, event) {
-  if (event?.target.closest(".quick-card__remove")) return;
+  if (event?.target.closest(".quick-card__delete, .quick-card__drag")) return;
   if (card.classList.contains("quick-card--add")) {
     openQuickEntryDialog(event);
+    return;
+  }
+  if (card.closest(".quick-entry-card")?.classList.contains("is-editing")) {
+    openQuickEntryDialog(event, card);
     return;
   }
   showToast(card.dataset.action);
@@ -829,8 +849,21 @@ function bindChatMessageMenu() {
 function refreshActivePrescriptionPanel(record = getActiveConsultationRecord(getRouteConsultationContext())) {
   const panel = document.querySelector(".prescription-panel:not(.prescription-panel--readonly)");
   if (!panel || !record) return;
+  const scrollTop = panel.scrollTop;
+  const scrollBottom = panel.scrollHeight - panel.clientHeight - scrollTop;
   panel.outerHTML = record.type === "consult" ? renderConsultationPanel({ record }) : renderPrescriptionPanel({ record });
   bindConsultWorkspace();
+  const nextPanel = document.querySelector(".prescription-panel:not(.prescription-panel--readonly)");
+  if (nextPanel) {
+    const restoreScroll = () => {
+      nextPanel.scrollTop = scrollTop > 0
+        ? Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight - scrollBottom)
+        : 0;
+    };
+    restoreScroll();
+    window.requestAnimationFrame(restoreScroll);
+    window.setTimeout(restoreScroll, 0);
+  }
 }
 
 async function renderDiagnosisDropdown(input) {
@@ -1072,11 +1105,7 @@ function bindConsultWorkspace() {
     if (option.dataset.bound === "true") return;
     option.dataset.bound = "true";
     option.addEventListener("click", () => {
-      const input = document.querySelector(".jh-chat-input textarea");
-      if (input) {
-        input.value = option.textContent.trim();
-        input.focus();
-      }
+      fillChatInput(option.textContent);
     });
   });
 
@@ -1101,7 +1130,7 @@ function bindConsultWorkspace() {
       sendChatInputMessage(textarea);
     });
     textarea?.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey) || event.isComposing) return;
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
       event.preventDefault();
       sendChatInputMessage(textarea);
     });
@@ -1338,15 +1367,17 @@ export function bindInteractions() {
       });
     });
 
-    quickReplyOverlay.querySelectorAll(".quick-reply-message").forEach((message) => {
-      message.addEventListener("click", () => {
-        const input = document.querySelector(".jh-chat-input textarea");
-        if (input) {
-          input.value = message.textContent.trim();
-          input.focus();
-        }
+    const applyQuickReplyMessage = (message, event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      if (fillChatInput(message.textContent)) {
         closeQuickReplyDialog();
-      });
+      }
+    };
+
+    quickReplyOverlay.querySelectorAll(".quick-reply-message").forEach((message) => {
+      message.addEventListener("pointerdown", (event) => applyQuickReplyMessage(message, event));
+      message.addEventListener("click", (event) => event.preventDefault());
     });
   }
 
@@ -1411,9 +1442,10 @@ export function bindInteractions() {
       optionButton.addEventListener("click", (event) => {
         const option = getQuickEntryOption(optionButton.dataset.optionIndex);
         if (!option) return;
-        const added = addCustomQuickCard(option);
+        const editingCard = quickEntryEditingCard;
+        const updated = editingCard ? replaceQuickCard(editingCard, option) : addCustomQuickCard(option);
         closeQuickEntryDialog(event);
-        if (added) showToast(`已添加${option.title}`);
+        if (updated) showToast(`${editingCard ? "已更新" : "已添加"}${option.title}`);
       });
     });
   }
@@ -1425,23 +1457,61 @@ export function bindInteractions() {
     });
   }
 
+  document.querySelectorAll(".quick-entry-card__edit").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = button.closest(".quick-entry-card");
+      const editing = !card?.classList.contains("is-editing");
+      card?.classList.toggle("is-editing", editing);
+      button.setAttribute("aria-pressed", String(editing));
+      button.querySelector(".quick-entry-card__edit-text").textContent = editing ? "完成" : "编辑";
+    });
+  });
+
   document.querySelectorAll(".quick-grid").forEach((grid) => {
     if (grid.dataset.bound === "true") return;
     grid.dataset.bound = "true";
     grid.addEventListener("click", (event) => {
-      const removeButton = event.target.closest(".quick-card__remove");
-      if (removeButton) {
+      const deleteButton = event.target.closest(".quick-card__delete");
+      if (deleteButton) {
         event.preventDefault();
         event.stopPropagation();
-        const card = removeButton.closest(".quick-card--custom");
-        if (!card) return;
+        const card = deleteButton.closest(".quick-card--custom");
+        if (!card || !card.closest(".quick-entry-card")?.classList.contains("is-editing")) return;
         removeCustomQuickCard(card);
-        showToast("已移除快捷入口");
+        showToast("已删除快捷入口");
         return;
       }
       const card = event.target.closest(".quick-card");
       if (!card || !grid.contains(card)) return;
       activateQuickCard(card, event);
+    });
+    grid.addEventListener("dragstart", (event) => {
+      const handle = event.target.closest(".quick-card__drag");
+      const card = handle?.closest(".quick-card--custom");
+      if (!card || !grid.closest(".quick-entry-card")?.classList.contains("is-editing")) {
+        event.preventDefault();
+        return;
+      }
+      card.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", "");
+    });
+    grid.addEventListener("dragover", (event) => {
+      const dragging = grid.querySelector(".quick-card.is-dragging");
+      if (!dragging) return;
+      const target = event.target.closest(".quick-card--custom");
+      if (!target || target === dragging || !grid.contains(target)) return;
+      event.preventDefault();
+      const targetRect = target.getBoundingClientRect();
+      const insertAfter = event.clientY > targetRect.top + targetRect.height / 2;
+      grid.insertBefore(dragging, insertAfter ? target.nextElementSibling : target);
+    });
+    grid.addEventListener("dragend", () => {
+      grid.querySelector(".quick-card.is-dragging")?.classList.remove("is-dragging");
     });
     grid.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;

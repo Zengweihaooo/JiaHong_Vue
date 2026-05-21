@@ -1586,12 +1586,89 @@ button {
   box-shadow: var(--jh-shadow-soft);
 }
 
+.quick-entry-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quick-entry-card__header .card__title {
+  margin: 0;
+}
+
+.quick-entry-card__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 72px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--jh-line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--jh-text-tertiary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.quick-entry-card__edit:hover,
+.quick-entry-card__edit[aria-pressed="true"] {
+  border-color: #cfe3ff;
+  background: #ebf3ff;
+  color: var(--jh-blue);
+  box-shadow: 0 6px 14px -10px rgba(16, 42, 67, 0.3);
+}
+
+.quick-entry-card__edit-icon {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.quick-entry-card__edit-icon::before {
+  position: absolute;
+  left: 2px;
+  top: 5px;
+  width: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  content: "";
+}
+
+.quick-entry-card__edit-icon::after {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 4px;
+  height: 4px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+}
+
+.quick-entry-card__edit-text {
+  white-space: nowrap;
+}
+
 .quick-grid {
   display: grid;
   align-items: stretch;
   justify-content: center;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: auto;
   width: 100%;
   min-width: 0;
@@ -1626,43 +1703,73 @@ button {
   border-style: dashed;
 }
 
-.quick-card__remove {
+.quick-card__delete,
+.quick-card__drag {
   position: absolute;
-  top: 10px;
-  right: 10px;
   z-index: 2;
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--jh-line);
   border-radius: 50%;
   background: #ffffff;
   color: var(--jh-text-tertiary);
   cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+  box-shadow: 0 6px 14px -12px rgba(16, 42, 67, 0.4);
 }
 
-.quick-card--custom:hover .quick-card__remove,
-.quick-card--custom:focus-within .quick-card__remove {
-  opacity: 1;
+.quick-card__delete {
+  top: 8px;
+  right: 8px;
 }
 
-.quick-card__remove:hover {
-  border-color: #cfe3ff;
-  box-shadow: 0 6px 14px -10px rgba(16, 42, 67, 0.3);
+.quick-card__drag {
+  top: 8px;
+  left: 8px;
+  cursor: grab;
 }
 
-.quick-card__remove img {
-  display: block;
-  width: 10px;
+.quick-entry-card.is-editing .quick-card__delete,
+.quick-entry-card.is-editing .quick-card__drag {
+  display: inline-flex;
+}
+
+.quick-card__delete::before,
+.quick-card__delete::after {
+  position: absolute;
+  width: 11px;
+  height: 1.6px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.quick-card__delete::before {
+  transform: rotate(45deg);
+}
+
+.quick-card__delete::after {
+  transform: rotate(-45deg);
+}
+
+.quick-card__drag::before {
+  width: 13px;
   height: 10px;
+  background:
+    radial-gradient(circle, currentColor 1.5px, transparent 1.7px) 0 0 / 6px 5px;
+  content: "";
+}
+
+.quick-entry-card.is-editing .quick-card--custom {
+  border-color: #cfe3ff;
+  background: #f8fbff;
+}
+
+.quick-card.is-dragging {
+  opacity: 0.55;
 }
 
 .quick-card__body {
@@ -4356,6 +4463,7 @@ body.page-view-room {
   height: 100%;
   flex-direction: column;
   overflow-y: auto;
+  overflow-anchor: none;
   overscroll-behavior: contain;
   touch-action: pan-y;
   background: #ffffff;
@@ -5016,12 +5124,12 @@ body.page-view-room {
 }
 
 .consultation-panel .diagnosis-combobox {
-  flex: 0 0 94px;
-  width: 94px;
+  flex: 0 0 160px;
+  width: 160px;
 }
 
 .consultation-treatment-row {
-  align-items: flex-start;
+  align-items: center;
 }
 
 .consultation-treatment-input {
@@ -5031,7 +5139,8 @@ body.page-view-room {
   padding: var(--jh-input-field-padding-lg);
   resize: none;
   outline: 0;
-  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 22px;
   white-space: nowrap;
 }
@@ -5041,12 +5150,12 @@ body.page-view-room {
 }
 
 .consultation-medicine-section {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
 }
 
 .consultation-panel .medicine-scroll-area {
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .consultation-panel .medicine-scroll-area > .medicine-search-combobox,

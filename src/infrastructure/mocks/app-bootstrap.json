@@ -292,8 +292,7 @@
         "elapsedSeconds": 138,
         "diagnosis": "过敏性鼻炎",
         "diagnosisTags": [
-          "过敏性鼻炎",
-          "用药咨询"
+          "过敏性鼻炎"
         ],
         "consultationAttribute": "without-medicine",
         "consultInfo": {
@@ -334,8 +333,7 @@
         "elapsedSeconds": 224,
         "diagnosis": "小儿发热",
         "diagnosisTags": [
-          "小儿发热",
-          "儿童用药咨询"
+          "小儿发热"
         ],
         "consultationAttribute": "with-medicine",
         "consultInfo": {

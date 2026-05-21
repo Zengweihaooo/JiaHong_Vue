@@ -28,7 +28,7 @@ export function removeDiagnosisFromActiveRecord(tag, context = {}) {
   if (!record || !tag) return { ok: false, message: "当前诊断不可删除" };
   normalizeRecordDiagnosis(record);
   record.diagnosisTags = record.diagnosisTags.filter((item) => item !== tag);
-  normalizeRecordDiagnosis(record);
+  normalizeRecordDiagnosis(record, { allowEmpty: true });
   return { ok: true, record, message: "诊断已更新" };
 }
 
@@ -78,10 +78,13 @@ export function updateMedicineFieldInActiveRecord(index, field, value, context =
   return { ok: true, record };
 }
 
-function normalizeRecordDiagnosis(record) {
+function normalizeRecordDiagnosis(record, { allowEmpty = false } = {}) {
   const tags = Array.isArray(record.diagnosisTags) ? record.diagnosisTags.filter(Boolean) : [];
-  if (!tags.length && record.diagnosis) tags.push(record.diagnosis);
-  record.diagnosisTags = Array.from(new Set(tags));
+  const normalizedTags = record.type === "consult"
+    ? tags.filter((tag) => !tag.includes("咨询"))
+    : tags;
+  if (!allowEmpty && !normalizedTags.length && record.diagnosis && !record.diagnosis.includes("咨询")) normalizedTags.push(record.diagnosis);
+  record.diagnosisTags = Array.from(new Set(normalizedTags));
   record.diagnosis = record.diagnosisTags[0] || "";
 }
 
