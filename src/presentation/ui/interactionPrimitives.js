@@ -1,12 +1,20 @@
-export function showToast(message) {
+const toastToneClasses = ["toast--warning"];
+
+export function showToast(message, options = {}) {
   const toast = document.querySelector(".toast");
   if (!toast) return;
+  const { tone = "default", duration = 1500 } = options;
   window.clearTimeout(showToast.timer);
   toast.textContent = message;
+  toast.classList.remove(...toastToneClasses);
+  if (tone === "warning") {
+    toast.classList.add("toast--warning");
+  }
+  toast.setAttribute("role", tone === "warning" ? "alert" : "status");
   toast.classList.add("is-visible");
   showToast.timer = window.setTimeout(() => {
     toast.classList.remove("is-visible");
-  }, 1500);
+  }, duration);
 }
 
 export function stopEvent(event) {

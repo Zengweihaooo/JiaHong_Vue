@@ -1,5 +1,5 @@
 export function getConsultMainElement(root = document) {
-  return root.querySelector(".room-main, .text-main");
+  return root.querySelector(".room-main, .consult-room-main, .text-main");
 }
 
 export function isConsultReadonlyView(root = document) {
@@ -7,7 +7,7 @@ export function isConsultReadonlyView(root = document) {
 }
 
 export function setConsultShellReadonly(readonly, root = document) {
-  root.querySelector(".room-shell, .text-shell, .video-shell")?.classList.toggle("consult-shell--readonly", readonly);
+  root.querySelector(".consult-shell, .room-shell, .text-shell, .video-shell")?.classList.toggle("consult-shell--readonly", readonly);
 }
 
 export function refreshChatThread(renderChatThread, chatKey, root = document) {

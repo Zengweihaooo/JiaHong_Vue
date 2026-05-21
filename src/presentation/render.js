@@ -18,7 +18,7 @@ import {
   renderQuickReplyDialogView,
   renderRiskWarningDialogView
 } from "./components/dialogs.js";
-import { icons } from "./ui/icons.js";
+import { icons, renderQuickEntryIcon } from "./ui/icons.js";
 import { renderData, renderRuntime } from "./renderContext.js";
 
 export {
@@ -431,6 +431,7 @@ export function renderMessageItem(record, active, index = 0, activeVideoRecordId
         </span>
         <span class="message-item__title">${record.title}</span>
         <span class="message-item__preview">${record.preview}</span>
+        ${videoLocked ? `<span class="message-item__lock-hint">请先结束当前视频问诊</span>` : ""}
       </span>
       ${showBadge ? `<span class="message-item__badge">${unreadCount}</span>` : ""}
     </button>`;
@@ -655,8 +656,8 @@ function getConsultMainTitle(record) {
 
 function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, prescriptionPanel, record = null }) {
   return `
-    <main class="text-main">
-      <section class="text-card" aria-label="${label}">
+    <main class="text-main consult-room-main">
+      <section class="text-card consult-room-card" aria-label="${label}">
         <div class="pharmacy-bar">
           <div class="pharmacy-bar__left">
             <h2>${title}</h2>
@@ -894,6 +895,20 @@ export function renderMedicineTableRow(row, readonly = false) {
     </div>`;
 }
 
+function renderMedicineTable(medicines = [], readonly = false) {
+  if (!medicines.length) {
+    return `<div class="medicine-empty-state">暂无药品信息</div>`;
+  }
+
+  return `
+    <div class="medicine-table${medicines.length === 1 ? " medicine-table--single" : ""}">
+      <div class="medicine-table__row medicine-table__head">
+        <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
+      </div>
+      ${medicines.map((row) => renderMedicineTableRow(row, readonly)).join("")}
+    </div>`;
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -990,12 +1005,7 @@ export function renderPrescriptionPanel(options = {}) {
         <h3>所需药品</h3>
         <div class="medicine-scroll-area">
           ${readonly ? "" : renderMedicineSearchCombobox()}
-          <div class="medicine-table">
-            <div class="medicine-table__row medicine-table__head">
-              <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
-            </div>
-            ${medicineRows.map((row) => renderMedicineTableRow(row, readonly)).join("")}
-          </div>
+          ${renderMedicineTable(medicineRows, readonly)}
         </div>
       </div>
       <div class="prescription-actions${readonly ? " prescription-actions--readonly" : ""}">
@@ -1060,16 +1070,7 @@ export function renderConsultationPanel(options = {}) {
         <h3>所需药品</h3>
         <div class="medicine-scroll-area">
           ${readonly ? "" : renderMedicineSearchCombobox()}
-          ${
-            medicines.length
-              ? `<div class="medicine-table">
-                  <div class="medicine-table__row medicine-table__head">
-                    <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
-                  </div>
-                  ${medicines.map((row) => renderMedicineTableRow(row, readonly)).join("")}
-                </div>`
-              : `<div class="medicine-empty-state">暂无药品信息</div>`
-          }
+          ${renderMedicineTable(medicines, readonly)}
         </div>
       </div>
       <div class="prescription-actions consultation-actions${readonly ? " prescription-actions--readonly" : ""}">
@@ -1087,7 +1088,7 @@ export function renderConsultationPanel(options = {}) {
 
 function renderConsultPage({ shellClass = "", main }) {
   return `
-    <div class="app-shell room-shell${shellClass ? ` ${shellClass}` : ""} app-shell--responsive">
+    <div class="app-shell room-shell consult-shell${shellClass ? ` ${shellClass}` : ""} app-shell--responsive">
       ${renderRoomTopbar()}
       ${renderRoomSidebar()}
       ${main}
@@ -1317,7 +1318,7 @@ export function renderQuickEntryDialog() {
             .map(
               (option, index) => `
                 <button class="quick-entry-option" type="button" data-option-index="${index}">
-                  <span class="icon-box">${icons[option.icon]}</span>
+                  <span class="icon-box">${renderQuickEntryIcon(option.icon)}</span>
                   <span class="quick-entry-option__copy">
                     <span class="quick-entry-option__title">${option.title}</span>
                     <span class="quick-entry-option__desc">${option.desc}</span>
@@ -1357,7 +1358,7 @@ export function renderQuickActions() {
                        <button class="quick-card__drag" type="button" aria-label="拖动排序：${action.title}" draggable="true"></button>`
                 }
                 <span class="quick-card__body">
-                  <span class="icon-box">${icons[action.icon]}</span>
+                  <span class="icon-box">${renderQuickEntryIcon(action.icon)}</span>
                   ${
                     action.title
                       ? `<span class="quick-card__title">${action.title}</span>`

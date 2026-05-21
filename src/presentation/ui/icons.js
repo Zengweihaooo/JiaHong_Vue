@@ -41,3 +41,11 @@ export const icons = {
     <img class="quick-icon quick-icon--plus" src="${assetUrl("assets/figma-home/quick-plus.svg")}" alt="" aria-hidden="true" />`
 };
 
+const menuQuickIcons = new Set(["user", "shield", "clipboard", "briefcase"]);
+
+export function renderQuickEntryIcon(iconKey = "plus") {
+  if (menuQuickIcons.has(iconKey)) {
+    return `<span class="quick-icon quick-icon--menu quick-icon--menu-${iconKey}" aria-hidden="true"></span>`;
+  }
+  return icons[iconKey] || icons.plus;
+}

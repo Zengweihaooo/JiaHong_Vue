@@ -38,7 +38,7 @@ import {
   updateMedicineFieldInActiveRecord
 } from "../application/controllers/prescriptionController.js";
 import { getConsultMainElement, isConsultReadonlyView, refreshChatThread, setConsultShellReadonly } from "./ui/dom.js";
-import { icons } from "./ui/icons.js";
+import { renderQuickEntryIcon } from "./ui/icons.js";
 import {
   bindOverlayDismiss,
   closeOverlay,
@@ -51,6 +51,8 @@ import {
 } from "./ui/interactionPrimitives.js";
 import { attachLocalCamera, setLocalCameraEnabled, setLocalMicrophoneEnabled } from "./ui/localMedia.js";
 import { formatDuration, getActiveChatKey, getDoctorStatusLabel, renderChatThread, renderConsultationPanel, renderMessageList, renderPrescriptionPanel, renderPrescriptionTraceMain, renderRoomMain, renderTextMain, renderVideoMain, renderVideoMediaIcon, videoMediaState } from "./render.js";
+
+const videoConsultationLockedMessage = "请先结束当前视频问诊，再进入新的视频问诊";
 
 function getRouteConsultationContext() {
   return {
@@ -465,7 +467,7 @@ function showPrescriptionTrace(record) {
 
 function handleMessageItemClick(item) {
   if (item.dataset.videoLocked === "true" || item.getAttribute("aria-disabled") === "true") {
-    showToast("当前视频问诊未结束，暂不可进入新的视频问诊");
+    showToast(videoConsultationLockedMessage, { tone: "warning", duration: 3200 });
     return;
   }
   if (item.dataset.badgeKey) {
@@ -519,7 +521,7 @@ function setConsultPageMode(targetView) {
   document.body.classList.add(`page-view-${targetView}`);
   const shell = document.querySelector(".app-shell");
   if (!shell) return;
-  shell.classList.add("room-shell", "text-shell");
+  shell.classList.add("room-shell", "consult-shell", "text-shell");
   shell.classList.toggle("video-shell", targetView === "video");
   shell.classList.remove("history-shell");
 }
@@ -702,7 +704,7 @@ function renderQuickCardMarkup({ title = "", desc = "添加快捷入口", icon =
              <button class="quick-card__drag" type="button" aria-label="拖动排序：${title}" draggable="true"></button>`
       }
       <span class="quick-card__body">
-        <span class="icon-box">${icons[icon]}</span>
+        <span class="icon-box">${renderQuickEntryIcon(icon)}</span>
         ${title ? `<span class="quick-card__title">${title}</span>` : ""}
         <span class="quick-card__desc">${desc}</span>
       </span>
