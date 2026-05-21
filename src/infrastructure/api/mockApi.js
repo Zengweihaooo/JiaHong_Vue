@@ -1,21 +1,23 @@
 import { fetchJson } from "./httpClient.js";
+import { getSessionStorage } from "../browser/runtimeEnvironment.js";
 
 const mockLatencyMs = 80;
 let realtimeTick = 0;
 const runtimeStorageKey = "jh.mockRuntimeState";
-const runtimeSchemaVersion = 6;
+const runtimeSchemaVersion = 7;
 const maxRuntimeConsultations = 6;
 const baseWaitingQueue = {
   total: 2,
   byType: { text: 1, video: 1, consult: 0 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260520-15", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260521-3", import.meta.url);
 const localClinicalCatalogUrl = new URL("../mocks/local-clinical-catalog.json", import.meta.url);
 const prescriptionCatalogUrl = new URL("../mocks/prescription-catalog.json", import.meta.url);
+const runtimeStorage = getSessionStorage();
 
 function readRuntimeState() {
   try {
-    const state = JSON.parse(sessionStorage.getItem(runtimeStorageKey) || "{}");
+    const state = JSON.parse(runtimeStorage.getItem(runtimeStorageKey) || "{}");
     if (state.schemaVersion !== runtimeSchemaVersion) return {};
     return state;
   } catch {
@@ -25,13 +27,13 @@ function readRuntimeState() {
 
 function writeRuntimeState(patch) {
   const nextState = { ...readRuntimeState(), schemaVersion: runtimeSchemaVersion, ...patch };
-  sessionStorage.setItem(runtimeStorageKey, JSON.stringify(nextState));
+  runtimeStorage.setItem(runtimeStorageKey, JSON.stringify(nextState));
   return nextState;
 }
 
 function delay(ms = mockLatencyMs) {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
+    globalThis.setTimeout(resolve, ms);
   });
 }
 
@@ -283,7 +285,18 @@ export async function getAppBootstrap() {
     }));
   }
   if (runtimeState.consultationRecords?.length) {
-    const runtimeRecords = runtimeState.consultationRecords.slice(0, maxRuntimeConsultations);
+    const baseRecordsById = new Map(payload.consultations.records.map((record) => [record.id, record]));
+    const runtimeRecords = runtimeState.consultationRecords.slice(0, maxRuntimeConsultations).map((record) => {
+      const baseRecord = baseRecordsById.get(record.id);
+      if (!baseRecord) return record;
+      return {
+        ...baseRecord,
+        ...record,
+        prescriptionMedicines: record.prescriptionMedicines?.length
+          ? record.prescriptionMedicines
+          : baseRecord.prescriptionMedicines || record.prescriptionMedicines
+      };
+    });
     payload.consultations.records = [
       ...runtimeRecords,
       ...payload.consultations.records.filter(

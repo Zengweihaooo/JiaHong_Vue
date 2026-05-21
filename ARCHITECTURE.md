@@ -17,13 +17,14 @@
 - `src/infrastructure/api/httpClient.js`：统一 JSON 请求封装。
 - `src/infrastructure/api/mockApi.js`：Mock API 门面，模拟真实接口延迟和返回结构。
 - `src/infrastructure/api/appApi.js`：应用 API facade，应用层只依赖这里；未来替换真实接口优先改这里。
+- `src/infrastructure/browser/runtimeEnvironment.js`：浏览器运行环境适配器，集中提供 `sessionStorage` 和 navigation performance 访问的安全回退。
 - `src/infrastructure/mocks/app-bootstrap.json`：页面启动所需 Mock 数据源。
 - `src/infrastructure/mocks/local-clinical-catalog.json`：本地临床处方目录库，覆盖常见疾病和常用药，当前疾病/药品搜索的主数据源。
 - `src/infrastructure/mocks/prescription-catalog.json`：疾病和药品候选目录 Mock 数据源。
 - `src/infrastructure/mocks/nhsa-medicine-catalog.json`：从国家医保信息业务编码标准数据库动态维护公开查询页拉取的医保药品本地样本。
 - `tools/fetch-nhsa-medicine-sample.mjs`：开发用医保药品样本同步脚本，按关键词从官方公开查询接口拉取小样本。
-- `src/application/state/dataStore.js`：内存数据仓库，只保存 API hydrate 后的数据，不写业务样例。
-- `src/application/state/runtimeState.js`：运行态状态，例如服务开关、消息徽标、问诊状态机实例。
+- `src/application/state/dataStore.js`：内存数据仓库和会话查询 selectors，只保存 API hydrate 后的数据，不写业务样例。
+- `src/application/state/runtimeState.js`：运行态状态，例如服务开关、消息徽标、问诊状态机实例；浏览器存储访问经 infrastructure adapter。
 - `src/application/store/appStore.js`：应用启动 store，负责拉取 bootstrap 数据并初始化运行态。
 - `src/application/controllers/chatController.js`：聊天消息控制器，封装进行中聊天消息追加、查询和撤回。
 - `src/application/controllers/consultationController.js`：问诊流程控制器，封装状态机事件、问诊结束/取消、处方状态同步和待接诊同步。
@@ -50,7 +51,7 @@ presentation
   -> application/controllers / application/state(read runtime only) / domain / shared
 
 application
-  -> infrastructure/api/appApi / domain / shared
+  -> infrastructure/api/appApi / domain
 
 infrastructure
   -> mocks / httpClient
@@ -63,7 +64,10 @@ domain
 
 - `src/domain/*` 必须保持纯业务规则，不依赖 DOM、API、data store、runtime state 或 render。
 - `src/infrastructure/*` 不依赖 application 或 presentation，只负责外部数据和接口适配。
+- `src/infrastructure/browser/runtimeEnvironment.js` 集中适配 `sessionStorage`、`performance` 等浏览器运行环境，application state 不直接读取浏览器全局对象。
 - `src/application/controllers/*` 可以读写应用状态、调用 `appApi.js`、复用 domain 规则，但不操作 DOM。
+- `src/application/controllers/*` 之间保持并列，不互相 import；共享查询逻辑下沉到 state selectors 或 domain 纯函数。
+- `src/application/controllers/*` 不读取浏览器路由、URL 查询参数或跳转地址；当前页面上下文由 presentation 层传入。
 - `src/presentation/render.js` 不直接操作 DOM，不直接请求 API，不直接修改 data store 或 runtime state。
 - `src/presentation/interactions.js` 不直接 import data store、`mockApi.js` 或业务状态机；需要业务动作时新增/复用 controller。
 - 页面要替换 Mock API 时优先改 `src/infrastructure/api/appApi.js` 的导出，不穿透改 controllers。
@@ -86,7 +90,8 @@ domain
 
 - 新增会话通过 `newConsultation.record` 进入 `dataStore.js` 的 `consultationRecords`。
 - 新增聊天通过 `newConsultation.chat` 进入 `ongoingChatState`。
-- 点击会话时路由携带 `record` 参数，图文/视频页按同一个 `recordId` 渲染药店、患者、聊天、诊断和用药信息。
+- 点击会话时路由携带 `sessionId` 参数，图文/视频页按同一个稳定会话 ID 渲染药店、患者、聊天、诊断和用药信息；旧 `record` 参数只作为历史链接兼容入口。
+- Mock 和运行态会话 ID 使用 `cs_...` 形式，不把图文、视频、已结束等业务文字写进 ID；会话类型只放在 `type` / `targetView` 字段。
 - 进行中的消息列表最多展示 6 条，Mock 运行态新增会话会随机插入列表位置并做数量裁剪，避免列表无限增长或类型固定分组。
 - 未读状态按 `record.id` 持久化，不再按列表位置计算，新增会话插入后不会导致徽标错位。
 - 问诊结束时由 `archivedConsultation.js` 统一生成可回看的归档记录，确保新结束或历史 Mock 记录都有聊天历史和操作留痕；已结束视频记录只保留历史消息与处方信息，不再渲染视频预览框。

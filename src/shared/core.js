@@ -20,6 +20,10 @@ export function getRecordParam(fallback = "") {
   return getQueryParam("record", fallback);
 }
 
+export function getSessionIdParam(fallback = "") {
+  return getQueryParam("sessionId") || getRecordParam(fallback);
+}
+
 export function inferAppView() {
   const currentPath = getCurrentRoutePath();
   if (currentPath.includes("/video")) return "video";
@@ -44,18 +48,19 @@ export function getRoomHref() {
   return getAppHref("/room/");
 }
 
-export function getTextHref(recordId = "") {
+export function getTextHref(sessionId = "") {
   const href = getAppHref("/text/");
-  return recordId ? `${href}?record=${encodeURIComponent(recordId)}` : href;
+  return sessionId ? `${href}?sessionId=${encodeURIComponent(sessionId)}` : href;
 }
 
-export function getVideoHref(recordId = "") {
+export function getVideoHref(sessionId = "") {
   const href = getAppHref("/video/");
-  return recordId ? `${href}?record=${encodeURIComponent(recordId)}` : href;
+  return sessionId ? `${href}?sessionId=${encodeURIComponent(sessionId)}` : href;
 }
 
-export function getHistoryHref(recordId = "ended-text") {
-  return `${getAppHref("/history/")}?record=${encodeURIComponent(recordId)}`;
+export function getHistoryHref(sessionId = "") {
+  const href = getAppHref("/history/");
+  return sessionId ? `${href}?sessionId=${encodeURIComponent(sessionId)}` : href;
 }
 
 export function getHomeHref() {

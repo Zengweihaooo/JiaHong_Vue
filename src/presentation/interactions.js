@@ -1,7 +1,6 @@
-import { appView, assetUrl, getHistoryHref, getRoomHref, getTextHref, getVideoHref } from "../shared/core.js";
+import { appView, assetUrl, getHistoryHref, getRoomHref, getSessionIdParam, getTextHref, getVideoHref } from "../shared/core.js";
 import {
   getActiveConsultationRecord,
-  getActiveOngoingRecordId,
   activateVideoConsultation,
   getConsultationRecordById,
   getFirstEndedConsultationRecord,
@@ -41,7 +40,7 @@ import {
 import { getConsultMainElement, isConsultReadonlyView, refreshChatThread, setConsultShellReadonly } from "./ui/dom.js";
 import { icons } from "./ui/icons.js";
 import { attachLocalCamera, setLocalCameraEnabled, setLocalMicrophoneEnabled } from "./ui/localMedia.js";
-import { formatDuration, getActiveChatKey, getDoctorStatusLabel, renderChatThread, renderMessageList, renderPrescriptionPanel, renderPrescriptionTraceMain, renderRoomMain, renderTextMain, renderVideoMain, renderVideoMediaIcon, videoMediaState } from "./render.js";
+import { formatDuration, getActiveChatKey, getDoctorStatusLabel, renderChatThread, renderConsultationPanel, renderMessageList, renderPrescriptionPanel, renderPrescriptionTraceMain, renderRoomMain, renderTextMain, renderVideoMain, renderVideoMediaIcon, videoMediaState } from "./render.js";
 
 function showToast(message) {
   const toast = document.querySelector(".toast");
@@ -56,6 +55,13 @@ function showToast(message) {
 function stopEvent(event) {
   event?.preventDefault();
   event?.stopPropagation();
+}
+
+function getRouteConsultationContext() {
+  return {
+    sessionId: getSessionIdParam(),
+    view: appView
+  };
 }
 
 function setOverlayOpen(overlayOrSelector, open, { focusSelector = "" } = {}) {
@@ -249,7 +255,7 @@ function enableEndConsultButton() {
 function openRiskWarningDialog() {
   const overlay = document.querySelector(".risk-warning-overlay");
   if (!overlay) return;
-  openRiskReviewForActiveConsultation()?.catch(() => {
+  openRiskReviewForActiveConsultation(getRouteConsultationContext())?.catch(() => {
     showToast("问诊状态同步失败");
   });
   setOverlayOpen(overlay, true, { focusSelector: ".risk-warning-dialog__close" });
@@ -261,11 +267,29 @@ function closeRiskWarningDialog() {
   const wasOpen = overlay.classList.contains("is-open");
   setOverlayOpen(overlay, false);
   if (wasOpen) {
-    submitPrescriptionForActiveConsultation()?.catch(() => {
+    submitPrescriptionForActiveConsultation(getRouteConsultationContext())?.catch(() => {
       showToast("处方状态同步失败");
     });
     enableEndConsultButton();
   }
+}
+
+function openConsultAttachmentDialog(button, event) {
+  stopEvent(event);
+  const overlay = document.querySelector(".consult-attachment-overlay");
+  if (!overlay) return;
+  const index = button?.dataset.consultAttachmentIndex || "1";
+  const total = button?.dataset.consultAttachmentTotal || "4";
+  const title = button?.dataset.consultAttachmentTitle || `附件${index}`;
+  const titleNode = overlay.querySelector("[data-consult-attachment-dialog-title]");
+  const pagerNode = overlay.querySelector("[data-consult-attachment-dialog-pager]");
+  if (titleNode) titleNode.textContent = title;
+  if (pagerNode) pagerNode.textContent = `${index}/${total}`;
+  setOverlayOpen(overlay, true, { focusSelector: ".consult-attachment-dialog__close" });
+}
+
+function closeConsultAttachmentDialog(event) {
+  closeOverlay(".consult-attachment-overlay", event);
 }
 
 function openConsultConfirmDialog(kind) {
@@ -286,7 +310,7 @@ async function handleConsultConfirm(kind) {
   closeConsultConfirmDialog(kind);
   let result = null;
   try {
-    result = await resolveActiveConsultation(kind);
+    result = await resolveActiveConsultation(kind, getRouteConsultationContext());
   } catch {
     showToast("问诊状态同步失败");
     result = { message: kind === "cancel" ? "已取消问诊" : "问诊已结束", redirectHref: getRoomHref() };
@@ -505,14 +529,11 @@ function handleMessageItemClick(item) {
 
   setConsultShellReadonly(false);
 
-  if (isConsultReadonlyView() && (appView === "text" || appView === "video")) {
-    const activeId = appView === "text" ? "active-text" : "active-video";
-    if (record?.id === activeId) {
-      restoreOngoingMain();
-      bindConsultWorkspace();
-      startOngoingTimers();
-      return;
-    }
+  if (isConsultReadonlyView() && (appView === "text" || appView === "video") && record?.id === getSessionIdParam()) {
+    restoreOngoingMain();
+    bindConsultWorkspace();
+    startOngoingTimers();
+    return;
   }
 
   const targetView = item.dataset.targetView || (record?.type === "video" ? "video" : record ? "text" : "");
@@ -530,11 +551,11 @@ function handleMessageItemClick(item) {
   }
 }
 
-function updateConsultRoute(targetView, recordId) {
-  const href = targetView === "video" ? getVideoHref(recordId) : getTextHref(recordId);
+function updateConsultRoute(targetView, sessionId) {
+  const href = targetView === "video" ? getVideoHref(sessionId) : getTextHref(sessionId);
   const nextUrl = new URL(href, window.location.href);
   if (nextUrl.href !== window.location.href) {
-    window.history.pushState({ view: targetView, recordId }, "", nextUrl);
+    window.history.pushState({ view: targetView, sessionId }, "", nextUrl);
   }
 }
 
@@ -805,10 +826,10 @@ function bindChatMessageMenu() {
   document.addEventListener("scroll", closeChatMessageMenu, true);
 }
 
-function refreshActivePrescriptionPanel(record = getActiveConsultationRecord()) {
+function refreshActivePrescriptionPanel(record = getActiveConsultationRecord(getRouteConsultationContext())) {
   const panel = document.querySelector(".prescription-panel:not(.prescription-panel--readonly)");
   if (!panel || !record) return;
-  panel.outerHTML = renderPrescriptionPanel({ record });
+  panel.outerHTML = record.type === "consult" ? renderConsultationPanel({ record }) : renderPrescriptionPanel({ record });
   bindConsultWorkspace();
 }
 
@@ -818,7 +839,8 @@ async function renderDiagnosisDropdown(input) {
   if (!dropdown) return;
   const requestId = `${Date.now()}-${Math.random()}`;
   input.dataset.diagnosisRequestId = requestId;
-  const options = await getDiagnosisOptions(input.value);
+  const context = getRouteConsultationContext();
+  const options = await getDiagnosisOptions(input.value, context);
   if (input.dataset.diagnosisRequestId !== requestId) return;
   dropdown.innerHTML = "";
   options.forEach((diagnosis) => {
@@ -830,7 +852,7 @@ async function renderDiagnosisDropdown(input) {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      handlePrescriptionResult(addDiagnosisToActiveRecord(diagnosis));
+      handlePrescriptionResult(addDiagnosisToActiveRecord(diagnosis, context));
     });
     dropdown.appendChild(button);
   });
@@ -852,7 +874,8 @@ async function renderMedicineDropdown(input) {
   if (!dropdown) return;
   const requestId = `${Date.now()}-${Math.random()}`;
   input.dataset.medicineRequestId = requestId;
-  const options = await getMedicineOptions(input.value);
+  const context = getRouteConsultationContext();
+  const options = await getMedicineOptions(input.value, context);
   if (input.dataset.medicineRequestId !== requestId) return;
   dropdown.innerHTML = "";
   options.forEach((medicine) => {
@@ -864,7 +887,7 @@ async function renderMedicineDropdown(input) {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      handlePrescriptionResult(addMedicineToActiveRecord(medicine));
+      handlePrescriptionResult(addMedicineToActiveRecord(medicine, context));
     });
     dropdown.appendChild(button);
   });
@@ -899,7 +922,9 @@ function bindPrescriptionEditor() {
     const removeDiagnosis = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      handlePrescriptionResult(removeDiagnosisFromActiveRecord(button.dataset.diagnosisTag));
+      handlePrescriptionResult(
+        removeDiagnosisFromActiveRecord(button.dataset.diagnosisTag, getRouteConsultationContext())
+      );
     };
     button.addEventListener("pointerdown", removeDiagnosis);
     button.addEventListener("click", (event) => {
@@ -922,7 +947,7 @@ function bindPrescriptionEditor() {
     event.preventDefault();
     const diagnosisText = event.currentTarget.value.trim();
     if (!diagnosisText) return;
-    handlePrescriptionResult(addDiagnosisToActiveRecord(diagnosisText));
+    handlePrescriptionResult(addDiagnosisToActiveRecord(diagnosisText, getRouteConsultationContext()));
   });
   const medicineInput = panel.querySelector(".medicine-search input");
   medicineInput?.setAttribute("aria-expanded", "false");
@@ -938,7 +963,7 @@ function bindPrescriptionEditor() {
   medicineInput?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.isComposing) return;
     event.preventDefault();
-    handlePrescriptionResult(addMedicineToActiveRecord(event.currentTarget.value));
+    handlePrescriptionResult(addMedicineToActiveRecord(event.currentTarget.value, getRouteConsultationContext()));
   });
   if (!bindPrescriptionEditor.dropdownDismissBound) {
     bindPrescriptionEditor.dropdownDismissBound = true;
@@ -956,7 +981,9 @@ function bindPrescriptionEditor() {
       event.preventDefault();
       event.stopPropagation();
       const row = button.closest("[data-medicine-name]");
-      handlePrescriptionResult(removeMedicineFromActiveRecord(row?.dataset.medicineName));
+      handlePrescriptionResult(
+        removeMedicineFromActiveRecord(row?.dataset.medicineName, getRouteConsultationContext())
+      );
     });
     button.addEventListener("click", (event) => {
       event.preventDefault();
@@ -966,11 +993,21 @@ function bindPrescriptionEditor() {
   panel.querySelectorAll(".medicine-edit-field[data-medicine-field]").forEach((input) => {
     input.addEventListener("input", () => {
       const row = input.closest("[data-medicine-index]");
-      updateMedicineFieldInActiveRecord(row?.dataset.medicineIndex, input.dataset.medicineField, input.value);
+      updateMedicineFieldInActiveRecord(
+        row?.dataset.medicineIndex,
+        input.dataset.medicineField,
+        input.value,
+        getRouteConsultationContext()
+      );
     });
     input.addEventListener("change", () => {
       const row = input.closest("[data-medicine-index]");
-      updateMedicineFieldInActiveRecord(row?.dataset.medicineIndex, input.dataset.medicineField, input.value);
+      updateMedicineFieldInActiveRecord(
+        row?.dataset.medicineIndex,
+        input.dataset.medicineField,
+        input.value,
+        getRouteConsultationContext()
+      );
     });
   });
 }
@@ -1047,6 +1084,12 @@ function bindConsultWorkspace() {
     if (button.dataset.bound === "true") return;
     button.dataset.bound = "true";
     button.addEventListener("click", openQuickReplyDialog);
+  });
+
+  document.querySelectorAll(".consult-attachment").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", (event) => openConsultAttachmentDialog(button, event));
   });
 
   document.querySelectorAll(".jh-chat-input").forEach((chatInput) => {
@@ -1198,12 +1241,15 @@ export function startOngoingTimers() {
       const nextSeconds = Number(node.dataset.elapsed || 0) + 1;
       node.dataset.elapsed = String(nextSeconds);
       if (node.matches("[data-duration-timer]")) {
-        syncActiveElapsedSeconds(nextSeconds);
+        syncActiveElapsedSeconds(nextSeconds, getRouteConsultationContext());
       }
       const text = formatDuration(nextSeconds);
       if (node.matches("[data-duration-timer]")) {
+        node.setAttribute("aria-label", `问诊持续时长：${text}`);
+        const value = node.querySelector(".jh-duration-chip__value");
+        if (value) value.textContent = text;
         const label = node.querySelector("strong");
-        if (label) label.textContent = `问诊持续时长：${text}`;
+        if (label && !value) label.textContent = `问诊持续时长：${text}`;
       } else {
         node.textContent = `持续 ${text}`;
       }
@@ -1310,6 +1356,16 @@ export function bindInteractions() {
     bindOverlayDismiss(riskWarningOverlay, {
       close: closeRiskWarningDialog,
       closeSelector: ".risk-warning-dialog__close"
+    });
+  }
+
+  const consultAttachmentOverlay = document.querySelector(".consult-attachment-overlay");
+
+  if (consultAttachmentOverlay) {
+    bindOverlayDismiss(consultAttachmentOverlay, {
+      close: closeConsultAttachmentDialog,
+      closeSelector: ".consult-attachment-dialog__close",
+      dialogSelector: ".consult-attachment-dialog"
     });
   }
 

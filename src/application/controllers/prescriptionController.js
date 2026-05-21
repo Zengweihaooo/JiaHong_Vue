@@ -1,8 +1,8 @@
 import { searchDiagnosisCatalog, searchMedicineCatalog } from "../../infrastructure/api/appApi.js";
-import { getActiveConsultationRecord } from "./consultationController.js";
+import { getActiveOngoingConsultationRecord } from "../state/dataStore.js";
 
-export async function getDiagnosisOptions(keyword = "") {
-  const record = getActiveConsultationRecord();
+export async function getDiagnosisOptions(keyword = "", context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   const response = await searchDiagnosisCatalog({
     keyword,
     exclude: record?.diagnosisTags || []
@@ -10,8 +10,8 @@ export async function getDiagnosisOptions(keyword = "") {
   return response.items;
 }
 
-export function addDiagnosisToActiveRecord(diagnosisText = "") {
-  const record = getActiveConsultationRecord();
+export function addDiagnosisToActiveRecord(diagnosisText = "", context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   if (!record) return { ok: false, message: "当前会话不可编辑" };
   normalizeRecordDiagnosis(record);
   const nextDiagnosis = diagnosisText.trim() || `补充诊断${record.diagnosisTags.length + 1}`;
@@ -23,8 +23,8 @@ export function addDiagnosisToActiveRecord(diagnosisText = "") {
   return { ok: true, record, message: `已添加诊断：${nextDiagnosis}` };
 }
 
-export function removeDiagnosisFromActiveRecord(tag) {
-  const record = getActiveConsultationRecord();
+export function removeDiagnosisFromActiveRecord(tag, context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   if (!record || !tag) return { ok: false, message: "当前诊断不可删除" };
   normalizeRecordDiagnosis(record);
   record.diagnosisTags = record.diagnosisTags.filter((item) => item !== tag);
@@ -32,8 +32,8 @@ export function removeDiagnosisFromActiveRecord(tag) {
   return { ok: true, record, message: "诊断已更新" };
 }
 
-export async function getMedicineOptions(keyword = "") {
-  const record = getActiveConsultationRecord();
+export async function getMedicineOptions(keyword = "", context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   const response = await searchMedicineCatalog({
     keyword,
     exclude: (record?.prescriptionMedicines || []).map((medicine) => medicine.name)
@@ -41,13 +41,13 @@ export async function getMedicineOptions(keyword = "") {
   return response.items;
 }
 
-export async function addMedicineToActiveRecord(input = "") {
-  const record = getActiveConsultationRecord();
+export async function addMedicineToActiveRecord(input = "", context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   if (!record) return { ok: false, message: "当前会话不可编辑" };
   record.prescriptionMedicines = record.prescriptionMedicines || [];
   const keyword = typeof input === "string" ? input.trim() : input?.name || "";
   if (!keyword) return { ok: false, record, message: "请输入药品名称" };
-  const options = typeof input === "object" && input ? [input] : await getMedicineOptions(keyword);
+  const options = typeof input === "object" && input ? [input] : await getMedicineOptions(keyword, context);
   const suggestion = options.find((medicine) => medicine.name === keyword) || options[0];
   if (!suggestion) return { ok: false, record, message: "未找到匹配药品" };
   if (record.prescriptionMedicines.some((medicine) => medicine.name === suggestion.name)) {
@@ -61,16 +61,16 @@ export async function addMedicineToActiveRecord(input = "") {
   return { ok: true, record, message: `已添加药品：${suggestion.name}` };
 }
 
-export function removeMedicineFromActiveRecord(name) {
-  const record = getActiveConsultationRecord();
+export function removeMedicineFromActiveRecord(name, context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   if (!record || !name) return { ok: false, message: "当前药品不可删除" };
   record.prescriptionMedicines = (record.prescriptionMedicines || []).filter((medicine) => medicine.name !== name);
   normalizeMedicines(record);
   return { ok: true, record, message: "药品已删除" };
 }
 
-export function updateMedicineFieldInActiveRecord(index, field, value) {
-  const record = getActiveConsultationRecord();
+export function updateMedicineFieldInActiveRecord(index, field, value, context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
   if (!record || !index || !field) return { ok: false };
   const medicine = (record.prescriptionMedicines || []).find((item) => Number(item.index) === Number(index));
   if (!medicine) return { ok: false, record };

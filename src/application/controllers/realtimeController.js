@@ -1,8 +1,11 @@
 import { getRealtimeSnapshot } from "../../infrastructure/api/appApi.js";
-import { addConsultationRecord } from "../state/dataStore.js";
-import { registerConsultationMachine } from "../state/runtimeState.js";
-import { setDoctorStatusState } from "./runtimeController.js";
-import { syncWaitingQueueToMessages } from "./consultationController.js";
+import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
+import { addConsultationRecord, consultationRecords } from "../state/dataStore.js";
+import {
+  registerConsultationMachine,
+  setDoctorStatus,
+  setWaitingQueue
+} from "../state/runtimeState.js";
 
 export async function refreshRealtimeState() {
   const snapshot = await getRealtimeSnapshot();
@@ -16,10 +19,10 @@ export async function refreshRealtimeState() {
     }
   }
 
-  syncWaitingQueueToMessages();
+  setWaitingQueue(buildWaitingQueueFromRecords(consultationRecords));
 
   if (snapshot.doctorStatus) {
-    setDoctorStatusState(snapshot.doctorStatus, { sync: false });
+    setDoctorStatus(snapshot.doctorStatus);
   }
 
   return {

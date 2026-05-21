@@ -1,6 +1,12 @@
 import { updateConsultationStatus } from "../../infrastructure/api/appApi.js";
-import { appView, getRecordParam, getRoomHref } from "../../shared/core.js";
-import { consultationRecords, updateConsultationRecordState } from "../state/dataStore.js";
+import {
+  consultationRecords,
+  getActiveOngoingConsultationRecord,
+  getActiveOngoingConsultationRecordId,
+  getConsultationRecordById as findConsultationRecordById,
+  getFirstEndedConsultationRecordByType,
+  updateConsultationRecordState
+} from "../state/dataStore.js";
 import { consultationEvents } from "../../domain/consultationStateMachine.js";
 import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
 import {
@@ -23,27 +29,20 @@ const terminalConsultationEvents = {
   }
 };
 
-export function getActiveOngoingRecordId(view = appView) {
-  const recordId = getRecordParam();
-  if (recordId) return recordId;
-  if (view === "text") return "active-text";
-  if (view === "video") return "active-video";
-  return null;
+export function getActiveOngoingRecordId(context = {}) {
+  return getActiveOngoingConsultationRecordId(context);
 }
 
-export function getActiveConsultationRecord() {
-  const recordId = getActiveOngoingRecordId();
-  return consultationRecords.find((entry) => entry.id === recordId && entry.state === "ongoing");
+export function getActiveConsultationRecord(context = {}) {
+  return getActiveOngoingConsultationRecord(context);
 }
 
 export function getConsultationRecordById(recordId) {
-  return consultationRecords.find((entry) => entry.id === recordId) || null;
+  return findConsultationRecordById(recordId);
 }
 
 export function getFirstEndedConsultationRecord({ type = "all" } = {}) {
-  return consultationRecords.find(
-    (record) => (type === "all" || record.type === type) && record.state === "ended"
-  ) || null;
+  return getFirstEndedConsultationRecordByType(type);
 }
 
 export function activateVideoConsultation(recordId) {
@@ -54,38 +53,37 @@ export function syncWaitingQueueToMessages({ silent = false } = {}) {
   setWaitingQueue(buildWaitingQueueFromRecords(consultationRecords), { silent });
 }
 
-export function syncActiveElapsedSeconds(seconds) {
-  const recordId = getActiveOngoingRecordId();
+export function syncActiveElapsedSeconds(seconds, context = {}) {
+  const recordId = getActiveOngoingRecordId(context);
   if (!recordId) return;
   const record = consultationRecords.find((entry) => entry.id === recordId);
   if (record) record.elapsedSeconds = seconds;
 }
 
-export function openRiskReviewForActiveConsultation() {
-  return syncActiveConsultationEvent(consultationEvents.OPEN_RISK_REVIEW);
+export function openRiskReviewForActiveConsultation(context = {}) {
+  return syncActiveConsultationEvent(consultationEvents.OPEN_RISK_REVIEW, context);
 }
 
-export function submitPrescriptionForActiveConsultation() {
-  return syncActiveConsultationEvent(consultationEvents.SUBMIT_PRESCRIPTION);
+export function submitPrescriptionForActiveConsultation(context = {}) {
+  return syncActiveConsultationEvent(consultationEvents.SUBMIT_PRESCRIPTION, context);
 }
 
-export function syncActiveConsultationEvent(event) {
-  const recordId = getActiveOngoingRecordId();
+export function syncActiveConsultationEvent(event, context = {}) {
+  const recordId = getActiveOngoingRecordId(context);
   if (!recordId) return null;
   sendConsultationEvent(recordId, event);
   return updateConsultationStatus(recordId, event);
 }
 
-export async function resolveActiveConsultation(kind) {
+export async function resolveActiveConsultation(kind, context = {}) {
   const config = terminalConsultationEvents[kind];
   if (!config) return null;
 
-  const recordId = getActiveOngoingRecordId();
+  const recordId = getActiveOngoingRecordId(context);
   const record = consultationRecords.find((entry) => entry.id === recordId);
   if (!recordId) {
     return {
-      message: config.message,
-      redirectHref: getRoomHref()
+      message: config.message
     };
   }
 
@@ -100,7 +98,6 @@ export async function resolveActiveConsultation(kind) {
   return {
     recordId,
     record: updatedRecord,
-    message: config.message,
-    redirectHref: getRoomHref()
+    message: config.message
   };
 }

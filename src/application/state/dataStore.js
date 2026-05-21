@@ -73,6 +73,43 @@ export function addConsultationRecord(record, chat) {
   return true;
 }
 
+export function getDefaultOngoingConsultationRecord({ view = "" } = {}) {
+  if (!view || view === "room") {
+    return consultationRecords.find((record) => record.state === "ongoing") || null;
+  }
+  return consultationRecords.find((record) => record.state === "ongoing" && record.targetView === view) ||
+    consultationRecords.find((record) => record.state === "ongoing" && record.type === view) ||
+    null;
+}
+
+export function getDefaultEndedConsultationRecord() {
+  return consultationRecords.find((record) => record.state === "ended") || null;
+}
+
+export function getActiveOngoingConsultationRecordId({ sessionId = "", recordId = "", view = "" } = {}) {
+  const explicitSessionId = sessionId || recordId;
+  if (explicitSessionId) return explicitSessionId;
+  return getDefaultOngoingConsultationRecord({ view })?.id || null;
+}
+
+export function getConsultationRecordById(recordId) {
+  return consultationRecords.find((entry) => entry.id === recordId) || null;
+}
+
+export function getOngoingConsultationRecordById(recordId) {
+  return consultationRecords.find((entry) => entry.id === recordId && entry.state === "ongoing") || null;
+}
+
+export function getActiveOngoingConsultationRecord(context = {}) {
+  return getOngoingConsultationRecordById(getActiveOngoingConsultationRecordId(context));
+}
+
+export function getFirstEndedConsultationRecordByType(type = "all") {
+  return consultationRecords.find(
+    (record) => (type === "all" || record.type === type) && record.state === "ended"
+  ) || null;
+}
+
 function formatEndedAt(date = new Date()) {
   const pad = (value) => String(value).padStart(2, "0");
   return [

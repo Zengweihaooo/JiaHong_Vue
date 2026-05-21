@@ -188,7 +188,7 @@
   "consultations": {
     "records": [
       {
-        "id": "active-text",
+        "id": "cs_20260519_164213_001",
         "type": "text",
         "typeLabel": "图文",
         "state": "ongoing",
@@ -232,7 +232,7 @@
         ]
       },
       {
-        "id": "active-video",
+        "id": "cs_20260519_163408_002",
         "type": "video",
         "typeLabel": "视频",
         "state": "ongoing",
@@ -276,11 +276,11 @@
         ]
       },
       {
-        "id": "active-consult-medication",
+        "id": "cs_20260519_164132_003",
         "type": "consult",
         "typeLabel": "咨询",
         "state": "ongoing",
-        "title": "嘉虹健康图文咨询",
+        "title": "武汉市好药师大药房",
         "patient": "郑女士",
         "age": "31岁",
         "patientGender": "女",
@@ -295,6 +295,17 @@
           "过敏性鼻炎",
           "用药咨询"
         ],
+        "consultationAttribute": "without-medicine",
+        "consultInfo": {
+          "description": "颈部酸痛僵硬，转头活动受限，久坐后痛感加重",
+          "attachments": [
+            "附件1",
+            "附件2",
+            "附件3",
+            "附件4"
+          ]
+        },
+        "treatmentAdvice": "",
         "patientDetail": {
           "weight": "49",
           "pregnancy": "否",
@@ -307,11 +318,11 @@
         "prescriptionMedicines": []
       },
       {
-        "id": "active-consult-child",
+        "id": "cs_20260519_163925_004",
         "type": "consult",
         "typeLabel": "咨询",
         "state": "ongoing",
-        "title": "嘉虹健康图文咨询",
+        "title": "武汉市好药师大药房南湖店",
         "patient": "吴女士",
         "age": "34岁",
         "patientGender": "女",
@@ -326,6 +337,15 @@
           "小儿发热",
           "儿童用药咨询"
         ],
+        "consultationAttribute": "with-medicine",
+        "consultInfo": {
+          "description": "孩子低热一天，精神还可以，想问问先观察还是需要用药。",
+          "attachments": [
+            "附件1",
+            "附件2"
+          ]
+        },
+        "treatmentAdvice": "",
         "patientDetail": {
           "weight": "18",
           "pregnancy": "否",
@@ -335,10 +355,47 @@
           "kidneyAbnormal": "否",
           "allergies": "无"
         },
-        "prescriptionMedicines": []
+        "prescriptionMedicines": [
+          {
+            "index": 1,
+            "name": "阿奇霉素分散片",
+            "type": "处方药",
+            "spec": "0.125g*6片",
+            "usage": "口服",
+            "frequency": "1次/日",
+            "dose": "0.25g",
+            "quantity": "1",
+            "unit": "盒",
+            "risk": "高"
+          },
+          {
+            "index": 2,
+            "name": "布洛芬混悬液",
+            "type": "处方药",
+            "spec": "100ml/瓶",
+            "usage": "口服",
+            "frequency": "必要时",
+            "dose": "5ml",
+            "quantity": "1",
+            "unit": "瓶",
+            "risk": "中"
+          },
+          {
+            "index": 3,
+            "name": "小儿氨酚黄那敏颗粒",
+            "type": "处方药",
+            "spec": "6g*10袋",
+            "usage": "口服",
+            "frequency": "2次/日",
+            "dose": "0.5袋",
+            "quantity": "1",
+            "unit": "盒",
+            "risk": "低"
+          }
+        ]
       },
       {
-        "id": "ended-text",
+        "id": "cs_20260519_140800_901",
         "type": "text",
         "typeLabel": "图文",
         "state": "ended",
@@ -431,7 +488,7 @@
         ]
       },
       {
-        "id": "ended-video",
+        "id": "cs_20260518_160500_902",
         "type": "video",
         "typeLabel": "视频",
         "state": "ended",
@@ -525,68 +582,68 @@
       }
     ],
     "ongoingChats": {
-      "active-text": {
+      "cs_20260519_164213_001": {
         "sessionDate": "2026-05-19 16:42:13",
         "messages": [
           {
-            "id": "active-text-msg-1",
+            "id": "cs_20260519_164213_001-msg-1",
             "from": "doctor",
             "text": "您好，我看到您描述咽痛和低热。请问有没有咳嗽、皮疹，近期是否服用过其他药？",
             "recalled": false
           },
           {
-            "id": "active-text-msg-2",
+            "id": "cs_20260519_164213_001-msg-2",
             "from": "patient",
             "text": "嗓子疼两天，吞咽有点痛，体温 37.6，没有皮疹，没吃别的药。",
             "recalled": false
           }
         ]
       },
-      "active-video": {
+      "cs_20260519_163408_002": {
         "sessionDate": "2026-05-19 16:34:08",
         "messages": [
           {
-            "id": "active-video-msg-1",
+            "id": "cs_20260519_163408_002-msg-1",
             "from": "doctor",
             "text": "您好，视频接诊前先确认下：咳嗽几天了？痰色、体温和呼吸情况怎样？",
             "recalled": false
           },
           {
-            "id": "active-video-msg-2",
+            "id": "cs_20260519_163408_002-msg-2",
             "from": "patient",
             "text": "咳嗽三天，有黄痰，晚上咳得厉害，没有胸闷，体温 37.4。",
             "recalled": false
           }
         ]
       },
-      "active-consult-medication": {
+      "cs_20260519_164132_003": {
         "sessionDate": "2026-05-19 16:41:32",
         "messages": [
           {
-            "id": "active-consult-medication-msg-1",
+            "id": "cs_20260519_164132_003-msg-1",
             "from": "doctor",
             "text": "您好，请问目前主要是鼻痒、喷嚏还是流涕？家里现在有哪几种药？",
             "recalled": false
           },
           {
-            "id": "active-consult-medication-msg-2",
+            "id": "cs_20260519_164132_003-msg-2",
             "from": "patient",
             "text": "主要是连续打喷嚏和清鼻涕，家里有氯雷他定和鼻喷剂，不确定能不能一起用。",
             "recalled": false
           }
         ]
       },
-      "active-consult-child": {
+      "cs_20260519_163925_004": {
         "sessionDate": "2026-05-19 16:37:18",
         "messages": [
           {
-            "id": "active-consult-child-msg-1",
+            "id": "cs_20260519_163925_004-msg-1",
             "from": "doctor",
             "text": "您好，孩子现在体温多少？有没有咳嗽、呕吐、腹泻或精神明显变差？",
             "recalled": false
           },
           {
-            "id": "active-consult-child-msg-2",
+            "id": "cs_20260519_163925_004-msg-2",
             "from": "patient",
             "text": "最高 37.8，精神还可以，偶尔咳两声，没有呕吐腹泻，所以想先问问怎么处理。",
             "recalled": false
@@ -597,7 +654,7 @@
     "realtimePool": {
       "records": [
         {
-          "id": "text-allergy",
+          "id": "cs_20260519_164005_005",
           "type": "text",
           "typeLabel": "图文",
           "state": "ongoing",
@@ -641,7 +698,7 @@
           ]
         },
         {
-          "id": "text-gastritis",
+          "id": "cs_20260519_163812_006",
           "type": "text",
           "typeLabel": "图文",
           "state": "ongoing",
@@ -685,7 +742,7 @@
           ]
         },
         {
-          "id": "video-hypertension",
+          "id": "cs_20260519_163604_007",
           "type": "video",
           "typeLabel": "视频",
           "state": "ongoing",
@@ -729,7 +786,7 @@
           ]
         },
         {
-          "id": "video-dermatitis",
+          "id": "cs_20260519_163458_008",
           "type": "video",
           "typeLabel": "视频",
           "state": "ongoing",
@@ -774,68 +831,68 @@
         }
       ],
       "chats": {
-        "text-allergy": {
+        "cs_20260519_164005_005": {
           "sessionDate": "2026-05-19 16:39:28",
           "messages": [
             {
-              "id": "text-allergy-msg-1",
+              "id": "cs_20260519_164005_005-msg-1",
               "from": "doctor",
               "text": "您好，鼻涕是清水样还是黄绿色？有没有发热、咽痛或喘憋？",
               "recalled": false
             },
             {
-              "id": "text-allergy-msg-2",
+              "id": "cs_20260519_164005_005-msg-2",
               "from": "patient",
               "text": "连续打喷嚏流清鼻涕，之前花粉季也会这样，没有发热，也不喘。",
               "recalled": false
             }
           ]
         },
-        "text-gastritis": {
+        "cs_20260519_163812_006": {
           "sessionDate": "2026-05-19 16:36:45",
           "messages": [
             {
-              "id": "text-gastritis-msg-1",
+              "id": "cs_20260519_163812_006-msg-1",
               "from": "doctor",
               "text": "您好，胃部不适多久了？有没有黑便、呕血，近期是否怀孕或备孕？",
               "recalled": false
             },
             {
-              "id": "text-gastritis-msg-2",
+              "id": "cs_20260519_163812_006-msg-2",
               "from": "patient",
               "text": "饭后胃胀反酸，昨晚吃辣后更明显，没有黑便呕血，也没有怀孕。",
               "recalled": false
             }
           ]
         },
-        "video-hypertension": {
+        "cs_20260519_163604_007": {
           "sessionDate": "2026-05-19 16:31:36",
           "messages": [
             {
-              "id": "video-hypertension-msg-1",
+              "id": "cs_20260519_163604_007-msg-1",
               "from": "doctor",
               "text": "您好，请先准备好近期血压记录。有没有头晕、胸痛或下肢水肿？",
               "recalled": false
             },
             {
-              "id": "video-hypertension-msg-2",
+              "id": "cs_20260519_163604_007-msg-2",
               "from": "patient",
               "text": "最近血压 145/92 左右，之前一直吃这个药，没有胸痛，下肢也不肿。",
               "recalled": false
             }
           ]
         },
-        "video-dermatitis": {
+        "cs_20260519_163458_008": {
           "sessionDate": "2026-05-19 16:28:52",
           "messages": [
             {
-              "id": "video-dermatitis-msg-1",
+              "id": "cs_20260519_163458_008-msg-1",
               "from": "doctor",
               "text": "您好，视频里我会看一下皮损范围。请问是否有渗液、破溃，最近接触过新的洗涤用品吗？",
               "recalled": false
             },
             {
-              "id": "video-dermatitis-msg-2",
+              "id": "cs_20260519_163458_008-msg-2",
               "from": "patient",
               "text": "胳膊这片红疹很痒，抓了会脱皮，没有渗液，最近换过洗衣液。",
               "recalled": false

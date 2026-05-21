@@ -1,8 +1,20 @@
-import { assetUrl, appView, getHomeHref, getRoomHref, getTextHref, getVideoHref, getHistoryHref, getRecordParam } from "../shared/core.js";
+import { assetUrl, appView, getHomeHref, getRoomHref, getTextHref, getVideoHref, getHistoryHref, getSessionIdParam } from "../shared/core.js";
 import { normalizeArchivedConsultationRecord } from "../domain/archivedConsultation.js";
 import { getMessageListRecords } from "../domain/consultationQueue.js";
 import { icons } from "./ui/icons.js";
 import { renderData, renderRuntime } from "./renderContext.js";
+
+function getDefaultOngoingRenderRecord(type = appView) {
+  return (
+    renderData.consultationRecords.find((record) => record.state === "ongoing" && record.targetView === type) ||
+    renderData.consultationRecords.find((record) => record.state === "ongoing" && record.type === type) ||
+    renderData.consultationRecords.find((record) => record.state === "ongoing")
+  );
+}
+
+function getDefaultEndedRenderRecord() {
+  return renderData.consultationRecords.find((record) => record.state === "ended");
+}
 
 export function renderCheckboxMark() {
   return `<img class="jh-checkbox__mark" src="${assetUrl("assets/figma-home/checkmark.svg")}" alt="" aria-hidden="true" />`;
@@ -39,10 +51,18 @@ export function renderButton({ text, tone = "primary", size = "md", className = 
 
 export function renderDurationChip(variant = "icon", elapsedSeconds = 0) {
   const safeVariant = ["icon", "pill", "plain"].includes(variant) ? variant : "icon";
+  const durationText = formatDuration(elapsedSeconds);
   return `
-    <span class="jh-duration-chip jh-duration-chip--${safeVariant}" data-duration-timer data-elapsed="${elapsedSeconds}">
-      ${safeVariant === "icon" ? `<span class="jh-duration-chip__clock" aria-hidden="true"></span>` : ""}
-      <strong>问诊持续时长：${formatDuration(elapsedSeconds)}</strong>
+    <span class="jh-duration-chip jh-duration-chip--${safeVariant}" data-duration-timer data-elapsed="${elapsedSeconds}" aria-label="问诊持续时长：${durationText}">
+      ${
+        safeVariant === "icon"
+          ? `<svg class="jh-duration-chip__clock" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M9 3.75V9.08229L12.6818 10.8597" stroke="#E36D6D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="0.7" y="0.7" width="16.6" height="16.6" rx="8.3" stroke="#E36D6D" stroke-width="1.4"/>
+            </svg>`
+          : ""
+      }
+      <strong><span class="jh-duration-chip__prefix">问诊持续时长：</span><span class="jh-duration-chip__value">${durationText}</span></strong>
     </span>`;
 }
 
@@ -151,6 +171,11 @@ export function renderConsultConfirmDialogs() {
 export function renderRiskWarningDialog() {
   const record = getActiveConsultationRecord();
   const medicines = record?.prescriptionMedicines?.length ? record.prescriptionMedicines : [];
+  const legendItems = [
+    { status: "must", label: "必须处理" },
+    { status: "severe", label: "严重警告" },
+    { status: "general", label: "一般警告" }
+  ];
   const headers = [
     "药品名称",
     "患者条件",
@@ -178,6 +203,19 @@ export function renderRiskWarningDialog() {
             <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" />
           </button>
         </header>
+        <div class="risk-warning-dialog__legend" aria-label="风险状态说明">
+          ${legendItems
+            .map(
+              (item) => `
+                <div class="risk-warning-legend-item">
+                  <span class="risk-warning-legend-item__icon" aria-hidden="true">
+                    <span class="risk-warning-status risk-warning-status--${item.status}"></span>
+                  </span>
+                  <span class="risk-warning-legend-item__label">${item.label}</span>
+                </div>`
+            )
+            .join("")}
+        </div>
         <div class="risk-warning-dialog__table-wrap">
           <div class="risk-warning-table" role="table" aria-label="风险检测提醒">
             <div class="risk-warning-row risk-warning-row--head" role="row">
@@ -258,6 +296,33 @@ export function renderSelectField({ label = "请选择", size = "sm", className 
           : ""
       }
     </button>`;
+}
+
+const prescriptionRemarkOptions = [
+  "益生菌需与抗生素间隔两小时使用",
+  "蒙脱石散需与其它药前后间隔两小时使用",
+  "联合用药中的补充用药",
+  "为老人带药",
+  "处方中儿童药品为15岁孩子带药",
+  "按疗程使用",
+  "微信支付",
+  "现金支付",
+  "支付宝支付",
+  "阿托伐他汀需与其它药物分开使用",
+  "其他"
+];
+
+export function renderPrescriptionRemarkSelect() {
+  return `
+    <label class="prescription-remark-field">
+      <span class="prescription-remark-field__label">处方备注：</span>
+      <select class="jh-input-field jh-input-field--sm prescription-remark-select" aria-label="处方备注">
+        <option value="">请选择</option>
+        ${prescriptionRemarkOptions
+          .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
+          .join("")}
+      </select>
+    </label>`;
 }
 
 export function renderLabelTag({ text = "默认标签", tone = "light", size = "sm", weight = "regular", className = "" } = {}) {
@@ -502,13 +567,9 @@ export function renderRoomTopbar() {
 
 export function renderRoomSidebar() {
   const activeRecord =
-    appView === "video"
-      ? getRecordParam("active-video")
-      : appView === "text"
-        ? getRecordParam("active-text")
-        : appView === "history"
-          ? getRecordParam("ended-text")
-          : "";
+    getSessionIdParam() ||
+    (appView === "history" ? getDefaultEndedRenderRecord()?.id : getDefaultOngoingRenderRecord(appView)?.id) ||
+    "";
   const initialState = appView === "history" ? "ended" : "ongoing";
   return `
     <aside class="room-sidebar" aria-label="问诊消息栏">
@@ -547,10 +608,10 @@ export function renderMessageList({ type = "all", state = "ongoing", activeRecor
 }
 
 export function getActiveVideoConsultationRecordId(activeRecord = "") {
-  const urlRecordId = getRecordParam();
+  const urlSessionId = getSessionIdParam();
   const candidates = [
     activeRecord,
-    appView === "video" ? urlRecordId : "",
+    appView === "video" ? urlSessionId : "",
     renderRuntime.activeVideoConsultationId
   ].filter(Boolean);
   return (
@@ -587,12 +648,10 @@ export function renderMessageItem(record, active, index = 0, activeVideoRecordId
 }
 
 export function getActiveConsultationRecord(type = appView) {
-  const recordId = getRecordParam();
-  const fallbackId = type === "video" ? "active-video" : "active-text";
+  const sessionId = getSessionIdParam();
   return (
-    renderData.consultationRecords.find((record) => record.id === recordId && record.state === "ongoing") ||
-    renderData.consultationRecords.find((record) => record.id === fallbackId) ||
-    renderData.consultationRecords.find((record) => record.state === "ongoing" && record.type === type)
+    renderData.consultationRecords.find((record) => record.id === sessionId && record.state === "ongoing") ||
+    getDefaultOngoingRenderRecord(type)
   );
 }
 
@@ -714,10 +773,10 @@ export function renderPrescriptionTraceCard(record) {
 }
 
 export function renderHistoryPage() {
-  const recordId = getRecordParam("ended-text");
+  const sessionId = getSessionIdParam();
   const record =
-    renderData.consultationRecords.find((item) => item.id === recordId && item.state === "ended") ||
-    renderData.consultationRecords.find((item) => item.id === "ended-text");
+    renderData.consultationRecords.find((item) => item.id === sessionId && item.state === "ended") ||
+    getDefaultEndedRenderRecord();
   const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
   const medicines = archivedRecord.prescriptionMedicines || [];
   return `
@@ -792,7 +851,19 @@ export function renderRoom() {
     </div>`;
 }
 
-function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, prescriptionPanel }) {
+function getRecordMedicineTypeLabel(record) {
+  if (record?.type === "consult") return record.consultationAttribute === "with-medicine" ? "带药" : "珮文";
+  return "中药";
+}
+
+function getConsultMainTitle(record) {
+  if (record?.type === "consult" && (!record.title || record.title.includes("图文咨询"))) {
+    return "武汉市好药师大药房";
+  }
+  return record?.title || "图文问诊";
+}
+
+function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, prescriptionPanel, record = null }) {
   return `
     <main class="text-main">
       <section class="text-card" aria-label="${label}">
@@ -800,7 +871,7 @@ function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, p
           <div class="pharmacy-bar__left">
             <h2>${title}</h2>
             ${renderRiskTag({ text: "迎检", size: "lg", className: "risk-tag--inspection" })}
-            ${renderLabelTag({ text: "中药", tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
+            ${renderLabelTag({ text: getRecordMedicineTypeLabel(record), tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
             ${renderDurationChip("icon", elapsedSeconds)}
@@ -817,22 +888,23 @@ function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, p
 
 export function renderTextMain() {
   const record = getActiveConsultationRecord("text");
+  const isConsult = record?.type === "consult";
   return renderConsultMainShell({
-    label: "图文问诊",
-    title: record?.title || "图文问诊",
+    label: isConsult ? "图文咨询" : "图文问诊",
+    title: getConsultMainTitle(record),
     elapsedSeconds: record?.elapsedSeconds ?? 0,
-    chatPanel: renderChatPanel(record?.id),
-    prescriptionPanel: renderPrescriptionPanel({ record })
+    chatPanel: renderChatPanel(record?.id, { record }),
+    prescriptionPanel: isConsult ? renderConsultationPanel({ record }) : renderPrescriptionPanel({ record }),
+    record
   });
 }
 
 
 export function getActiveChatKey() {
-  const recordId = getRecordParam();
-  if (recordId && renderData.ongoingChatState[recordId]) return recordId;
-  if (appView === "video") return "active-video";
-  if (appView === "text") return "active-text";
-  return null;
+  const sessionId = getSessionIdParam();
+  if (sessionId && renderData.ongoingChatState[sessionId]) return sessionId;
+  const record = getDefaultOngoingRenderRecord(appView);
+  return record?.id || null;
 }
 
 export function findOngoingChatMessage(chatKey, messageId) {
@@ -869,6 +941,65 @@ export function renderChatThread(chatKey = getActiveChatKey(), { threadClass = "
     </div>`;
 }
 
+function getConsultInfo(record = {}) {
+  const attachments = record.consultInfo?.attachments?.length ? record.consultInfo.attachments : ["附件1", "附件2", "附件3", "附件4"];
+  return {
+    description: record.consultInfo?.description || "颈部酸痛僵硬，转头活动受限，久坐后痛感加重",
+    attachments
+  };
+}
+
+export function renderConsultInfoCard(record) {
+  if (record?.type !== "consult") return "";
+  const consultInfo = getConsultInfo(record);
+  return `
+    <section class="consult-info-card" aria-label="咨询信息">
+      <h3>咨询信息</h3>
+      <div class="consult-info-card__row">
+        <span class="consult-info-card__label">病情描述：</span>
+        <p>${escapeHtml(consultInfo.description)}</p>
+      </div>
+      <div class="consult-info-card__row">
+        <span class="consult-info-card__label">病例信息：</span>
+        <div class="consult-attachments">
+          ${consultInfo.attachments
+            .map(
+              (attachment, index) => `
+                <button class="consult-attachment" type="button" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment)}">
+                  <img src="${assetUrl("assets/figma-consult/attachment.svg")}" alt="" aria-hidden="true" />
+                  <span>${escapeHtml(attachment)}</span>
+                </button>`
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderConsultAttachmentDialog() {
+  return `
+    <div class="consult-attachment-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="consult-attachment-dialog">
+        <div class="consult-attachment-dialog__header">
+          <h2>
+            <span class="consult-attachment-dialog__icon" aria-hidden="true"></span>
+            <span data-consult-attachment-dialog-title>附件1</span>
+          </h2>
+          <button class="consult-attachment-dialog__close" type="button" aria-label="关闭附件预览"></button>
+        </div>
+        <div class="consult-attachment-dialog__body">
+          <img class="consult-attachment-dialog__image" src="${assetUrl("assets/figma-consult/attachment-preview.png")}" alt="附件预览" />
+          <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--prev" aria-hidden="true"></span>
+          <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--next" aria-hidden="true"></span>
+          <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--pager" aria-hidden="true"></span>
+          <span class="consult-attachment-dialog__pager" data-consult-attachment-dialog-pager>1/4</span>
+          <button class="consult-attachment-dialog__page consult-attachment-dialog__page--prev" type="button" aria-label="上一页"></button>
+          <button class="consult-attachment-dialog__page consult-attachment-dialog__page--next" type="button" aria-label="下一页"></button>
+        </div>
+      </div>
+    </div>`;
+}
+
 export function renderChatMessageMenu() {
   return `
     <div class="chat-message-menu" role="menu" aria-hidden="true" hidden>
@@ -878,20 +1009,29 @@ export function renderChatMessageMenu() {
     </div>`;
 }
 
-export function renderChatPanel(chatKey = "active-text") {
+export function renderChatPanel(chatKey = getActiveChatKey(), { record = null } = {}) {
+  const aiReplies =
+    record?.type === "consult"
+      ? [
+          "考虑颈部肌肉劳损，多休息少低头",
+          "颈椎姿势不良引发不适，局部热敷缓解",
+          "颈肩筋膜炎，避免久坐适当活动颈部"
+        ]
+      : [
+          "头痛发烧多久啦？体温多少度？",
+          "持续几天了？头痛具体位置在哪，程度如何？",
+          "这是一串智能回复的文字内容，并且这是一行的最长字符数"
+        ];
   return `
     <section class="chat-panel" aria-label="聊天区域">
+      ${renderConsultInfoCard(record)}
       ${renderChatThread(chatKey)}
       <div class="ai-reply">
         <div class="ai-reply__head">
           <span class="ai-spark" aria-hidden="true"></span>
           <h3>智能推荐回复</h3>
         </div>
-        ${renderAiReplyOptions([
-          "头痛发烧多久啦？体温多少度？",
-          "持续几天了？头痛具体位置在哪，程度如何？",
-          "这是一串智能回复的文字内容，并且这是一行的最长字符数"
-        ])}
+        ${renderAiReplyOptions(aiReplies)}
         ${renderChatInput()}
       </div>
     </section>`;
@@ -1055,9 +1195,9 @@ export function renderPrescriptionPanel(options = {}) {
         ${
           readonly
             ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>`
-            : renderSelectField({ label: "请选择", size: "sm" })
+            : renderPrescriptionRemarkSelect()
         }
-        <div>
+        <div class="prescription-actions__controls">
           ${
             readonly
               ? renderButton({
@@ -1074,6 +1214,70 @@ export function renderPrescriptionPanel(options = {}) {
     </section>`;
 }
 
+export function renderConsultationPanel(options = {}) {
+  const { readonly = false, record = null } = options;
+  const patientName =
+    record
+      ? `${record.patient}&nbsp;&nbsp;${record.patientGender || ""}&nbsp;&nbsp;${record.age}`
+      : "暂无患者信息";
+  const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
+  const diagnosisTags =
+    record
+      ? record.diagnosisTags || [record.diagnosis].filter(Boolean)
+      : [];
+  const medicines = record?.prescriptionMedicines?.length ? record.prescriptionMedicines : [];
+
+  return `
+    <section class="prescription-panel consultation-panel${readonly ? " prescription-panel--readonly" : ""}" aria-label="咨询处理信息">
+      <div class="patient-info">
+        <div class="patient-info__name">${patientName}</div>
+        <div class="patient-info__grid">${renderPatientInfoGrid(patientDetail)}</div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="diagnosis-section consultation-diagnosis-section">
+        <h3>诊断意见</h3>
+        <div class="diagnosis-row">
+          <label><span>*</span>诊&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;断</label>
+          ${readonly ? `<span class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select--readonly" aria-disabled="true">${diagnosisTags[0] || ""}</span>` : renderDiagnosisSelectInput()}
+          <div class="diagnosis-input">
+            ${renderDiagnosisTags(diagnosisTags, readonly)}
+          </div>
+        </div>
+        <div class="diagnosis-row consultation-treatment-row">
+          <label><span>*</span>处理意见</label>
+          <textarea class="jh-input-field jh-input-field--lg consultation-treatment-input" placeholder="请输入治疗处理意见" aria-label="请输入治疗处理意见">${escapeHtml(record?.treatmentAdvice || "")}</textarea>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="medicine-section consultation-medicine-section">
+        <h3>所需药品</h3>
+        <div class="medicine-scroll-area">
+          ${readonly ? "" : renderMedicineSearchCombobox()}
+          ${
+            medicines.length
+              ? `<div class="medicine-table">
+                  <div class="medicine-table__row medicine-table__head">
+                    <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
+                  </div>
+                  ${medicines.map((row) => renderMedicineTableRow(row, readonly)).join("")}
+                </div>`
+              : `<div class="medicine-empty-state">暂无药品信息</div>`
+          }
+        </div>
+      </div>
+      <div class="prescription-actions consultation-actions${readonly ? " prescription-actions--readonly" : ""}">
+        ${readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect()}
+        <div class="prescription-actions__controls">
+          ${
+            readonly
+              ? renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" })
+              : renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" })
+          }
+        </div>
+      </div>
+    </section>`;
+}
+
 function renderConsultPage({ shellClass = "", main }) {
   return `
     <div class="app-shell room-shell${shellClass ? ` ${shellClass}` : ""} app-shell--responsive">
@@ -1084,6 +1288,7 @@ function renderConsultPage({ shellClass = "", main }) {
       ${renderRiskWarningDialog()}
       ${renderConsultConfirmDialogs()}
       ${renderChatMessageMenu()}
+      ${renderConsultAttachmentDialog()}
       <div class="toast" role="status" aria-live="polite"></div>
     </div>`;
 }
@@ -1164,7 +1369,7 @@ export function renderVideoChatPanel() {
         </div>
         ${renderVideoToolbar()}
       </div>
-      ${renderChatThread(record?.id || "active-video", { threadClass: "video-chat-thread" })}
+      ${renderChatThread(record?.id, { threadClass: "video-chat-thread" })}
       <div class="video-input-wrap">
         ${renderChatInput()}
       </div>

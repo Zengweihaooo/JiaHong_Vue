@@ -1591,11 +1591,10 @@ button {
   align-items: stretch;
   justify-content: center;
   gap: 16px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: minmax(160px, auto);
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  grid-auto-rows: auto;
   width: 100%;
   min-width: 0;
-  min-height: 336px;
   height: auto;
 }
 
@@ -1607,10 +1606,10 @@ button {
   justify-content: center;
   width: 100%;
   min-width: 0;
-  min-height: 160px;
+  min-height: 168px;
   height: auto;
-  padding: 10px;
-  overflow: hidden;
+  padding: 14px 10px;
+  overflow: visible;
   border: 1px solid var(--jh-line);
   border-radius: 6px;
   background: linear-gradient(270deg, #fcfcfc 0%, var(--jh-panel) 100%);
@@ -1674,6 +1673,7 @@ button {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
 .icon-box {
@@ -1760,10 +1760,7 @@ img.quick-icon {
   text-align: center;
   word-break: break-word;
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .quick-card__desc {
@@ -1777,10 +1774,7 @@ img.quick-icon {
   text-align: center;
   word-break: break-word;
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .footer {
@@ -1983,7 +1977,7 @@ svg {
   }
 
   .quick-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   }
 
   .trace-info-grid,
@@ -2997,7 +2991,7 @@ body.page-view-room {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 740px;
+  min-height: 796px;
   overflow: hidden;
   border-radius: 12px;
   background: #ffffff;
@@ -3012,6 +3006,7 @@ body.page-view-room {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   width: 100%;
   height: 56px;
   padding: 10px 24px;
@@ -3024,16 +3019,30 @@ body.page-view-room {
 .pharmacy-bar__right {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 24px;
 }
 
+.pharmacy-bar__left {
+  flex: 1 1 auto;
+}
+
+.pharmacy-bar__right {
+  flex: 0 0 auto;
+}
+
 .pharmacy-bar h2 {
-  width: 240px;
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 240px;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
   color: var(--jh-text-primary);
   font-size: 20px;
   font-weight: 400;
   line-height: 28px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -3079,27 +3088,15 @@ body.page-view-room {
 }
 
 .jh-duration-chip strong {
+  display: inline-flex;
   font-weight: 700;
 }
 
 .jh-duration-chip__clock {
-  position: relative;
   flex: 0 0 auto;
   width: var(--jh-duration-chip-icon-size);
   height: var(--jh-duration-chip-icon-size);
-  border: var(--jh-duration-chip-clock-stroke) solid var(--jh-error-hover);
-  border-radius: 50%;
-}
-
-.jh-duration-chip__clock::before {
-  position: absolute;
-  left: 8px;
-  top: 4px;
-  width: 4px;
-  height: 7px;
-  border-left: var(--jh-duration-chip-clock-stroke) solid var(--jh-error-hover);
-  border-bottom: var(--jh-duration-chip-clock-stroke) solid var(--jh-error-hover);
-  content: "";
+  display: block;
 }
 
 .consult-workspace {
@@ -3107,7 +3104,7 @@ body.page-view-room {
   top: 56px;
   left: 0;
   display: grid;
-  grid-template-columns: minmax(320px, 3fr) minmax(0, 5fr);
+  grid-template-columns: minmax(320px, 424px) minmax(0, 1fr);
   width: 100%;
   height: calc(100% - 56px);
   min-width: 0;
@@ -3137,6 +3134,270 @@ body.page-view-room {
   overscroll-behavior: contain;
   touch-action: pan-y;
   scrollbar-gutter: stable;
+}
+
+.consult-info-card {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 16px;
+  margin: 12px 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 6px 16px -8px rgba(16, 42, 67, 0.08),
+    0 1px 3px rgba(16, 42, 67, 0.05);
+}
+
+.consult-info-card h3 {
+  position: relative;
+  margin: 0;
+  padding-left: 10px;
+  color: var(--jh-text-primary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.consult-info-card h3::before {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 4px;
+  height: 15px;
+  border-radius: 1px;
+  background: var(--jh-blue);
+  content: "";
+}
+
+.consult-info-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.consult-info-card__row + .consult-info-card__row {
+  margin-top: -4px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e8eb;
+}
+
+.consult-info-card__label {
+  flex: 0 0 auto;
+  color: var(--jh-text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.consult-info-card p {
+  min-width: 0;
+  margin: 0;
+  color: var(--jh-text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.consult-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.consult-attachment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 63px;
+  height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: #f8f8f9;
+  color: var(--jh-blue);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.consult-attachment img {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.consult-attachment span {
+  color: inherit;
+  font: inherit;
+}
+
+.consult-attachment-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 75px;
+  background: rgba(122, 136, 152, 0.3);
+}
+
+.consult-attachment-overlay.is-open {
+  display: flex;
+}
+
+.consult-attachment-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 838px;
+  height: 749px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 84px 64px -20px rgba(16, 42, 67, 0.18),
+    0 8px 16px -4px rgba(16, 42, 67, 0.1);
+}
+
+.consult-attachment-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  border-bottom: 0.667px solid rgba(229, 231, 235, 0.5);
+  background: #f2f3f4;
+  box-shadow: 0 1px 2px rgba(16, 42, 67, 0.04);
+}
+
+.consult-attachment-dialog__header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: #1e2939;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.consult-attachment-dialog__icon {
+  width: 10px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.9);
+  -webkit-mask: url("assets/figma-consult/attachment.svg") center / contain no-repeat;
+  mask: url("assets/figma-consult/attachment.svg") center / contain no-repeat;
+}
+
+.consult-attachment-dialog__close {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.consult-attachment-dialog__close::before,
+.consult-attachment-dialog__close::after {
+  position: absolute;
+  top: 9px;
+  left: 4px;
+  width: 12px;
+  height: 1.667px;
+  border-radius: 999px;
+  background: #99a1af;
+  content: "";
+}
+
+.consult-attachment-dialog__close::before {
+  transform: rotate(45deg);
+}
+
+.consult-attachment-dialog__close::after {
+  transform: rotate(-45deg);
+}
+
+.consult-attachment-dialog__body {
+  position: relative;
+  width: 838px;
+  height: 700px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.consult-attachment-dialog__image {
+  position: absolute;
+  top: 0;
+  left: 69px;
+  width: 700px;
+  height: 700px;
+  object-fit: cover;
+}
+
+.consult-attachment-dialog__pager {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 32px;
+  padding: 4px 17px;
+  border-radius: 999px;
+  background: rgba(105, 115, 131, 0.5);
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.consult-attachment-dialog__page {
+  position: absolute;
+  top: 320px;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(105, 115, 131, 0.3);
+  cursor: pointer;
+}
+
+.consult-attachment-dialog__page--prev {
+  left: 18px;
+}
+
+.consult-attachment-dialog__page--next {
+  right: 17px;
+}
+
+.consult-attachment-dialog__page::before {
+  position: absolute;
+  top: 20px;
+  width: 18px;
+  height: 18px;
+  border-top: 2.8px solid #ffffff;
+  border-left: 2.8px solid #ffffff;
+  content: "";
+}
+
+.consult-attachment-dialog__page--prev::before {
+  left: 23px;
+  transform: rotate(-45deg);
+}
+
+.consult-attachment-dialog__page--next::before {
+  right: 23px;
+  transform: rotate(135deg);
 }
 
 .chat-date {
@@ -3890,9 +4151,46 @@ body.page-view-room {
   height: 11.667px;
 }
 
+.risk-warning-dialog__legend {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 838px;
+  height: 64px;
+  padding: 12px 12px 0;
+  background: #ffffff;
+}
+
+.risk-warning-legend-item {
+  display: flex;
+  align-items: center;
+  width: 140px;
+  height: 52px;
+  padding-right: 16px;
+}
+
+.risk-warning-legend-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 52px;
+  flex: 0 0 60px;
+}
+
+.risk-warning-legend-item__label {
+  color: #424751;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
 .risk-warning-dialog__table-wrap {
   width: 838px;
-  padding: 24px;
+  height: 212px;
+  padding: 12px 24px 24px;
   background: #ffffff;
 }
 
@@ -4025,6 +4323,7 @@ body.page-view-room {
 
 .risk-warning-dialog__message-wrap {
   width: 838px;
+  height: 144px;
   padding: 24px;
   background: #ffffff;
 }
@@ -4118,6 +4417,7 @@ body.page-view-room {
   display: flex;
   align-items: center;
   gap: 16px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -4192,8 +4492,8 @@ body.page-view-room {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1 1 514px;
-  max-width: 514px;
+  flex: 1 1 0;
+  width: 100%;
   min-width: 0;
   height: var(--jh-input-field-height-lg);
   padding: 4px;
@@ -4438,6 +4738,7 @@ body.page-view-room {
 
 .medicine-scroll-area {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 16px;
   width: 100%;
@@ -4610,8 +4911,10 @@ body.page-view-room {
 }
 
 .medicine-table {
-  height: var(--jh-table-height);
-  overflow: hidden;
+  flex: 0 0 auto;
+  height: auto;
+  min-height: var(--jh-table-height);
+  overflow: visible;
   border: 1px solid var(--jh-table-border);
   border-radius: 8px;
 }
@@ -4703,19 +5006,120 @@ body.page-view-room {
   text-align: right;
 }
 
+.consultation-panel .diagnosis-section {
+  gap: 16px;
+}
+
+.consultation-panel .diagnosis-row label {
+  flex: 0 0 70px;
+  width: 70px;
+}
+
+.consultation-panel .diagnosis-combobox {
+  flex: 0 0 94px;
+  width: 94px;
+}
+
+.consultation-treatment-row {
+  align-items: flex-start;
+}
+
+.consultation-treatment-input {
+  flex: 1 1 auto;
+  width: 100%;
+  height: var(--jh-input-field-height-lg);
+  padding: var(--jh-input-field-padding-lg);
+  resize: none;
+  outline: 0;
+  font: inherit;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.consultation-treatment-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.consultation-medicine-section {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.consultation-panel .medicine-scroll-area {
+  overflow-x: hidden;
+}
+
+.consultation-panel .medicine-scroll-area > .medicine-search-combobox,
+.consultation-panel .medicine-scroll-area > .medicine-table {
+  width: 100%;
+  min-width: 0;
+}
+
+.medicine-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 64px;
+  min-height: 64px;
+  border: 1px solid var(--jh-table-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #424751;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.consultation-actions .prescription-actions__controls {
+  margin-left: auto;
+}
+
+.consultation-complete-trigger {
+  width: 88px;
+  min-width: 88px;
+  font-weight: 700;
+}
+
 .prescription-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   margin-top: auto;
   padding: 16px 24px 24px;
   border-top: 1px solid #e5e8eb;
   background: #ffffff;
 }
 
-.prescription-actions > div {
+.prescription-actions__controls {
   display: flex;
+  flex: 0 0 auto;
   gap: 16px;
+}
+
+.prescription-remark-field {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 320px;
+  min-width: 220px;
+  max-width: 360px;
+  gap: 8px;
+}
+
+.prescription-remark-field__label {
+  flex: 0 0 auto;
+  color: var(--jh-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.prescription-remark-select {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .jh-prescription-submit {
@@ -4936,20 +5340,50 @@ body.page-view-room {
     overflow: visible;
   }
 
+  .text-main .pharmacy-bar,
   .text-shell .pharmacy-bar {
-    gap: 16px;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    height: 56px;
+    min-height: 56px;
+    padding: 10px 16px;
+    overflow: hidden;
   }
 
+  .text-main .pharmacy-bar__left,
+  .text-main .pharmacy-bar__right,
   .text-shell .pharmacy-bar__left,
   .text-shell .pharmacy-bar__right {
     min-width: 0;
-    gap: 16px;
+    gap: 10px;
   }
 
+  .text-main .pharmacy-bar__left,
+  .text-shell .pharmacy-bar__left {
+    flex: 1 1 auto;
+  }
+
+  .text-main .pharmacy-bar__right,
+  .text-shell .pharmacy-bar__right {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+  .text-main .pharmacy-bar h2,
   .text-shell .pharmacy-bar h2 {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  .text-main .jh-duration-chip__prefix,
+  .text-shell .jh-duration-chip__prefix {
+    display: none;
+  }
+
+  .text-main .jh-duration-chip--icon,
+  .text-shell .jh-duration-chip--icon {
+    gap: 6px;
+    padding: 0 10px 0 8px;
   }
 
   .text-shell .consult-workspace {

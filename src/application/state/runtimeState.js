@@ -3,6 +3,7 @@ import {
   mapRecordStateToMachineState
 } from "../../domain/consultationStateMachine.js";
 import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
+import { getNavigationEntry, getSessionStorage } from "../../infrastructure/browser/runtimeEnvironment.js";
 
 export const serviceState = {};
 export const consultationMachines = {};
@@ -25,10 +26,7 @@ export const waitingQueueState = {
 const runtimeStateListeners = new Set();
 export const activeVideoConsultationStorageKey = "jh.activeVideoConsultationId.v1";
 export const dismissedBadgeStorageKey = "jh.dismissedMessageBadges.v2";
-export const safeSessionStorage =
-  typeof sessionStorage === "undefined"
-    ? { getItem: () => null, setItem: () => {}, removeItem: () => {} }
-    : sessionStorage;
+export const safeSessionStorage = getSessionStorage();
 
 export function subscribeRuntimeState(listener) {
   runtimeStateListeners.add(listener);
@@ -59,7 +57,7 @@ export function initRuntimeState({ services = [], consultationRecords = [], doct
     (record) => record.id === storedActiveVideoId && record.type === "video" && record.state === "ongoing"
   );
   const defaultActiveVideo = consultationRecords.find(
-    (record) => record.id === "active-video" && record.type === "video" && record.state === "ongoing"
+    (record) => record.type === "video" && record.state === "ongoing"
   );
   activeVideoConsultationState.recordId = storedActiveVideo?.id || defaultActiveVideo?.id || "";
   if (activeVideoConsultationState.recordId) {
@@ -117,8 +115,7 @@ export function setWaitingQueue(queue, { silent = false } = {}) {
   if (!silent) emitRuntimeStateChange();
 }
 
-export const currentNavigation =
-  typeof performance === "undefined" ? null : performance.getEntriesByType("navigation")[0];
+export const currentNavigation = getNavigationEntry();
 export const dismissedMessageBadges = new Set(
   JSON.parse(safeSessionStorage.getItem(dismissedBadgeStorageKey) || "[]")
 );
