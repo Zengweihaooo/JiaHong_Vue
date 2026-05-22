@@ -16,6 +16,8 @@
 - `src/domain/prescriptionCatalog.js`：处方目录相关纯规则，目前只保留拼音排序比较器。
 - `src/infrastructure/api/httpClient.js`：统一 JSON 请求封装。
 - `src/infrastructure/api/mockApi.js`：Mock API 门面，模拟真实接口延迟和返回结构。
+- `src/infrastructure/api/mockCatalogSearch.js`：Mock 疾病/药品目录搜索适配，封装拼音/首字母匹配和目录合并规则。
+- `src/infrastructure/api/mockPinyinIndex.js`：Mock 目录搜索的本地拼音索引数据，不承载请求或搜索流程。
 - `src/infrastructure/api/appApi.js`：应用 API facade，应用层只依赖这里；未来替换真实接口优先改这里。
 - `src/infrastructure/browser/runtimeEnvironment.js`：浏览器运行环境适配器，集中提供 `sessionStorage` 和 navigation performance 访问的安全回退。
 - `src/infrastructure/mocks/app-bootstrap.json`：页面启动所需 Mock 数据源。
@@ -26,15 +28,29 @@
 - `src/application/state/dataStore.js`：内存数据仓库和会话查询 selectors，只保存 API hydrate 后的数据，不写业务样例。
 - `src/application/state/runtimeState.js`：运行态状态，例如服务开关、消息徽标、问诊状态机实例；浏览器存储访问经 infrastructure adapter。
 - `src/application/store/appStore.js`：应用启动 store，负责拉取 bootstrap 数据并初始化运行态。
+- `src/application/viewModels/renderViewModel.js`：渲染层只读 view model，集中暴露页面模板需要的数据和运行态快照，避免 presentation 直接读取 state 模块。
 - `src/application/controllers/chatController.js`：聊天消息控制器，封装进行中聊天消息追加、查询和撤回。
 - `src/application/controllers/consultationController.js`：问诊流程控制器，封装状态机事件、问诊结束/取消、处方状态同步和待接诊同步。
 - `src/application/controllers/contentController.js`：公告和快捷入口读取控制器，避免交互层直接读取数据仓库。
 - `src/application/controllers/prescriptionController.js`：处方编辑控制器，封装诊断/药品候选、增删改和去重规则。
 - `src/application/controllers/realtimeController.js`：实时状态控制器，封装 Mock 快照、会话新增、状态机注册和队列同步。
 - `src/application/controllers/runtimeController.js`：运行态控制器，封装医生状态和服务开关的本地状态与 API 同步。
-- `src/presentation/renderContext.js`：渲染上下文适配层，集中把应用状态暴露给渲染层。
-- `src/presentation/render.js`：HTML 渲染函数，输入来自渲染上下文，不直接发请求或操作 DOM。
+- `src/presentation/render.js`：通用问诊/历史 HTML 渲染入口，负责页面级组合，输入来自 application view model，不直接发请求或操作 DOM。
+- `src/presentation/views/renderRecordSelectors.js`：渲染专用记录选择器，集中处理路由 session、默认进行中/已结束记录和视频活跃会话 ID。
+- `src/presentation/views/homeView.js`：首页视图模板，集中渲染候诊、服务、公告和高频操作入口。
+- `src/presentation/views/roomShellView.js`：问诊室骨架视图模板，集中渲染顶部栏、侧边栏、消息列表和候诊室空状态。
+- `src/presentation/views/chatView.js`：聊天视图模板，集中渲染聊天输入、聊天气泡、智能回复、咨询信息卡片、消息菜单和附件预览。
+- `src/presentation/views/historyView.js`：历史问诊视图模板，集中渲染开方留痕、归档聊天和只读处方面板。
+- `src/presentation/views/prescriptionPanels.js`：处方和咨询处理面板模板，集中渲染患者信息、诊断、药品表格和处方操作。
+- `src/presentation/views/videoMedia.js`：视频问诊媒体控件模板和媒体开关 UI 状态。
 - `src/presentation/interactions.js`：事件绑定和 DOM 响应，只把用户动作转交给 application controllers/render/ui 模块。
+- `src/presentation/interactions/runtimeUiBindings.js`：运行态 UI 绑定，集中同步医生状态、服务开关、候诊数字、侧边栏和用户菜单。
+- `src/presentation/interactions/homeInteractionBindings.js`：首页交互绑定，集中处理公告弹窗、快捷入口编辑、快捷卡片增删拖拽和首页问诊卡跳转。
+- `src/presentation/interactions/roomInteractionBindings.js`：问诊室交互绑定，集中处理消息列表刷新、会话切换、筛选、历史回看和房间服务开关。
+- `src/presentation/interactions/consultDialogBindings.js`：问诊弹窗交互绑定，集中处理快捷回复、风险提醒、咨询附件预览和取消/结束问诊确认框。
+- `src/presentation/interactions/chatBindings.js`：聊天输入、消息右键菜单、撤回/复制/引用和 Mock 患者回复绑定。
+- `src/presentation/interactions/prescriptionEditorBindings.js`：处方编辑 DOM 绑定，集中处理诊断/药品搜索、用药单位选择、表格行编辑和处方面板局部刷新。
+- `src/presentation/interactions/videoControls.js`：视频问诊摄像头/麦克风 DOM 控制和本地媒体流绑定。
 - `src/presentation/components/primitives.js`：基础 HTML 组件模板，例如按钮、开关、标签、状态徽标和计时 chip；不读取业务状态。
 - `src/presentation/components/dialogs.js`：弹窗类 HTML 组件模板，例如快捷回复、问诊确认和风险检测提醒；由 `render.js` 注入页面数据。
 - `src/presentation/ui/icons.js`：应用图标 HTML 模板。
@@ -51,7 +67,7 @@ script.js
   -> application/store / presentation
 
 presentation
-  -> application/controllers / application/state(read runtime only) / domain / shared
+  -> application/controllers / application/viewModels / domain / shared
 
 application
   -> infrastructure/api/appApi / domain
@@ -71,6 +87,7 @@ domain
 - `src/application/controllers/*` 可以读写应用状态、调用 `appApi.js`、复用 domain 规则，但不操作 DOM。
 - `src/application/controllers/*` 之间保持并列，不互相 import；共享查询逻辑下沉到 state selectors 或 domain 纯函数。
 - `src/application/controllers/*` 不读取浏览器路由、URL 查询参数或跳转地址；当前页面上下文由 presentation 层传入。
+- `src/application/viewModels/*` 只提供 presentation 需要的只读投影，不发请求、不操作 DOM、不承载业务写操作。
 - `src/presentation/render.js` 不直接操作 DOM，不直接请求 API，不直接修改 data store 或 runtime state。
 - `src/presentation/components/*` 优先保持为可传参复用的模板组件；基础组件不读取 `renderData` / `renderRuntime`，复杂组件由 `render.js` 注入数据。
 - `src/presentation/interactions.js` 不直接 import data store、`mockApi.js` 或业务状态机；需要业务动作时新增/复用 controller。
