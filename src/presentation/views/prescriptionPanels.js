@@ -1,66 +1,20 @@
-import { assetUrl } from "../../shared/core.js";
 import { renderButton, renderRiskTag } from "../components/primitives.js";
 import { escapeHtml } from "../ui/html.js";
+import {
+  renderDiagnosisSelectInput,
+  renderDiagnosisTags,
+  renderMedicineSearchCombobox,
+  renderPrescriptionRemarkSelect
+} from "./prescriptionFormFields.js";
 
-export function renderSearchField({ className = "", placeholder = "请输入药品名称或首字母做模糊查询", disabled = false } = {}) {
-  return `
-    <label class="jh-search-field${className ? ` ${className}` : ""}${disabled ? " is-disabled" : ""}">
-      <span class="jh-search-field__icon" aria-hidden="true">
-        <img src="${assetUrl("assets/search-icon.png")}" alt="" />
-      </span>
-      <input type="text" placeholder="${placeholder}" aria-label="${placeholder}"${disabled ? " disabled" : ""} />
-    </label>`;
-}
-
-export function renderMedicineSearchCombobox() {
-  return `
-    <div class="medicine-search-combobox">
-      ${renderSearchField({ className: "medicine-search" })}
-      <div class="medicine-options" role="listbox" hidden></div>
-    </div>`;
-}
-
-export function renderSelectField({ label = "请选择", size = "sm", className = "", showChevron = true } = {}) {
-  const safeSize = size === "lg" ? "lg" : "sm";
-  return `
-    <button class="jh-input-field jh-input-field--${safeSize}${className ? ` ${className}` : ""}" type="button">
-      <span>${label}</span>
-      ${
-        showChevron
-          ? `<span class="jh-input-field__chevron" aria-hidden="true">
-              <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
-            </span>`
-          : ""
-      }
-    </button>`;
-}
-
-const prescriptionRemarkOptions = [
-  "益生菌需与抗生素间隔两小时使用",
-  "蒙脱石散需与其它药前后间隔两小时使用",
-  "联合用药中的补充用药",
-  "为老人带药",
-  "处方中儿童药品为15岁孩子带药",
-  "按疗程使用",
-  "微信支付",
-  "现金支付",
-  "支付宝支付",
-  "阿托伐他汀需与其它药物分开使用",
-  "其他"
-];
-
-export function renderPrescriptionRemarkSelect() {
-  return `
-    <label class="prescription-remark-field">
-      <span class="prescription-remark-field__label">处方备注：</span>
-      <select class="jh-input-field jh-input-field--sm prescription-remark-select" aria-label="处方备注">
-        <option value="">请选择</option>
-        ${prescriptionRemarkOptions
-          .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
-          .join("")}
-      </select>
-    </label>`;
-}
+export {
+  renderDiagnosisSelectInput,
+  renderDiagnosisTags,
+  renderMedicineSearchCombobox,
+  renderPrescriptionRemarkSelect,
+  renderSearchField,
+  renderSelectField
+} from "./prescriptionFormFields.js";
 
 
 export const defaultPrescriptionMedicines = [];
@@ -164,57 +118,93 @@ function renderMedicineTable(medicines = [], readonly = false) {
     </div>`;
 }
 
-export function renderDiagnosisTags(tags, readonly = false) {
-  return tags
-    .map((tag) => {
-      const safeTag = escapeHtml(tag);
-      return `
-        ${
-          readonly
-            ? `<span class="diagnosis-tag diagnosis-tag--readonly">`
-            : `<span class="diagnosis-tag" data-diagnosis-tag="${safeTag}">`
-        }
-          <span>${safeTag}</span>
-          ${
-            readonly
-              ? ""
-              : `<button class="diagnosis-tag__close diagnosis-tag__close-btn" type="button" data-diagnosis-tag="${safeTag}" aria-label="移除诊断：${safeTag}">
-                  <img src="${assetUrl("assets/diagnosis-tag-close.svg")}" alt="" />
-                </button>`
-          }
-        </span>`;
-    })
-    .join("");
+function getPatientName(record) {
+  return record
+    ? `${record.patient}&nbsp;&nbsp;${record.patientGender || ""}&nbsp;&nbsp;${record.age}`
+    : "暂无患者信息";
 }
 
-export function renderDiagnosisSelectInput() {
+function getDiagnosisTags(record, { excludeConsultationTag = false } = {}) {
+  const tags = record ? record.diagnosisTags || [record.diagnosis].filter(Boolean) : [];
+  return excludeConsultationTag ? tags.filter((tag) => !tag.includes("咨询")) : tags;
+}
+
+function renderPatientSection(record) {
+  const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
   return `
-    <div class="diagnosis-combobox">
-      <input
-        class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select-input"
-        type="text"
-        aria-label="请选择诊断"
-        aria-expanded="false"
-        autocomplete="off"
-        placeholder="请选择诊断"
-      />
-      <div class="diagnosis-options" role="listbox" hidden></div>
-    </div>`;
+      <div class="patient-info">
+        <div class="patient-info__name">${getPatientName(record)}</div>
+        <div class="patient-info__grid">${renderPatientInfoGrid(patientDetail)}</div>
+      </div>`;
+}
+
+function renderReadonlyDiagnosisValue(diagnosisTags) {
+  return `<span class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select--readonly" aria-disabled="true">${diagnosisTags[0] || ""}</span>`;
+}
+
+function renderDiagnosisSection({ title, diagnosisTags, readonly = false, className = "", treatmentAdvice = "" }) {
+  return `
+      <div class="diagnosis-section${className ? ` ${className}` : ""}">
+        <h3>${title}</h3>
+        <div class="diagnosis-row">
+          <label><span>*</span>诊断</label>
+          ${readonly ? renderReadonlyDiagnosisValue(diagnosisTags) : renderDiagnosisSelectInput()}
+          <div class="diagnosis-input">
+            ${renderDiagnosisTags(diagnosisTags, readonly)}
+          </div>
+        </div>
+        ${
+          treatmentAdvice === null
+            ? ""
+            : `<div class="diagnosis-row consultation-treatment-row">
+          <label><span>*</span>处理意见</label>
+          <textarea class="jh-input-field jh-input-field--lg consultation-treatment-input" placeholder="请输入治疗处理意见" aria-label="请输入治疗处理意见">${escapeHtml(treatmentAdvice)}</textarea>
+        </div>`
+        }
+      </div>`;
+}
+
+function renderMedicineSection({ medicines, readonly = false, className = "" }) {
+  return `
+      <div class="medicine-section${className ? ` ${className}` : ""}">
+        <h3>所需药品</h3>
+        <div class="medicine-scroll-area">
+          ${readonly ? "" : renderMedicineSearchCombobox()}
+          ${renderMedicineTable(medicines, readonly)}
+        </div>
+      </div>`;
+}
+
+function renderArchivedActionHint(readonly) {
+  return readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect();
+}
+
+function renderPrescriptionActionButtons({ readonly = false, consultation = false } = {}) {
+  if (readonly) {
+    return renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" });
+  }
+  if (consultation) {
+    return renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" });
+  }
+  return `${renderButton({ text: "结束问诊", tone: "soft-danger", size: "md", className: "end-consult-trigger", disabled: true })}
+          ${renderButton({ text: "提交处方", tone: "primary", size: "md", className: "jh-prescription-submit" })}`;
+}
+
+function renderPrescriptionActions({ readonly = false, consultation = false } = {}) {
+  return `
+      <div class="prescription-actions${consultation ? " consultation-actions" : ""}${readonly ? " prescription-actions--readonly" : ""}">
+        ${renderArchivedActionHint(readonly)}
+        <div class="prescription-actions__controls">
+          ${renderPrescriptionActionButtons({ readonly, consultation })}
+        </div>
+      </div>`;
 }
 
 export function renderPrescriptionPanel(options = {}) {
   const normalized = typeof options === "boolean" ? { includeSecondMedicine: options } : options;
   const { includeSecondMedicine = false, readonly = false, record = null } = normalized;
 
-  const patientName =
-    record
-      ? `${record.patient}&nbsp;&nbsp;${record.patientGender || ""}&nbsp;&nbsp;${record.age}`
-      : "暂无患者信息";
-  const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
-  const diagnosisTags =
-    record
-      ? record.diagnosisTags || [record.diagnosis].filter(Boolean)
-      : [];
+  const diagnosisTags = getDiagnosisTags(record);
   const medicines =
     record?.prescriptionMedicines?.length
       ? record.prescriptionMedicines
@@ -228,107 +218,33 @@ export function renderPrescriptionPanel(options = {}) {
 
   return `
     <section class="prescription-panel${readonly ? " prescription-panel--readonly" : ""}" aria-label="${panelLabel}">
-      <div class="patient-info">
-        <div class="patient-info__name">${patientName}</div>
-        <div class="patient-info__grid">${renderPatientInfoGrid(patientDetail)}</div>
-      </div>
+      ${renderPatientSection(record)}
       <div class="section-divider"></div>
-      <div class="diagnosis-section">
-        <h3>疾病信息</h3>
-        <div class="diagnosis-row">
-          <label><span>*</span>诊断</label>
-          ${
-            readonly
-              ? `<span class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select--readonly" aria-disabled="true">${diagnosisTags[0] || ""}</span>`
-              : renderDiagnosisSelectInput()
-          }
-          <div class="diagnosis-input">
-            ${renderDiagnosisTags(diagnosisTags, readonly)}
-          </div>
-        </div>
-      </div>
+      ${renderDiagnosisSection({ title: "疾病信息", diagnosisTags, readonly, treatmentAdvice: null })}
       <div class="section-divider"></div>
-      <div class="medicine-section">
-        <h3>所需药品</h3>
-        <div class="medicine-scroll-area">
-          ${readonly ? "" : renderMedicineSearchCombobox()}
-          ${renderMedicineTable(medicineRows, readonly)}
-        </div>
-      </div>
-      <div class="prescription-actions${readonly ? " prescription-actions--readonly" : ""}">
-        ${
-          readonly
-            ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>`
-            : renderPrescriptionRemarkSelect()
-        }
-        <div class="prescription-actions__controls">
-          ${
-            readonly
-              ? renderButton({
-                  text: "查看开方历史",
-                  tone: "primary",
-                  size: "md",
-                  className: "prescription-history-open"
-                })
-              : `${renderButton({ text: "结束问诊", tone: "soft-danger", size: "md", className: "end-consult-trigger", disabled: true })}
-          ${renderButton({ text: "提交处方", tone: "primary", size: "md", className: "jh-prescription-submit" })}`
-          }
-        </div>
-      </div>
+      ${renderMedicineSection({ medicines: medicineRows, readonly })}
+      ${renderPrescriptionActions({ readonly })}
     </section>`;
 }
 
 export function renderConsultationPanel(options = {}) {
   const { readonly = false, record = null } = options;
-  const patientName =
-    record
-      ? `${record.patient}&nbsp;&nbsp;${record.patientGender || ""}&nbsp;&nbsp;${record.age}`
-      : "暂无患者信息";
-  const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
-  const diagnosisTags =
-    record
-      ? (record.diagnosisTags || [record.diagnosis].filter(Boolean)).filter((tag) => !tag.includes("咨询"))
-      : [];
+  const diagnosisTags = getDiagnosisTags(record, { excludeConsultationTag: true });
   const medicines = record?.prescriptionMedicines?.length ? record.prescriptionMedicines : [];
 
   return `
     <section class="prescription-panel consultation-panel${readonly ? " prescription-panel--readonly" : ""}" aria-label="咨询处理信息">
-      <div class="patient-info">
-        <div class="patient-info__name">${patientName}</div>
-        <div class="patient-info__grid">${renderPatientInfoGrid(patientDetail)}</div>
-      </div>
+      ${renderPatientSection(record)}
       <div class="section-divider"></div>
-      <div class="diagnosis-section consultation-diagnosis-section">
-        <h3>诊断意见</h3>
-        <div class="diagnosis-row">
-          <label><span>*</span>诊断</label>
-          ${readonly ? `<span class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select--readonly" aria-disabled="true">${diagnosisTags[0] || ""}</span>` : renderDiagnosisSelectInput()}
-          <div class="diagnosis-input">
-            ${renderDiagnosisTags(diagnosisTags, readonly)}
-          </div>
-        </div>
-        <div class="diagnosis-row consultation-treatment-row">
-          <label><span>*</span>处理意见</label>
-          <textarea class="jh-input-field jh-input-field--lg consultation-treatment-input" placeholder="请输入治疗处理意见" aria-label="请输入治疗处理意见">${escapeHtml(record?.treatmentAdvice || "")}</textarea>
-        </div>
-      </div>
+      ${renderDiagnosisSection({
+        title: "诊断意见",
+        diagnosisTags,
+        readonly,
+        className: "consultation-diagnosis-section",
+        treatmentAdvice: record?.treatmentAdvice || ""
+      })}
       <div class="section-divider"></div>
-      <div class="medicine-section consultation-medicine-section">
-        <h3>所需药品</h3>
-        <div class="medicine-scroll-area">
-          ${readonly ? "" : renderMedicineSearchCombobox()}
-          ${renderMedicineTable(medicines, readonly)}
-        </div>
-      </div>
-      <div class="prescription-actions consultation-actions${readonly ? " prescription-actions--readonly" : ""}">
-        ${readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect()}
-        <div class="prescription-actions__controls">
-          ${
-            readonly
-              ? renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" })
-              : renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" })
-          }
-        </div>
-      </div>
+      ${renderMedicineSection({ medicines, readonly, className: "consultation-medicine-section" })}
+      ${renderPrescriptionActions({ readonly, consultation: true })}
     </section>`;
 }

@@ -42,6 +42,7 @@
 - `src/presentation/views/chatView.js`：聊天视图模板，集中渲染聊天输入、聊天气泡、智能回复、咨询信息卡片、消息菜单和附件预览。
 - `src/presentation/views/historyView.js`：历史问诊视图模板，集中渲染开方留痕、归档聊天和只读处方面板。
 - `src/presentation/views/prescriptionPanels.js`：处方和咨询处理面板模板，集中渲染患者信息、诊断、药品表格和处方操作。
+- `src/presentation/views/prescriptionFormFields.js`：处方表单字段模板，集中渲染搜索框、诊断选择、诊断标签、备注下拉和通用选择按钮。
 - `src/presentation/views/videoMedia.js`：视频问诊媒体控件模板和媒体开关 UI 状态。
 - `src/presentation/interactions.js`：事件绑定和 DOM 响应，只把用户动作转交给 application controllers/render/ui 模块。
 - `src/presentation/interactions/runtimeUiBindings.js`：运行态 UI 绑定，集中同步医生状态、服务开关、候诊数字、侧边栏和用户菜单。
@@ -50,6 +51,7 @@
 - `src/presentation/interactions/consultDialogBindings.js`：问诊弹窗交互绑定，集中处理快捷回复、风险提醒、咨询附件预览和取消/结束问诊确认框。
 - `src/presentation/interactions/chatBindings.js`：聊天输入、消息右键菜单、撤回/复制/引用和 Mock 患者回复绑定。
 - `src/presentation/interactions/prescriptionEditorBindings.js`：处方编辑 DOM 绑定，集中处理诊断/药品搜索、用药单位选择、表格行编辑和处方面板局部刷新。
+- `src/presentation/interactions/medicineUnitBindings.js`：药品单位下拉绑定，集中处理单位菜单定位、开关、键盘操作和单位字段同步。
 - `src/presentation/interactions/videoControls.js`：视频问诊摄像头/麦克风 DOM 控制和本地媒体流绑定。
 - `src/presentation/components/primitives.js`：基础 HTML 组件模板，例如按钮、开关、标签、状态徽标和计时 chip；不读取业务状态。
 - `src/presentation/components/dialogs.js`：弹窗类 HTML 组件模板，例如快捷回复、问诊确认和风险检测提醒；由 `render.js` 注入页面数据。
