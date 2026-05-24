@@ -23,11 +23,11 @@ import {
 } from "./views/chatView.js";
 import {
   renderRoomMain,
-  renderRoomSidebar,
   renderRoomTopbar,
   renderSidebar,
   renderTopbar
 } from "./views/roomShellView.js";
+import { renderRoomSidebar } from "./views/roomMessageListView.js";
 
 export function renderQuickReplyDialog() {
   return renderQuickReplyDialogView({

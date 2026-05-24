@@ -4,7 +4,8 @@ import { renderData } from "../../application/viewModels/renderViewModel.js";
 import { renderButton, renderLabelTag, renderReadTag } from "../components/primitives.js";
 import { renderPrescriptionPanel } from "./prescriptionPanels.js";
 import { getDefaultEndedRenderRecord } from "./renderRecordSelectors.js";
-import { renderRoomSidebar, renderRoomTopbar } from "./roomShellView.js";
+import { renderRoomSidebar } from "./roomMessageListView.js";
+import { renderRoomTopbar } from "./roomShellView.js";
 
 export function getConsultMainClass() {
   return appView === "text" || appView === "video" ? "text-main" : "room-main";

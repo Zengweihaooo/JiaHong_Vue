@@ -3,7 +3,8 @@ import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from 
 import { getActiveConsultationRecord } from "./renderRecordSelectors.js";
 import { renderChatInput, renderChatPanel, renderChatThread } from "./chatView.js";
 import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js";
-import { renderRoomSidebar, renderRoomTopbar } from "./roomShellView.js";
+import { renderRoomSidebar } from "./roomMessageListView.js";
+import { renderRoomTopbar } from "./roomShellView.js";
 import { renderVideoToolbar, videoMediaState } from "./videoMedia.js";
 
 function getRecordMedicineTypeLabel(record) {

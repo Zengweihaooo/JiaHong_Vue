@@ -10,7 +10,8 @@ import { getConsultMainElement, isConsultReadonlyView, setConsultShellReadonly }
 import { showToast } from "../ui/interactionPrimitives.js";
 import { renderTextMain, renderVideoMain } from "../views/consultRoomView.js";
 import { renderPrescriptionTraceMain } from "../views/historyView.js";
-import { renderMessageList, renderRoomMain } from "../views/roomShellView.js";
+import { renderMessageList } from "../views/roomMessageListView.js";
+import { renderRoomMain } from "../views/roomShellView.js";
 import { bindChatMessageMenu } from "./chatBindings.js";
 import { bindConsultConfirmDialogs } from "./consultDialogBindings.js";
 import { setServiceTileState } from "./runtimeUiBindings.js";
