@@ -16,6 +16,8 @@
 - `src/domain/prescriptionCatalog.js`：处方目录相关纯规则，目前只保留拼音排序比较器。
 - `src/infrastructure/api/httpClient.js`：统一 JSON 请求封装。
 - `src/infrastructure/api/mockApi.js`：Mock API 门面，模拟真实接口延迟和返回结构。
+- `src/infrastructure/api/mockRuntimeState.js`：Mock API 运行态存储适配，集中读写医生状态、服务开关、会话列表和聊天缓存。
+- `src/infrastructure/api/mockPatientReply.js`：Mock 病人自动回复生成器，集中按医生消息意图和病例上下文生成患者回复。
 - `src/infrastructure/api/mockCatalogSearch.js`：Mock 疾病/药品目录搜索适配，封装拼音/首字母匹配和目录合并规则。
 - `src/infrastructure/api/mockPinyinIndex.js`：Mock 目录搜索的本地拼音索引数据，不承载请求或搜索流程。
 - `src/infrastructure/api/appApi.js`：应用 API facade，应用层只依赖这里；未来替换真实接口优先改这里。
