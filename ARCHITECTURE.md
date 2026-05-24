@@ -50,6 +50,7 @@
 - `src/presentation/interactions.js`：事件绑定和 DOM 响应，只把用户动作转交给 application controllers/render/ui 模块。
 - `src/presentation/interactions/runtimeUiBindings.js`：运行态 UI 绑定，集中同步医生状态、服务开关、候诊数字、侧边栏和用户菜单。
 - `src/presentation/interactions/homeInteractionBindings.js`：首页交互绑定，集中处理公告弹窗、快捷入口编辑、快捷卡片增删拖拽和首页问诊卡跳转。
+- `src/presentation/interactions/homeQuickEntryBindings.js`：首页快捷入口绑定，集中处理快捷入口弹窗、卡片添加/编辑/删除和拖拽排序。
 - `src/presentation/interactions/roomInteractionBindings.js`：问诊室交互绑定，集中处理消息列表刷新、会话切换、筛选、历史回看和房间服务开关。
 - `src/presentation/interactions/consultWorkspaceBindings.js`：会诊工作区组合绑定，集中串联聊天输入、快捷回复、附件、处方提交和结束/取消问诊触发器。
 - `src/presentation/interactions/dragScrollBindings.js`：可拖拽滚动容器绑定，复用在聊天、快捷回复和处方面板局部重渲染后。
