@@ -39,6 +39,7 @@
 - `src/presentation/views/renderRecordSelectors.js`：渲染专用记录选择器，集中处理路由 session、默认进行中/已结束记录和视频活跃会话 ID。
 - `src/presentation/views/homeView.js`：首页视图模板，集中渲染候诊、服务、公告和高频操作入口。
 - `src/presentation/views/roomShellView.js`：问诊室骨架视图模板，集中渲染顶部栏、侧边栏、消息列表和候诊室空状态。
+- `src/presentation/views/consultRoomView.js`：当前问诊视图模板，集中渲染图文/视频问诊主工作区、药房栏和视频聊天区域。
 - `src/presentation/views/chatView.js`：聊天视图模板，集中渲染聊天输入、聊天气泡、智能回复、咨询信息卡片、消息菜单和附件预览。
 - `src/presentation/views/historyView.js`：历史问诊视图模板，集中渲染开方留痕、归档聊天和只读处方面板。
 - `src/presentation/views/prescriptionPanels.js`：处方和咨询处理面板模板，集中渲染患者信息、诊断、药品表格和处方操作。
