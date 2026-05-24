@@ -1,8 +1,5 @@
-import { appView, assetUrl, getSessionIdParam } from "../shared/core.js";
-import {
-  getActiveConsultationRecord,
-  syncActiveElapsedSeconds
-} from "../application/controllers/consultationController.js";
+import { appView, getSessionIdParam } from "../shared/core.js";
+import { syncActiveElapsedSeconds } from "../application/controllers/consultationController.js";
 import { refreshRealtimeState } from "../application/controllers/realtimeController.js";
 import { subscribeToRuntimeState } from "../application/controllers/runtimeController.js";
 import { isConsultReadonlyView } from "./ui/dom.js";
@@ -20,28 +17,20 @@ import {
   setServiceTileState,
   toggleDoctorOnlineStatus
 } from "./interactions/runtimeUiBindings.js";
-import { bindVideoControls } from "./interactions/videoControls.js";
 import {
   bindChatMessageMenu,
   closeChatMessageMenu,
-  configureChatBindings,
-  fillChatInput,
-  sendChatInputMessage
+  configureChatBindings
 } from "./interactions/chatBindings.js";
-import {
-  bindPrescriptionEditor,
-  configurePrescriptionEditorBindings
-} from "./interactions/prescriptionEditorBindings.js";
+import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js";
+import { bindDragScrollContainers } from "./interactions/dragScrollBindings.js";
+import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js";
 import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js";
 import {
   bindConsultConfirmDialogs,
   bindConsultDialogOverlays,
   closeConsultDialogOverlays,
-  configureConsultDialogBindings,
-  openConsultAttachmentDialog,
-  openConsultConfirmDialog,
-  openQuickReplyDialog,
-  openRiskWarningDialog
+  configureConsultDialogBindings
 } from "./interactions/consultDialogBindings.js";
 import {
   bindRoomInteractions,
@@ -54,137 +43,6 @@ function getRouteConsultationContext() {
     sessionId: getSessionIdParam(),
     view: appView
   };
-}
-
-function bindDragScrollContainers(root = document) {
-  root
-    .querySelectorAll(".message-list, .chat-thread, .video-chat-thread, .quick-reply-categories, .quick-reply-list, .prescription-panel")
-    .forEach((node) => {
-      if (node.dataset.dragScrollBound === "true") return;
-      node.dataset.dragScrollBound = "true";
-      let startY = 0;
-      let startScrollTop = 0;
-      let didDrag = false;
-      let pointerId = null;
-
-      node.addEventListener("pointerdown", (event) => {
-        if (event.button !== 0 || node.scrollHeight <= node.clientHeight) return;
-        pointerId = event.pointerId;
-        startY = event.clientY;
-        startScrollTop = node.scrollTop;
-        didDrag = false;
-        node.classList.add("is-drag-scroll-active");
-        node.setPointerCapture?.(event.pointerId);
-      });
-
-      node.addEventListener("pointermove", (event) => {
-        if (pointerId !== event.pointerId) return;
-        const deltaY = event.clientY - startY;
-        if (Math.abs(deltaY) > 4) didDrag = true;
-        if (!didDrag) return;
-        event.preventDefault();
-        node.scrollTop = startScrollTop - deltaY;
-      });
-
-      const endDrag = (event) => {
-        if (pointerId !== event.pointerId) return;
-        pointerId = null;
-        node.classList.remove("is-drag-scroll-active");
-        node.releasePointerCapture?.(event.pointerId);
-      };
-
-      node.addEventListener("pointerup", endDrag);
-      node.addEventListener("pointercancel", endDrag);
-      node.addEventListener(
-        "click",
-        (event) => {
-          if (!didDrag) return;
-          event.preventDefault();
-          event.stopPropagation();
-          didDrag = false;
-        },
-        true
-      );
-    });
-}
-
-function bindConsultWorkspace() {
-  bindDragScrollContainers();
-  bindPrescriptionEditor();
-
-  document.querySelectorAll(".ai-reply__options button").forEach((option) => {
-    if (option.dataset.bound === "true") return;
-    option.dataset.bound = "true";
-    option.addEventListener("click", () => {
-      fillChatInput(option.textContent);
-    });
-  });
-
-  document.querySelectorAll(".quick-reply-trigger").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("click", openQuickReplyDialog);
-  });
-
-  document.querySelectorAll(".consult-attachment").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("click", (event) => openConsultAttachmentDialog(button, event));
-  });
-
-  document.querySelectorAll(".jh-chat-input").forEach((chatInput) => {
-    if (chatInput.dataset.sendBound === "true") return;
-    chatInput.dataset.sendBound = "true";
-    const textarea = chatInput.querySelector("textarea");
-    const sendButton = chatInput.querySelector(".jh-chat-input__actions .jh-btn--primary");
-    sendButton?.addEventListener("click", () => {
-      sendChatInputMessage(textarea);
-    });
-    textarea?.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
-      event.preventDefault();
-      sendChatInputMessage(textarea);
-    });
-  });
-
-  document.querySelectorAll(".jh-prescription-submit").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      openRiskWarningDialog();
-    });
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-  });
-
-  document.querySelectorAll(".cancel-consult-trigger").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("click", () => {
-      openConsultConfirmDialog("cancel");
-    });
-  });
-
-  document.querySelectorAll(".end-consult-trigger").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (button.disabled) return;
-      openConsultConfirmDialog("end");
-    });
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-  });
-
-  bindVideoControls();
 }
 
 export function startOngoingTimers() {
