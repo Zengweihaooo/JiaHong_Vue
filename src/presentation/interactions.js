@@ -3,8 +3,8 @@ import { syncActiveElapsedSeconds } from "../application/controllers/consultatio
 import { refreshRealtimeState } from "../application/controllers/realtimeController.js";
 import { subscribeToRuntimeState } from "../application/controllers/runtimeController.js";
 import { isConsultReadonlyView } from "./ui/dom.js";
-import { showToast } from "./ui/interactionPrimitives.js";
-import { formatDuration } from "./components/primitives.js";
+import { showToast } from "./ui/interactionPrimitives.js?v=20260527-30";
+import { formatDuration, getDurationTone } from "./components/primitives.js?v=20260527-30";
 import {
   applyRuntimeStateToDom,
   bindDoctorStatusMenus,
@@ -16,22 +16,22 @@ import {
   isServiceAvailable,
   setServiceTileState,
   toggleDoctorOnlineStatus
-} from "./interactions/runtimeUiBindings.js";
+} from "./interactions/runtimeUiBindings.js?v=20260527-30";
 import {
   bindChatMessageMenu,
   closeChatMessageMenu,
   configureChatBindings
 } from "./interactions/chatBindings.js";
-import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js";
+import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-30";
 import { bindDragScrollContainers } from "./interactions/dragScrollBindings.js";
 import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js";
-import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js";
+import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260527-30";
 import {
   bindConsultConfirmDialogs,
   bindConsultDialogOverlays,
   closeConsultDialogOverlays,
   configureConsultDialogBindings
-} from "./interactions/consultDialogBindings.js";
+} from "./interactions/consultDialogBindings.js?v=20260527-30";
 import {
   bindRoomInteractions,
   configureRoomInteractionBindings,
@@ -60,6 +60,8 @@ export function startOngoingTimers() {
       const text = formatDuration(nextSeconds);
       if (node.matches("[data-duration-timer]")) {
         node.setAttribute("aria-label", `问诊持续时长：${text}`);
+        node.classList.remove("jh-duration-chip--normal", "jh-duration-chip--warning", "jh-duration-chip--danger");
+        node.classList.add(`jh-duration-chip--${getDurationTone(nextSeconds)}`);
         const value = node.querySelector(".jh-duration-chip__value");
         if (value) value.textContent = text;
         const label = node.querySelector("strong");

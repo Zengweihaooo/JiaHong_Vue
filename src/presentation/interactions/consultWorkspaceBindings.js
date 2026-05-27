@@ -4,10 +4,12 @@ import {
   openConsultConfirmDialog,
   openQuickReplyDialog,
   openRiskWarningDialog
-} from "./consultDialogBindings.js";
+} from "./consultDialogBindings.js?v=20260527-30";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
 import { bindVideoControls } from "./videoControls.js";
+
+const videoSubmitLockSeconds = 10;
 
 function bindAiReplyOptions() {
   document.querySelectorAll(".ai-reply__options button").forEach((option) => {
@@ -56,15 +58,44 @@ function bindPrescriptionSubmitTriggers() {
   document.querySelectorAll(".jh-prescription-submit").forEach((button) => {
     if (button.dataset.bound === "true") return;
     button.dataset.bound = "true";
-    button.addEventListener("pointerdown", (event) => {
+    const submit = (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (button.disabled || button.getAttribute("aria-disabled") === "true") return;
       openRiskWarningDialog();
-    });
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
+    };
+    button.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
     });
+    button.addEventListener("click", submit);
+  });
+}
+
+function bindVideoPrescriptionSubmitCountdown() {
+  document.querySelectorAll("[data-video-submit-countdown]").forEach((countdown) => {
+    if (countdown.dataset.bound === "true") return;
+    countdown.dataset.bound = "true";
+    const submitButton = countdown.closest(".video-prescription-submit-wrap")?.querySelector(".jh-prescription-submit");
+    const value = countdown.querySelector(".video-submit-countdown__value");
+    let remaining = Number(countdown.dataset.remaining || videoSubmitLockSeconds);
+    const render = () => {
+      const safeRemaining = Math.max(0, remaining);
+      countdown.dataset.remaining = String(safeRemaining);
+      if (value) value.textContent = `${safeRemaining}s`;
+      if (submitButton) {
+        submitButton.disabled = safeRemaining > 0;
+        submitButton.setAttribute("aria-disabled", String(safeRemaining > 0));
+      }
+      countdown.hidden = safeRemaining <= 0;
+    };
+    render();
+    const timer = window.setInterval(() => {
+      remaining -= 1;
+      render();
+      if (remaining <= 0) {
+        window.clearInterval(timer);
+      }
+    }, 1000);
   });
 }
 
@@ -101,6 +132,7 @@ export function bindConsultWorkspace() {
   bindConsultAttachments();
   bindChatInputs();
   bindPrescriptionSubmitTriggers();
+  bindVideoPrescriptionSubmitCountdown();
   bindConsultFinishTriggers();
   bindVideoControls();
 }

@@ -19,6 +19,7 @@ export function renderSwitch({ checked = false, label = "切换开关", classNam
 export function renderButton({ text, tone = "primary", size = "md", className = "", type = "button", disabled = false } = {}) {
   const safeTone = [
     "primary",
+    "success",
     "outline-primary",
     "outline-secondary",
     "block-outline",
@@ -41,16 +42,24 @@ export function formatDuration(totalSeconds) {
   return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
 }
 
+export function getDurationTone(totalSeconds) {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  if (safeSeconds >= 600) return "danger";
+  if (safeSeconds >= 179) return "warning";
+  return "normal";
+}
+
 export function renderDurationChip(variant = "icon", elapsedSeconds = 0) {
   const safeVariant = ["icon", "pill", "plain"].includes(variant) ? variant : "icon";
   const durationText = formatDuration(elapsedSeconds);
+  const tone = getDurationTone(elapsedSeconds);
   return `
-    <span class="jh-duration-chip jh-duration-chip--${safeVariant}" data-duration-timer data-elapsed="${elapsedSeconds}" aria-label="问诊持续时长：${durationText}">
+    <span class="jh-duration-chip jh-duration-chip--${safeVariant} jh-duration-chip--${tone}" data-duration-timer data-elapsed="${elapsedSeconds}" aria-label="问诊持续时长：${durationText}">
       ${
         safeVariant === "icon"
           ? `<svg class="jh-duration-chip__clock" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-              <path d="M9 3.75V9.08229L12.6818 10.8597" stroke="#E36D6D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="0.7" y="0.7" width="16.6" height="16.6" rx="8.3" stroke="#E36D6D" stroke-width="1.4"/>
+              <path d="M9 3.75V9.08229L12.6818 10.8597" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="0.7" y="0.7" width="16.6" height="16.6" rx="8.3" stroke="currentColor" stroke-width="1.4"/>
             </svg>`
           : ""
       }

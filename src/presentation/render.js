@@ -3,18 +3,18 @@ import {
   renderConsultConfirmDialogs,
   renderQuickReplyDialogView,
   renderRiskWarningDialogView
-} from "./components/dialogs.js";
+} from "./components/dialogs.js?v=20260527-30";
 import { renderData } from "../application/viewModels/renderViewModel.js";
 import {
   renderAnnouncementDialog,
   renderAnnouncementListDialog,
   renderMain,
   renderQuickEntryDialog
-} from "./views/homeView.js";
+} from "./views/homeView.js?v=20260527-30";
 import {
   renderTextPage,
   renderVideoPage
-} from "./views/consultRoomView.js";
+} from "./views/consultRoomView.js?v=20260527-30";
 import { renderHistoryPage } from "./views/historyView.js";
 import { getActiveConsultationRecord } from "./views/renderRecordSelectors.js";
 import {

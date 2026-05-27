@@ -11,7 +11,7 @@ import {
   closePopupMenus,
   showToast,
   togglePopupMenu
-} from "../ui/interactionPrimitives.js";
+} from "../ui/interactionPrimitives.js?v=20260527-30";
 
 const userMenuConfig = {
   menuSelector: ".user-menu",
@@ -24,6 +24,18 @@ const doctorStatusMenuConfig = {
   containerSelector: ".doctor-status-control",
   triggerSelector: ".doctor-status-trigger"
 };
+
+function showDoctorStatusToast(status) {
+  if (status === "online") {
+    showToast("上线成功", { tone: "success", placement: "home-status" });
+    return;
+  }
+  if (status === "offline") {
+    showToast("你已下线", { tone: "offline", placement: "home-status" });
+    return;
+  }
+  showToast("出诊状态已切换", { tone: "info", placement: "home-status" });
+}
 
 export function isServiceAvailable(serviceKey) {
   return getServiceAvailability(serviceKey);
@@ -39,6 +51,9 @@ export function setServiceTileState(tile, enabled, { sync = true } = {}) {
   tile.setAttribute("aria-checked", String(enabled));
   tile.classList.toggle("is-selected", enabled);
   if (serviceKey) applyServiceStateToDom(serviceKey, enabled);
+  if (sync) {
+    showToast("出诊状态已切换", { tone: "info", placement: "home-status" });
+  }
 }
 
 function applyServiceStateToDom(serviceKey, enabled) {
@@ -85,6 +100,9 @@ export function applyRuntimeStateToDom() {
   document.querySelectorAll("[data-waiting-type]").forEach((node) => {
     node.textContent = String(waitingQueue.byType[node.dataset.waitingType] ?? 0);
   });
+  document.querySelectorAll(".consult-card").forEach((card) => {
+    card.classList.toggle("consult-card--has-queue", Number(waitingQueue.total) > 0);
+  });
 
   getServiceAvailabilityEntries().forEach(([serviceKey, enabled]) => {
     applyServiceStateToDom(serviceKey, enabled);
@@ -92,9 +110,13 @@ export function applyRuntimeStateToDom() {
 }
 
 export function changeDoctorStatus(nextStatus, { sync = true } = {}) {
+  const previousStatus = getDoctorStatus();
   setDoctorStatusState(nextStatus, { sync }).catch(() => {
     showToast("出诊状态同步失败");
   });
+  if (sync && previousStatus !== nextStatus) {
+    showDoctorStatusToast(nextStatus);
+  }
 }
 
 export function toggleDoctorOnlineStatus() {

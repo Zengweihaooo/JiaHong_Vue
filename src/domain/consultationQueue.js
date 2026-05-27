@@ -27,7 +27,7 @@ export function getMessageListRecords(records = [], { type = "all", state = "ong
 
 export function buildWaitingQueueFromRecords(records = [], date = new Date()) {
   const visibleOngoingRecords = getMessageListRecords(records, { type: "all", state: "ongoing" }).filter(
-    (record) => record.type === "text" || record.type === "video"
+    (record) => record.type === "text" || record.type === "video" || record.type === "consult"
   );
   const byType = visibleOngoingRecords.reduce(
     (counts, record) => {

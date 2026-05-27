@@ -6,11 +6,11 @@
     "status": "online"
   },
   "waitingQueue": {
-    "total": 2,
+    "total": 4,
     "byType": {
       "text": 1,
       "video": 1,
-      "consult": 0
+      "consult": 2
     },
     "updatedAt": "2026-05-19T16:42:00+08:00"
   },
@@ -228,6 +228,27 @@
             "quantity": "1",
             "unit": "盒",
             "risk": "低"
+          },
+          {
+            "index": 2,
+            "name": "头孢曲松钠",
+            "type": "处方药",
+            "spec": "1.0g*1瓶",
+            "usage": "口服",
+            "frequency": "1次/日",
+            "dose": "0.25毫克",
+            "quantity": "1",
+            "unit": "瓶",
+            "risk": "高",
+            "warningFields": [
+              "usage",
+              "dose"
+            ],
+            "warningColumns": {
+              "4": "severe"
+            },
+            "warningMessage": "[警示信息]头孢曲松钠为注射用药，当前处方填写为口服且用量 0.25毫克，请核对给药途径和剂量。",
+            "warningSuggestion": "[建议信息]请调整头孢曲松钠的给药途径与单次剂量后，再提交处方。"
           }
         ]
       },

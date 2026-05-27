@@ -1,4 +1,4 @@
-import { renderButton, renderRiskTag } from "../components/primitives.js";
+import { renderButton, renderRiskTag } from "../components/primitives.js?v=20260527-30";
 import { escapeHtml } from "../ui/html.js";
 import {
   renderDiagnosisSelectInput,
@@ -31,6 +31,14 @@ export const defaultPatientDetail = {
   allergies: "--"
 };
 
+function getMedicineWarningFields(row = {}) {
+  return new Set(Array.isArray(row.warningFields) ? row.warningFields : []);
+}
+
+function getMedicineWarningClass(warningFields, field) {
+  return warningFields.has(field) ? " medicine-warning-target" : "";
+}
+
 export function renderPatientInfoGrid(patientDetail = defaultPatientDetail) {
   return `
     <span>体重 /KG：${patientDetail.weight}</span>
@@ -43,20 +51,23 @@ export function renderPatientInfoGrid(patientDetail = defaultPatientDetail) {
 }
 
 export function renderMedicineTableRow(row, readonly = false) {
+  const warningFields = getMedicineWarningFields(row);
   const renderEditableBox = (field, label) => {
     const value = row[field] ?? "";
-    if (readonly) return `<span class="table-input">${escapeHtml(value)}</span>`;
-    return `<input class="table-input medicine-edit-field" type="text" value="${escapeHtml(value)}" aria-label="${label}" data-medicine-field="${field}" />`;
+    const warningClass = getMedicineWarningClass(warningFields, field);
+    if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
+    return `<input class="table-input medicine-edit-field${warningClass}" type="text" value="${escapeHtml(value)}" aria-label="${label}" data-medicine-field="${field}" />`;
   };
   const renderUnitSelector = () => {
     const value = row.unit ?? "";
-    if (readonly) return `<span class="table-input">${escapeHtml(value)}</span>`;
+    const warningClass = getMedicineWarningClass(warningFields, "unit");
+    if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
     const selectedValue = value || medicineUnitOptions[0];
     const optionValues = Array.from(new Set([selectedValue, ...medicineUnitOptions].filter(Boolean)));
     return `
       <div class="medicine-unit-control">
         <button
-          class="table-input medicine-unit-select"
+          class="table-input medicine-unit-select${warningClass}"
           type="button"
           aria-label="单位"
           aria-haspopup="listbox"
@@ -83,11 +94,13 @@ export function renderMedicineTableRow(row, readonly = false) {
         </div>
       </div>`;
   };
+  const rowWarningClass = warningFields.size ? " medicine-table__row--warning-linked" : "";
+  const riskClass = "risk-small";
 
   return `
-    <div class="medicine-table__row" data-medicine-index="${row.index}" data-medicine-name="${escapeHtml(row.name)}">
+    <div class="medicine-table__row${rowWarningClass}" data-medicine-index="${row.index}" data-medicine-name="${escapeHtml(row.name)}">
       <span>${row.index}</span>
-      <span>${escapeHtml(row.name)}</span>
+      <span class="${getMedicineWarningClass(warningFields, "name").trim()}">${escapeHtml(row.name)}</span>
       <span>${escapeHtml(row.type)}</span>
       <span class="medicine-spec-text">${escapeHtml(row.spec)}</span>
       ${renderEditableBox("usage", "用法")}
@@ -95,7 +108,7 @@ export function renderMedicineTableRow(row, readonly = false) {
       ${renderEditableBox("dose", "用量")}
       <span>${escapeHtml(row.quantity)}</span>
       ${renderUnitSelector()}
-      ${renderRiskTag({ text: row.risk, size: "sm", className: "risk-small" })}
+      ${renderRiskTag({ text: row.risk, size: "sm", className: riskClass })}
       ${
         readonly
           ? ""
@@ -179,30 +192,49 @@ function renderArchivedActionHint(readonly) {
   return readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect();
 }
 
-function renderPrescriptionActionButtons({ readonly = false, consultation = false } = {}) {
+function renderVideoSubmitCountdown() {
+  return `
+    <span class="video-submit-countdown" data-video-submit-countdown data-remaining="10" aria-live="polite">
+      <span class="video-submit-countdown__icon" aria-hidden="true"></span>
+      <span class="video-submit-countdown__value">10s</span>
+    </span>`;
+}
+
+function renderPrescriptionActionButtons({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
   if (readonly) {
     return renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" });
   }
   if (consultation) {
     return renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" });
   }
-  return `${renderButton({ text: "结束问诊", tone: "soft-danger", size: "md", className: "end-consult-trigger", disabled: true })}
-          ${renderButton({ text: "提交处方", tone: "primary", size: "md", className: "jh-prescription-submit" })}`;
+  const submitButton = renderButton({
+    text: "提交处方",
+    tone: "primary",
+    size: "md",
+    className: "jh-prescription-submit",
+    disabled: videoSubmitLock
+  });
+  return `${renderButton({ text: "结束问诊", tone: "success", size: "md", className: "end-consult-trigger", disabled: true })}
+          ${
+            videoSubmitLock
+              ? `<span class="video-prescription-submit-wrap">${renderVideoSubmitCountdown()}${submitButton}</span>`
+              : submitButton
+          }`;
 }
 
-function renderPrescriptionActions({ readonly = false, consultation = false } = {}) {
+function renderPrescriptionActions({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
   return `
       <div class="prescription-actions${consultation ? " consultation-actions" : ""}${readonly ? " prescription-actions--readonly" : ""}">
         ${renderArchivedActionHint(readonly)}
         <div class="prescription-actions__controls">
-          ${renderPrescriptionActionButtons({ readonly, consultation })}
+          ${renderPrescriptionActionButtons({ readonly, consultation, videoSubmitLock })}
         </div>
       </div>`;
 }
 
 export function renderPrescriptionPanel(options = {}) {
   const normalized = typeof options === "boolean" ? { includeSecondMedicine: options } : options;
-  const { includeSecondMedicine = false, readonly = false, record = null } = normalized;
+  const { includeSecondMedicine = false, readonly = false, record = null, videoSubmitLock = false } = normalized;
 
   const diagnosisTags = getDiagnosisTags(record);
   const medicines =
@@ -223,7 +255,7 @@ export function renderPrescriptionPanel(options = {}) {
       ${renderDiagnosisSection({ title: "疾病信息", diagnosisTags, readonly, treatmentAdvice: null })}
       <div class="section-divider"></div>
       ${renderMedicineSection({ medicines: medicineRows, readonly })}
-      ${renderPrescriptionActions({ readonly })}
+      ${renderPrescriptionActions({ readonly, videoSubmitLock })}
     </section>`;
 }
 

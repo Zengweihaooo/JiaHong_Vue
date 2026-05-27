@@ -1,5 +1,6 @@
 import { assetUrl } from "../../shared/core.js";
 import { renderButton } from "./primitives.js";
+import { escapeHtml } from "../ui/html.js";
 
 export function renderQuickReplyDialogView({ categories = [], messages = [] } = {}) {
   return `
@@ -101,10 +102,14 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
     "孕产",
     "其他"
   ];
+  const warningExampleMedicine = medicines.find((medicine) => medicine.warningMessage);
   const rows = medicines.map((medicine, index) => ({
     name: medicine.name,
-    warnings: index === 0 ? { 2: "must", 5: medicine.risk === "低" ? "general" : "severe" } : { 4: "general" }
+    linked: medicine === warningExampleMedicine,
+    warnings: medicine.warningColumns || (index === 0 ? { 2: "must", 5: medicine.risk === "低" ? "general" : "severe" } : { 4: "general" })
   }));
+  const warningMessage = warningExampleMedicine?.warningMessage || `[警示信息]${rows[0]?.name || "当前药品"}需完成风险核对`;
+  const warningSuggestion = warningExampleMedicine?.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。";
 
   return `
     <div class="risk-warning-overlay" aria-hidden="true">
@@ -136,7 +141,7 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
             ${(rows.length ? rows : [{ name: "暂无用药数据", warnings: {} }])
               .map(
                 (row) => `
-                  <div class="risk-warning-row" role="row">
+                  <div class="risk-warning-row${row.linked ? " risk-warning-row--linked" : ""}" role="row">
                     <div class="risk-warning-cell risk-warning-cell--name" role="cell">${row.name}</div>
                     ${headers
                       .slice(1)
@@ -155,8 +160,8 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
         <div class="risk-warning-dialog__divider"></div>
         <div class="risk-warning-dialog__message-wrap">
           <div class="risk-warning-message">
-            <p>[警示信息]${rows[0]?.name || "当前药品"}需完成风险核对</p>
-            <p>[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。</p>
+            <p>${escapeHtml(warningMessage)}</p>
+            <p>${escapeHtml(warningSuggestion)}</p>
           </div>
         </div>
       </section>

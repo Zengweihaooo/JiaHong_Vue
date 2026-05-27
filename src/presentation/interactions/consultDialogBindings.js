@@ -33,8 +33,8 @@ function closeQuickReplyDialog() {
 function enableEndConsultButton() {
   document.querySelectorAll(".end-consult-trigger").forEach((button) => {
     button.disabled = false;
-    button.classList.remove("jh-btn--soft-danger");
-    button.classList.add("jh-btn--danger");
+    button.classList.remove("jh-btn--soft-danger", "jh-btn--danger");
+    button.classList.add("jh-btn--success");
   });
 }
 

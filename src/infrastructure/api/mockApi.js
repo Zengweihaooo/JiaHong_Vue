@@ -13,10 +13,10 @@ const mockLatencyMs = 80;
 let realtimeTick = 0;
 const maxRuntimeConsultations = 6;
 const baseWaitingQueue = {
-  total: 2,
-  byType: { text: 1, video: 1, consult: 0 }
+  total: 4,
+  byType: { text: 1, video: 1, consult: 2 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260521-18", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-30", import.meta.url);
 
 function delay(ms = mockLatencyMs) {
   return new Promise((resolve) => {
@@ -50,11 +50,13 @@ function buildWaitingQueue(runtimeRecords) {
   const ongoingRuntimeRecords = runtimeRecords.filter((record) => record.state === "ongoing");
   const addedText = ongoingRuntimeRecords.filter((record) => record.type === "text").length;
   const addedVideo = ongoingRuntimeRecords.filter((record) => record.type === "video").length;
+  const addedConsult = ongoingRuntimeRecords.filter((record) => record.type === "consult").length;
   const text = Math.min(baseWaitingQueue.byType.text + addedText, 3);
   const video = Math.min(baseWaitingQueue.byType.video + addedVideo, 3);
+  const consult = Math.min(baseWaitingQueue.byType.consult + addedConsult, 3);
   return {
-    total: Math.min(text + video, maxRuntimeConsultations),
-    byType: { text, video, consult: baseWaitingQueue.byType.consult },
+    total: Math.min(text + video + consult, maxRuntimeConsultations),
+    byType: { text, video, consult },
     updatedAt: new Date().toISOString()
   };
 }
