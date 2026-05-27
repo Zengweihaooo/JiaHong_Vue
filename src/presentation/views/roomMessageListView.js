@@ -84,7 +84,7 @@ export function renderMessageList({ type = "all", state = "ongoing", activeRecor
 function renderMessageGroupLabel(type) {
   if (!contactLayoutTypeOrder.includes(type)) return "";
   return `
-    <button class="message-group-label message-group-toggle" type="button" data-message-group="${type}" aria-expanded="true">
+    <button class="message-group-label message-group-toggle" type="button" data-message-group="${type}" data-no-drag-scroll="true" aria-expanded="true">
       <span>${messageTypeMeta[type].label}</span>
       <img src="${assetUrl("assets/figma-room/group-chevron.svg")}" alt="" aria-hidden="true" />
     </button>`;

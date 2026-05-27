@@ -14,8 +14,8 @@ import {
 import {
   renderTextPage,
   renderVideoPage
-} from "./views/consultRoomView.js?v=20260527-42";
-import { renderHistoryPage } from "./views/historyView.js?v=20260527-42";
+} from "./views/consultRoomView.js?v=20260527-43";
+import { renderHistoryPage } from "./views/historyView.js?v=20260527-43";
 import { getActiveConsultationRecord } from "./views/renderRecordSelectors.js";
 import {
   renderChatMessageMenu,
@@ -27,7 +27,7 @@ import {
   renderSidebar,
   renderTopbar
 } from "./views/roomShellView.js";
-import { renderRoomSidebar } from "./views/roomMessageListView.js?v=20260527-42";
+import { renderRoomSidebar } from "./views/roomMessageListView.js?v=20260527-43";
 
 export function renderQuickReplyDialog() {
   return renderQuickReplyDialogView({

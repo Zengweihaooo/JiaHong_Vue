@@ -3,7 +3,7 @@ import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from 
 import { getActiveConsultationRecord } from "./renderRecordSelectors.js";
 import { renderAiReplyComposer, renderChatPanel, renderChatThread } from "./chatView.js?v=20260527-39";
 import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260527-37";
-import { renderRoomSidebar } from "./roomMessageListView.js?v=20260527-42";
+import { renderRoomSidebar } from "./roomMessageListView.js?v=20260527-43";
 import { renderRoomTopbar } from "./roomShellView.js";
 import { renderVideoToolbar, videoMediaState } from "./videoMedia.js";
 

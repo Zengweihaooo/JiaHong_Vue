@@ -10,7 +10,7 @@ import { getConsultMainElement, isConsultReadonlyView, setConsultShellReadonly }
 import { showToast } from "../ui/interactionPrimitives.js";
 import { renderTextMain, renderVideoMain } from "../views/consultRoomView.js";
 import { renderPrescriptionTraceMain } from "../views/historyView.js";
-import { renderMessageList } from "../views/roomMessageListView.js?v=20260527-42";
+import { renderMessageList } from "../views/roomMessageListView.js?v=20260527-43";
 import { renderRoomMain } from "../views/roomShellView.js";
 import { bindChatMessageMenu } from "./chatBindings.js";
 import { bindConsultConfirmDialogs } from "./consultDialogBindings.js?v=20260527-41";
@@ -22,6 +22,7 @@ let bindConsultWorkspace = () => {};
 let startOngoingTimers = () => {};
 let stopOngoingTimers = () => {};
 const collapsedMessageGroups = new Set();
+let messageGroupToggleBound = false;
 
 export function configureRoomInteractionBindings({ bindWorkspace, startTimers, stopTimers } = {}) {
   bindConsultWorkspace = typeof bindWorkspace === "function" ? bindWorkspace : bindConsultWorkspace;
@@ -197,17 +198,25 @@ function applyMessageGroupCollapseState(root = document) {
 
 function bindMessageGroupToggles() {
   document.querySelectorAll(".message-list").forEach((messageList) => {
-    if (messageList.dataset.groupToggleBound === "true") return;
     messageList.dataset.groupToggleBound = "true";
-    messageList.addEventListener("click", (event) => {
-      const toggle = event.target.closest(".message-group-toggle");
-      if (!toggle || !messageList.contains(toggle)) return;
-      event.preventDefault();
-      const collapsed = toggle.getAttribute("aria-expanded") === "true";
-      setMessageGroupCollapsed(toggle, collapsed);
-    });
     applyMessageGroupCollapseState(messageList);
   });
+  if (messageGroupToggleBound) return;
+  messageGroupToggleBound = true;
+  document.addEventListener(
+    "click",
+    (event) => {
+      const toggle = event.target.closest(".message-group-toggle");
+      if (!toggle) return;
+      const messageList = toggle.closest(".message-list");
+      if (!messageList) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const collapsed = toggle.getAttribute("aria-expanded") === "true";
+      setMessageGroupCollapsed(toggle, collapsed);
+    },
+    true
+  );
 }
 
 export function bindPrescriptionTraceCards() {
