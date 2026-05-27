@@ -1,0 +1,30 @@
+import { getQuickEntryFeature } from "../../domain/quickEntries.js";
+import { escapeHtml } from "../ui/html.js";
+import { renderQuickEntryIcon } from "../ui/icons.js";
+
+export function renderQuickCardMarkup(entry = {}) {
+  const {
+    title = "",
+    desc = "添加快捷入口",
+    icon = "plus",
+    isAdd = false
+  } = entry;
+  const feature = getQuickEntryFeature(entry);
+  const classes = `quick-card${isAdd ? " quick-card--add" : " quick-card--custom"}`;
+  const featureAttribute = feature ? ` data-quick-feature="${escapeHtml(feature)}"` : "";
+
+  return `
+    <div class="${classes}" role="button" tabindex="0" data-action="${escapeHtml(desc)}" data-quick-title="${escapeHtml(title)}"${featureAttribute}${isAdd ? "" : ' data-custom-quick-entry="true"'}>
+      ${
+        isAdd
+          ? ""
+          : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${escapeHtml(title)}"></button>
+             <button class="quick-card__drag" type="button" aria-label="拖动排序：${escapeHtml(title)}" draggable="true"></button>`
+      }
+      <span class="quick-card__body">
+        <span class="icon-box">${renderQuickEntryIcon(icon)}</span>
+        ${title ? `<span class="quick-card__title">${escapeHtml(title)}</span>` : ""}
+        <span class="quick-card__desc">${escapeHtml(desc)}</span>
+      </span>
+    </div>`;
+}

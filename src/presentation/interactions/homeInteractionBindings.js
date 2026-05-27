@@ -7,7 +7,7 @@ import {
   setOverlayOpen,
   stopEvent
 } from "../ui/interactionPrimitives.js";
-import { bindQuickEntryInteractions, closeQuickEntryDialog, closeQuickSchedulePanel } from "./homeQuickEntryBindings.js?v=20260527-31";
+import { bindQuickEntryInteractions, closeQuickEntryDialog, closeQuickSchedulePanel } from "./homeQuickEntryBindings.js?v=20260527-35";
 
 function openAnnouncementDialog(event) {
   stopEvent(event);

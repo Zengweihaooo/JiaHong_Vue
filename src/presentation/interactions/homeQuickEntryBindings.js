@@ -1,64 +1,18 @@
 import { getQuickEntryOption } from "../../application/controllers/contentController.js";
-import { escapeHtml } from "../ui/html.js";
-import { renderQuickEntryIcon } from "../ui/icons.js";
-import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-31";
+import { maxQuickActionCards } from "../../domain/quickEntries.js";
+import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-35";
+import {
+  addCustomQuickCardToGrid,
+  ensureQuickAddCard,
+  getQuickGridCustomCards,
+  moveDraggingQuickCard,
+  removeCustomQuickCardWithMotion,
+  replaceQuickCard,
+  setQuickCardEditControlsState
+} from "./quickEntryGridDom.js";
 
-const maxQuickActionCards = 8;
-const quickGridAnimationMs = 280;
 let quickEntryEditingCard = null;
 let activeQuickCardDrag = null;
-
-function shouldReduceMotion() {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-}
-
-function getQuickGridCards(grid) {
-  return Array.from(grid.querySelectorAll(".quick-card"));
-}
-
-function getQuickGridCustomCards(grid) {
-  return Array.from(grid.querySelectorAll(".quick-card--custom"));
-}
-
-function captureQuickGridRects(grid) {
-  return new Map(getQuickGridCards(grid).map((card) => [card, card.getBoundingClientRect()]));
-}
-
-function animateQuickGridFrom(grid, previousRects) {
-  if (shouldReduceMotion()) return;
-  getQuickGridCards(grid).forEach((card) => {
-    if (card.classList.contains("is-dragging") || card.classList.contains("is-removing")) return;
-    const previousRect = previousRects.get(card);
-    if (!previousRect) return;
-    const nextRect = card.getBoundingClientRect();
-    const deltaX = previousRect.left - nextRect.left;
-    const deltaY = previousRect.top - nextRect.top;
-    if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return;
-    if (typeof card.animate === "function") {
-      card.animate(
-        [
-          { transform: `translate(${deltaX}px, ${deltaY}px)` },
-          { transform: "translate(0, 0)" }
-        ],
-        {
-          duration: quickGridAnimationMs,
-          easing: "cubic-bezier(0.16, 1, 0.3, 1)"
-        }
-      );
-      return;
-    }
-    card.style.transition = "none";
-    card.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-    card.getBoundingClientRect();
-    window.requestAnimationFrame(() => {
-      card.style.transition = `transform ${quickGridAnimationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`;
-      card.style.transform = "";
-      window.setTimeout(() => {
-        card.style.transition = "";
-      }, quickGridAnimationMs);
-    });
-  });
-}
 
 function openQuickEntryDialog(event, editingCard = null) {
   quickEntryEditingCard = editingCard;
@@ -72,151 +26,13 @@ export function closeQuickEntryDialog(event) {
   quickEntryEditingCard = null;
 }
 
-function renderQuickCardMarkup({ title = "", desc = "添加快捷入口", icon = "plus", isAdd = false } = {}) {
-  const classes = `quick-card${isAdd ? " quick-card--add" : " quick-card--custom"}`;
-  return `
-    <div class="${classes}" role="button" tabindex="0" data-action="${escapeHtml(desc)}" data-quick-title="${escapeHtml(title)}"${isAdd ? "" : ' data-custom-quick-entry="true"'}>
-      ${
-        isAdd
-          ? ""
-          : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${escapeHtml(title)}"></button>
-             <button class="quick-card__drag" type="button" aria-label="拖动排序：${escapeHtml(title)}" draggable="true"></button>`
-      }
-      <span class="quick-card__body">
-        <span class="icon-box">${renderQuickEntryIcon(icon)}</span>
-        ${title ? `<span class="quick-card__title">${escapeHtml(title)}</span>` : ""}
-        <span class="quick-card__desc">${escapeHtml(desc)}</span>
-      </span>
-    </div>`;
-}
-
-function setQuickCardEditControlsState(scope, editing) {
-  scope.querySelectorAll(".quick-card__delete, .quick-card__drag").forEach((control) => {
-    if (editing) {
-      control.style.setProperty("opacity", "1", "important");
-      control.style.setProperty("pointer-events", "auto", "important");
-      control.style.setProperty("transform", "translateY(0) scale(1)", "important");
-      control.style.setProperty("visibility", "visible", "important");
-      return;
-    }
-    control.style.removeProperty("opacity");
-    control.style.removeProperty("pointer-events");
-    control.style.removeProperty("transform");
-    control.style.removeProperty("visibility");
-  });
-}
-
-function getQuickActionCount(grid = document) {
-  return grid.querySelectorAll(".quick-card:not(.quick-card--add)").length;
-}
-
-function ensureQuickAddCard(grid) {
-  const addCard = grid.querySelector(".quick-card--add");
-  const shouldShowAdd = getQuickActionCount(grid) < maxQuickActionCards;
-  if (shouldShowAdd && !addCard) {
-    grid.insertAdjacentHTML("beforeend", renderQuickCardMarkup({ isAdd: true }));
-  } else if (!shouldShowAdd) {
-    addCard?.remove();
-  }
-}
-
 function addCustomQuickCard(option) {
   const grid = document.querySelector(".quick-grid");
-  if (!grid) return false;
-  if (getQuickActionCount(grid) >= maxQuickActionCards) {
+  const result = addCustomQuickCardToGrid(grid, option);
+  if (result.reason === "limit") {
     showToast(`最多添加${maxQuickActionCards}个快捷入口`);
-    return false;
   }
-  const addCard = grid.querySelector(".quick-card--add");
-  const markup = renderQuickCardMarkup(option);
-  if (addCard) {
-    addCard.insertAdjacentHTML("beforebegin", markup);
-  } else {
-    grid.insertAdjacentHTML("beforeend", markup);
-  }
-  if (grid.closest(".quick-entry-card")?.classList.contains("is-editing")) {
-    setQuickCardEditControlsState(grid, true);
-  }
-  ensureQuickAddCard(grid);
-  return true;
-}
-
-function replaceQuickCard(card, option) {
-  if (!card || !option) return false;
-  const editing = card.closest(".quick-entry-card")?.classList.contains("is-editing");
-  card.outerHTML = renderQuickCardMarkup(option);
-  if (editing) {
-    const grid = document.querySelector(".quick-grid");
-    if (grid) setQuickCardEditControlsState(grid, true);
-  }
-  return true;
-}
-
-function removeCustomQuickCard(card) {
-  const grid = card.closest(".quick-grid");
-  const previousRects = grid ? captureQuickGridRects(grid) : null;
-  card.remove();
-  if (grid) {
-    ensureQuickAddCard(grid);
-    animateQuickGridFrom(grid, previousRects);
-  }
-}
-
-function removeCustomQuickCardWithMotion(card) {
-  if (shouldReduceMotion()) {
-    removeCustomQuickCard(card);
-    return;
-  }
-  card.classList.add("is-removing");
-  window.setTimeout(() => {
-    removeCustomQuickCard(card);
-  }, quickGridAnimationMs);
-}
-
-function getGridInsertIndex(event, grid, dragging) {
-  const cards = getQuickGridCustomCards(grid).filter((card) => card !== dragging);
-  if (!cards.length) return 0;
-  const rects = cards.map((card, index) => ({
-    card,
-    index,
-    rect: card.getBoundingClientRect()
-  }));
-  const rowPadding = Math.max(8, rects[0].rect.height * 0.18);
-  const rowRects = rects.filter(({ rect }) => (
-    event.clientY >= rect.top - rowPadding && event.clientY <= rect.bottom + rowPadding
-  ));
-
-  if (rowRects.length) {
-    for (const item of rowRects) {
-      if (event.clientX < item.rect.left + item.rect.width / 2) return item.index;
-    }
-    return rowRects[rowRects.length - 1].index + 1;
-  }
-
-  for (const item of rects) {
-    if (event.clientY < item.rect.top + item.rect.height / 2) return item.index;
-  }
-  return cards.length;
-}
-
-function getGridInsertReference(event, grid, dragging) {
-  const cards = getQuickGridCustomCards(grid).filter((card) => card !== dragging);
-  const insertIndex = getGridInsertIndex(event, grid, dragging);
-  const addCard = grid.querySelector(".quick-card--add");
-  return {
-    insertIndex,
-    reference: cards[insertIndex] || addCard || null
-  };
-}
-
-function moveDraggingQuickCard(event, grid, dragging) {
-  const { insertIndex, reference } = getGridInsertReference(event, grid, dragging);
-  if (insertIndex === activeQuickCardDrag?.slotIndex) return;
-  if (reference === dragging || reference === dragging.nextElementSibling) return;
-  const previousRects = captureQuickGridRects(grid);
-  grid.insertBefore(dragging, reference);
-  if (activeQuickCardDrag) activeQuickCardDrag.slotIndex = insertIndex;
-  animateQuickGridFrom(grid, previousRects);
+  return result.ok;
 }
 
 function beginQuickCardDrag(event, grid, card) {
@@ -231,7 +47,7 @@ function beginQuickCardDrag(event, grid, card) {
 function updateQuickCardDrag(event) {
   if (!activeQuickCardDrag) return;
   event.preventDefault();
-  moveDraggingQuickCard(event, activeQuickCardDrag.grid, activeQuickCardDrag.card);
+  moveDraggingQuickCard(event, activeQuickCardDrag.grid, activeQuickCardDrag.card, activeQuickCardDrag);
 }
 
 function endPointerQuickCardDrag() {
@@ -282,7 +98,7 @@ function activateQuickCard(card, event) {
     openQuickEntryDialog(event, card);
     return;
   }
-  if (card.dataset.quickTitle === "排班管理") {
+  if (card.dataset.quickFeature === "schedule") {
     openQuickSchedulePanel(card, event);
     return;
   }
@@ -375,7 +191,7 @@ function bindQuickGrid() {
       const dragging = grid.querySelector(".quick-card.is-dragging");
       if (!dragging) return;
       event.preventDefault();
-      moveDraggingQuickCard(event, grid, dragging);
+      moveDraggingQuickCard(event, grid, dragging, activeQuickCardDrag);
     });
     grid.addEventListener("dragend", () => {
       grid.querySelector(".quick-card.is-dragging")?.classList.remove("is-dragging");

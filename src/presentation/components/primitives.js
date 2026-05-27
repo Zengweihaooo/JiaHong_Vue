@@ -1,4 +1,5 @@
 import { assetUrl } from "../../shared/core.js";
+import { getConsultationDurationTone } from "../../domain/consultationRules.js";
 
 export function renderCheckboxMark() {
   return `<img class="jh-checkbox__mark" src="${assetUrl("assets/figma-home/checkmark.svg")}" alt="" aria-hidden="true" />`;
@@ -43,10 +44,20 @@ export function formatDuration(totalSeconds) {
 }
 
 export function getDurationTone(totalSeconds) {
-  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
-  if (safeSeconds >= 600) return "danger";
-  if (safeSeconds >= 179) return "warning";
-  return "normal";
+  return getConsultationDurationTone(totalSeconds);
+}
+
+export function renderClockIcon({ className = "", size = 18, strokeWidth = 1.4 } = {}) {
+  const safeSize = Number(size) || 18;
+  const center = safeSize / 2;
+  const radius = center - strokeWidth / 2;
+  const handTop = safeSize * 0.28;
+  const handEndX = safeSize * 0.68;
+  const handEndY = safeSize * 0.6;
+  return `<svg class="${className}" width="${safeSize}" height="${safeSize}" viewBox="0 0 ${safeSize} ${safeSize}" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <circle cx="${center}" cy="${center}" r="${radius}" stroke="currentColor" stroke-width="${strokeWidth}"/>
+    <path d="M${center} ${handTop}V${center}L${handEndX} ${handEndY}" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 export function renderDurationChip(variant = "icon", elapsedSeconds = 0) {
@@ -57,10 +68,7 @@ export function renderDurationChip(variant = "icon", elapsedSeconds = 0) {
     <span class="jh-duration-chip jh-duration-chip--${safeVariant} jh-duration-chip--${tone}" data-duration-timer data-elapsed="${elapsedSeconds}" aria-label="问诊持续时长：${durationText}">
       ${
         safeVariant === "icon"
-          ? `<svg class="jh-duration-chip__clock" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-              <path d="M9 3.75V9.08229L12.6818 10.8597" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="0.7" y="0.7" width="16.6" height="16.6" rx="8.3" stroke="currentColor" stroke-width="1.4"/>
-            </svg>`
+          ? renderClockIcon({ className: "jh-duration-chip__clock", size: 18, strokeWidth: 1.4 })
           : ""
       }
       <strong><span class="jh-duration-chip__prefix">问诊持续时长：</span><span class="jh-duration-chip__value">${durationText}</span></strong>

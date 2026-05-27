@@ -7,8 +7,9 @@ import {
   renderStatusBadge,
   renderSwitch
 } from "../components/primitives.js";
-import { escapeHtml } from "../ui/html.js";
 import { icons, renderQuickEntryIcon } from "../ui/icons.js";
+import { renderQuickCardMarkup } from "../components/quickEntryCards.js";
+import { renderSchedulePanel } from "./homeSchedulePanel.js";
 
 export function renderWaitingCard() {
   return `
@@ -192,70 +193,6 @@ function renderQuickEntryCardEditButton() {
     </button>`;
 }
 
-function renderSchedulePanel() {
-  const timeSlots = ["10:00–11:00", "11:00–12:00", "12:00–13:00", "14:00–15:00", "15:00–16:00", "16:00–17:00"];
-  const scheduleRows = [
-    { label: "5-04", sub: "今日" },
-    { label: "5-05", sub: "周一" },
-    { label: "5-06", sub: "周二" }
-  ];
-  const scheduleItems = [
-    { row: 1, col: 2, span: 3, tone: "blue", title: "线下药店续方服务", time: "10:00-13:00", active: true },
-    { row: 1, col: 6, span: 1, tone: "cyan", title: "妙手阿里-兜底科室报班", time: "07:00-08:00" },
-    { row: 2, col: 2, span: 3, tone: "blue", title: "线下药店续方服务", time: "10:00-13:00" },
-    { row: 2, col: 5, span: 1, tone: "amber", title: "九州通美团-兜底科室报班", time: "14:00-15:00" },
-    { row: 2, col: 6, span: 1, tone: "cyan", title: "妙手阿里-兜底科室报班", time: "07:00-08:00" },
-    { row: 3, col: 2, span: 1, tone: "red", title: "拼多多-自由报班", time: "10:00-11:00" },
-    { row: 3, col: 4, span: 1, tone: "cyan", title: "九州通阿里-固定值班", time: "12:00-13:00" },
-    { row: 3, col: 5, span: 2, tone: "amber", title: "九州通美团-自由报班", time: "14:00-16:00" }
-  ];
-
-  return `
-    <section class="schedule-panel" aria-label="近期排班" hidden>
-      <header class="schedule-panel__header">
-        <span class="schedule-panel__title">
-          <strong>近期排班</strong>
-          <span>11分钟前已变更</span>
-        </span>
-        <span class="schedule-panel__actions">
-          <button class="schedule-panel__detail" type="button">查看详情</button>
-          <button class="schedule-panel__back" type="button">返回入口</button>
-        </span>
-      </header>
-      <nav class="schedule-panel__tabs" aria-label="排班时间段">
-        <button class="schedule-panel__arrow" type="button" aria-label="上一个时间段">‹</button>
-        ${timeSlots
-          .map(
-            (slot, index) => `
-              <button class="schedule-panel__tab${index === 1 ? " is-active" : ""}" type="button">${slot}</button>`
-          )
-          .join("")}
-        <button class="schedule-panel__arrow" type="button" aria-label="下一个时间段">›</button>
-      </nav>
-      <div class="schedule-board">
-        ${scheduleRows
-          .map(
-            (row, index) => `
-              <div class="schedule-board__date" style="grid-row:${index + 1}">
-                <span>${row.label}</span>
-                <span>${row.sub}</span>
-              </div>`
-          )
-          .join("")}
-        ${scheduleItems
-          .map(
-            (item) => `
-              <article class="schedule-event schedule-event--${item.tone}${item.active ? " is-active" : ""}" style="grid-row:${item.row};grid-column:${item.col} / span ${item.span}">
-                <strong>${item.title}</strong>
-                <span>${item.time}</span>
-                ${item.active ? '<em aria-hidden="true">进行中</em>' : ""}
-              </article>`
-          )
-          .join("")}
-      </div>
-    </section>`;
-}
-
 export function renderQuickActions() {
   return `
     <section class="card quick-entry-card" aria-label="高频操作入口">
@@ -265,26 +202,7 @@ export function renderQuickActions() {
       </div>
       <div class="quick-grid">
         ${renderData.quickActions
-          .map(
-            (action) => `
-              <div class="quick-card${action.isAdd ? " quick-card--add" : " quick-card--custom"}" role="button" tabindex="0" data-action="${escapeHtml(action.desc)}" data-quick-title="${escapeHtml(action.title)}">
-                ${
-                  action.isAdd
-                    ? ""
-                    : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${action.title}"></button>
-                       <button class="quick-card__drag" type="button" aria-label="拖动排序：${action.title}" draggable="true"></button>`
-                }
-                <span class="quick-card__body">
-                  <span class="icon-box">${renderQuickEntryIcon(action.icon)}</span>
-                  ${
-                    action.title
-                      ? `<span class="quick-card__title">${action.title}</span>`
-                      : ""
-                  }
-                  <span class="quick-card__desc">${action.desc}</span>
-                </span>
-              </div>`
-          )
+          .map((action) => renderQuickCardMarkup(action))
           .join("")}
       </div>
       ${renderSchedulePanel()}

@@ -80,7 +80,8 @@
       {
         "title": "排班管理",
         "desc": "查看值班安排",
-        "icon": "quickCalendar"
+        "icon": "quickCalendar",
+        "feature": "schedule"
       },
       {
         "title": "医生佣金条",
@@ -118,7 +119,8 @@
       {
         "title": "排班管理",
         "desc": "查看值班安排",
-        "icon": "quickCalendar"
+        "icon": "quickCalendar",
+        "feature": "schedule"
       },
       {
         "title": "历史问诊",

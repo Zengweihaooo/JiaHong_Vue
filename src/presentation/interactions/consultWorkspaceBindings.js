@@ -4,12 +4,11 @@ import {
   openConsultConfirmDialog,
   openQuickReplyDialog,
   openRiskWarningDialog
-} from "./consultDialogBindings.js?v=20260527-31";
+} from "./consultDialogBindings.js?v=20260527-35";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
 import { bindVideoControls } from "./videoControls.js";
-
-const videoSubmitLockSeconds = 10;
+import { bindVideoPrescriptionSubmitCountdown } from "./videoSubmitLockBindings.js";
 
 function bindAiReplyOptions() {
   document.querySelectorAll(".ai-reply__options button").forEach((option) => {
@@ -68,34 +67,6 @@ function bindPrescriptionSubmitTriggers() {
       event.stopPropagation();
     });
     button.addEventListener("click", submit);
-  });
-}
-
-function bindVideoPrescriptionSubmitCountdown() {
-  document.querySelectorAll("[data-video-submit-countdown]").forEach((countdown) => {
-    if (countdown.dataset.bound === "true") return;
-    countdown.dataset.bound = "true";
-    const submitButton = countdown.closest(".video-prescription-submit-wrap")?.querySelector(".jh-prescription-submit");
-    const value = countdown.querySelector(".video-submit-countdown__value");
-    let remaining = Number(countdown.dataset.remaining || videoSubmitLockSeconds);
-    const render = () => {
-      const safeRemaining = Math.max(0, remaining);
-      countdown.dataset.remaining = String(safeRemaining);
-      if (value) value.textContent = `${safeRemaining}s`;
-      if (submitButton) {
-        submitButton.disabled = safeRemaining > 0;
-        submitButton.setAttribute("aria-disabled", String(safeRemaining > 0));
-      }
-      countdown.hidden = safeRemaining <= 0;
-    };
-    render();
-    const timer = window.setInterval(() => {
-      remaining -= 1;
-      render();
-      if (remaining <= 0) {
-        window.clearInterval(timer);
-      }
-    }, 1000);
   });
 }
 

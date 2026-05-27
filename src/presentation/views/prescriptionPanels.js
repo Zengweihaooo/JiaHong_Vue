@@ -1,5 +1,6 @@
-import { renderButton, renderRiskTag } from "../components/primitives.js?v=20260527-31";
 import { escapeHtml } from "../ui/html.js";
+import { renderMedicineTable } from "../components/medicineTable.js";
+import { renderPrescriptionActions } from "../components/prescriptionActions.js";
 import {
   renderDiagnosisSelectInput,
   renderDiagnosisTags,
@@ -19,8 +20,6 @@ export {
 
 export const defaultPrescriptionMedicines = [];
 
-const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
-
 export const defaultPatientDetail = {
   weight: "--",
   pregnancy: "--",
@@ -31,14 +30,6 @@ export const defaultPatientDetail = {
   allergies: "--"
 };
 
-function getMedicineWarningFields(row = {}) {
-  return new Set(Array.isArray(row.warningFields) ? row.warningFields : []);
-}
-
-function getMedicineWarningClass(warningFields, field) {
-  return warningFields.has(field) ? " medicine-warning-target" : "";
-}
-
 export function renderPatientInfoGrid(patientDetail = defaultPatientDetail) {
   return `
     <span>体重 /KG：${patientDetail.weight}</span>
@@ -48,87 +39,6 @@ export function renderPatientInfoGrid(patientDetail = defaultPatientDetail) {
     <span>证件号：${patientDetail.idCard}</span>
     <span>*肾功能异常：　${patientDetail.kidneyAbnormal}</span>
     <span>过敏史：${patientDetail.allergies}</span>`;
-}
-
-export function renderMedicineTableRow(row, readonly = false) {
-  const warningFields = getMedicineWarningFields(row);
-  const renderEditableBox = (field, label) => {
-    const value = row[field] ?? "";
-    const warningClass = getMedicineWarningClass(warningFields, field);
-    if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
-    return `<input class="table-input medicine-edit-field${warningClass}" type="text" value="${escapeHtml(value)}" aria-label="${label}" data-medicine-field="${field}" />`;
-  };
-  const renderUnitSelector = () => {
-    const value = row.unit ?? "";
-    const warningClass = getMedicineWarningClass(warningFields, "unit");
-    if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
-    const selectedValue = value || medicineUnitOptions[0];
-    const optionValues = Array.from(new Set([selectedValue, ...medicineUnitOptions].filter(Boolean)));
-    return `
-      <div class="medicine-unit-control">
-        <button
-          class="table-input medicine-unit-select${warningClass}"
-          type="button"
-          aria-label="单位"
-          aria-haspopup="listbox"
-          aria-expanded="false"
-          data-medicine-field="unit"
-        >
-          <span>${escapeHtml(selectedValue)}</span>
-        </button>
-        <div class="medicine-unit-options" role="listbox" hidden>
-          ${optionValues
-            .map(
-              (unit) => `
-                <button
-                  class="medicine-unit-option${unit === selectedValue ? " is-active" : ""}"
-                  type="button"
-                  role="option"
-                  aria-selected="${unit === selectedValue ? "true" : "false"}"
-                  data-medicine-unit="${escapeHtml(unit)}"
-                >
-                  ${escapeHtml(unit)}
-                </button>`
-            )
-            .join("")}
-        </div>
-      </div>`;
-  };
-  const rowWarningClass = warningFields.size ? " medicine-table__row--warning-linked" : "";
-  const riskClass = "risk-small";
-
-  return `
-    <div class="medicine-table__row${rowWarningClass}" data-medicine-index="${row.index}" data-medicine-name="${escapeHtml(row.name)}">
-      <span>${row.index}</span>
-      <span class="${getMedicineWarningClass(warningFields, "name").trim()}">${escapeHtml(row.name)}</span>
-      <span>${escapeHtml(row.type)}</span>
-      <span class="medicine-spec-text">${escapeHtml(row.spec)}</span>
-      ${renderEditableBox("usage", "用法")}
-      ${renderEditableBox("frequency", "服用频次")}
-      ${renderEditableBox("dose", "用量")}
-      <span>${escapeHtml(row.quantity)}</span>
-      ${renderUnitSelector()}
-      ${renderRiskTag({ text: row.risk, size: "sm", className: riskClass })}
-      ${
-        readonly
-          ? ""
-          : renderButton({ text: "删除", tone: "text", size: "", className: "medicine-delete-btn" })
-      }
-    </div>`;
-}
-
-function renderMedicineTable(medicines = [], readonly = false) {
-  if (!medicines.length) {
-    return `<div class="medicine-empty-state">暂无药品信息</div>`;
-  }
-
-  return `
-    <div class="medicine-table${medicines.length === 1 ? " medicine-table--single" : ""}">
-      <div class="medicine-table__row medicine-table__head">
-        <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
-      </div>
-      ${medicines.map((row) => renderMedicineTableRow(row, readonly)).join("")}
-    </div>`;
 }
 
 function getPatientName(record) {
@@ -184,50 +94,6 @@ function renderMedicineSection({ medicines, readonly = false, className = "" }) 
         <div class="medicine-scroll-area">
           ${readonly ? "" : renderMedicineSearchCombobox()}
           ${renderMedicineTable(medicines, readonly)}
-        </div>
-      </div>`;
-}
-
-function renderArchivedActionHint(readonly) {
-  return readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect();
-}
-
-function renderVideoSubmitCountdown() {
-  return `
-    <span class="video-submit-countdown" data-video-submit-countdown data-remaining="10" aria-live="polite">
-      <span class="video-submit-countdown__icon" aria-hidden="true"></span>
-      <span class="video-submit-countdown__value">10s</span>
-    </span>`;
-}
-
-function renderPrescriptionActionButtons({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
-  if (readonly) {
-    return renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" });
-  }
-  if (consultation) {
-    return renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" });
-  }
-  const submitButton = renderButton({
-    text: "提交处方",
-    tone: "primary",
-    size: "md",
-    className: "jh-prescription-submit",
-    disabled: videoSubmitLock
-  });
-  return `${renderButton({ text: "结束问诊", tone: "success", size: "md", className: "end-consult-trigger", disabled: true })}
-          ${
-            videoSubmitLock
-              ? `<span class="video-prescription-submit-wrap">${renderVideoSubmitCountdown()}${submitButton}</span>`
-              : submitButton
-          }`;
-}
-
-function renderPrescriptionActions({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
-  return `
-      <div class="prescription-actions${consultation ? " consultation-actions" : ""}${readonly ? " prescription-actions--readonly" : ""}">
-        ${renderArchivedActionHint(readonly)}
-        <div class="prescription-actions__controls">
-          ${renderPrescriptionActionButtons({ readonly, consultation, videoSubmitLock })}
         </div>
       </div>`;
 }
