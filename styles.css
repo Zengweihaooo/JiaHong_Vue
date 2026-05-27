@@ -3197,6 +3197,10 @@ body.page-view-room {
   text-align: left;
 }
 
+.message-item[hidden] {
+  display: none !important;
+}
+
 .message-item--compact {
   height: 42px;
   background: var(--room-sidebar-row-muted-bg);

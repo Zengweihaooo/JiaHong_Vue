@@ -22,7 +22,6 @@ let bindConsultWorkspace = () => {};
 let startOngoingTimers = () => {};
 let stopOngoingTimers = () => {};
 const collapsedMessageGroups = new Set();
-let messageGroupToggleBound = false;
 
 export function configureRoomInteractionBindings({ bindWorkspace, startTimers, stopTimers } = {}) {
   bindConsultWorkspace = typeof bindWorkspace === "function" ? bindWorkspace : bindConsultWorkspace;
@@ -197,26 +196,19 @@ function applyMessageGroupCollapseState(root = document) {
 }
 
 function bindMessageGroupToggles() {
-  document.querySelectorAll(".message-list").forEach((messageList) => {
-    messageList.dataset.groupToggleBound = "true";
-    applyMessageGroupCollapseState(messageList);
-  });
-  if (messageGroupToggleBound) return;
-  messageGroupToggleBound = true;
-  document.addEventListener(
-    "click",
-    (event) => {
-      const toggle = event.target.closest(".message-group-toggle");
-      if (!toggle) return;
-      const messageList = toggle.closest(".message-list");
-      if (!messageList) return;
+  document.querySelectorAll(".message-group-toggle").forEach((toggle) => {
+    if (toggle.dataset.bound === "true") return;
+    toggle.dataset.bound = "true";
+    toggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       const collapsed = toggle.getAttribute("aria-expanded") === "true";
       setMessageGroupCollapsed(toggle, collapsed);
-    },
-    true
-  );
+    });
+  });
+  document.querySelectorAll(".message-list").forEach((messageList) => {
+    applyMessageGroupCollapseState(messageList);
+  });
 }
 
 export function bindPrescriptionTraceCards() {

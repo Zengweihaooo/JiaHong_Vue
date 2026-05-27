@@ -10,7 +10,10 @@ export function bindDragScrollContainers(root = document) {
       let pointerId = null;
 
       node.addEventListener("pointerdown", (event) => {
-        if (event.target.closest("button, a, input, textarea, select, [role='button'], [data-no-drag-scroll]")) return;
+        if (event.target.closest("button, a, input, textarea, select, [role='button'], [data-no-drag-scroll]")) {
+          didDrag = false;
+          return;
+        }
         if (event.button !== 0 || node.scrollHeight <= node.clientHeight) return;
         pointerId = event.pointerId;
         startY = event.clientY;
@@ -41,6 +44,7 @@ export function bindDragScrollContainers(root = document) {
       node.addEventListener(
         "click",
         (event) => {
+          if (event.target.closest("button, a, input, textarea, select, [role='button'], [data-no-drag-scroll]")) return;
           if (!didDrag) return;
           event.preventDefault();
           event.stopPropagation();
