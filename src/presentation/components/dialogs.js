@@ -34,7 +34,7 @@ export function renderQuickReplyDialogView({ categories = [], messages = [] } = 
               .join("")}
           </div>
         </div>
-        <footer class="quick-reply-dialog__footer">点击快捷用语填入输入框</footer>
+        <footer class="quick-reply-dialog__footer">单击快捷用语填入输入框，双击即可发送</footer>
       </section>
     </div>`;
 }
@@ -102,6 +102,20 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
     "孕产",
     "其他"
   ];
+  const compactHeaders = {
+    "患者条件": ["患者", "条件"],
+    "重复用药": ["重复", "用药"],
+    "用法用量": ["用法", "用量"],
+    "给药途径": ["给药", "途径"],
+    "相互作用": ["相互", "作用"],
+    "生化指标": ["生化", "指标"]
+  };
+  const renderRiskWarningHeader = (header) => {
+    const lines = compactHeaders[header];
+    return lines
+      ? `<span class="risk-warning-cell__stack">${lines.map((line) => `<span>${escapeHtml(line)}</span>`).join("")}</span>`
+      : escapeHtml(header);
+  };
   const warningExampleMedicine = medicines.find((medicine) => medicine.warningMessage);
   const rows = medicines.map((medicine, index) => ({
     name: medicine.name,
@@ -148,7 +162,7 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
         <div class="risk-warning-dialog__table-wrap">
           <div class="risk-warning-table" role="table" aria-label="风险检测提醒">
             <div class="risk-warning-row risk-warning-row--head" role="row">
-              ${headers.map((header) => `<div class="risk-warning-cell" role="columnheader">${header}</div>`).join("")}
+              ${headers.map((header) => `<div class="risk-warning-cell" role="columnheader">${renderRiskWarningHeader(header)}</div>`).join("")}
             </div>
             ${(rows.length ? rows : [{ name: "暂无用药数据", warnings: {} }])
               .map(

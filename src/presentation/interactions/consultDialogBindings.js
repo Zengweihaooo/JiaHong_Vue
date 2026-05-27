@@ -14,7 +14,7 @@ import {
   showToast,
   stopEvent
 } from "../ui/interactionPrimitives.js";
-import { fillChatInput } from "./chatBindings.js";
+import { fillChatInput, sendChatInputMessage } from "./chatBindings.js";
 
 let getConsultContext = () => ({ sessionId: "", view: "" });
 let onConsultResolved = () => {};
@@ -245,17 +245,28 @@ function bindQuickReplyOverlay() {
     });
   });
 
-  const applyQuickReplyMessage = (message, event) => {
+  const applyQuickReplyMessage = (message, event, { send = false } = {}) => {
     event?.preventDefault();
     event?.stopPropagation();
-    if (fillChatInput(message.textContent)) {
-      closeQuickReplyDialog();
+    const didFill = fillChatInput(message.textContent);
+    if (send && didFill) {
+      sendChatInputMessage(document.querySelector(".jh-chat-input textarea"));
+      window.setTimeout(closeQuickReplyDialog, 120);
     }
   };
 
   quickReplyOverlay.querySelectorAll(".quick-reply-message").forEach((message) => {
-    message.addEventListener("pointerdown", (event) => applyQuickReplyMessage(message, event));
-    message.addEventListener("click", (event) => event.preventDefault());
+    message.addEventListener("pointerdown", (event) => {
+      const now = Date.now();
+      const lastPointerAt = Number(message.dataset.lastPointerAt || 0);
+      const shouldSend = now - lastPointerAt <= 320;
+      message.dataset.lastPointerAt = shouldSend ? "0" : String(now);
+      applyQuickReplyMessage(message, event, { send: shouldSend });
+    });
+    message.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
   });
 }
 

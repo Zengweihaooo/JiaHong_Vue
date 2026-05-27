@@ -4530,7 +4530,7 @@ body.page-view-room {
   justify-content: center;
   width: 640px;
   height: 32px;
-  padding: 6px 199px;
+  padding: 6px 24px;
   border-top: 0.667px solid #e5e8eb;
   border-radius: 0 0 8px 8px;
   background: #f8f8f9;
@@ -4815,9 +4815,9 @@ body.page-view-room {
   inset: 0;
   z-index: 90;
   display: none;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 96px 32px 0 264px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
   background: transparent;
   pointer-events: none;
 }
@@ -4830,8 +4830,8 @@ body.page-view-room {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: min(720px, calc(100vw - 296px));
-  max-height: calc(100vh - 128px);
+  width: min(720px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
   overflow: hidden;
   border-radius: 8px;
   background: #ffffff;
@@ -4979,6 +4979,14 @@ body.page-view-room {
   line-height: 17px;
   text-align: center;
   overflow-wrap: anywhere;
+}
+
+.risk-warning-cell__stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 17px;
+  white-space: nowrap;
 }
 
 .risk-warning-row:not(.risk-warning-row--head) .risk-warning-cell {
@@ -6500,13 +6508,12 @@ body.page-view-room {
 
 @media (max-width: 720px) {
   .risk-warning-overlay {
-    justify-content: center;
-    padding: 72px 12px 0;
+    padding: 12px;
   }
 
   .risk-warning-dialog {
     width: calc(100vw - 24px);
-    max-height: calc(100vh - 96px);
+    max-height: calc(100vh - 24px);
   }
 
   .risk-warning-dialog__table-wrap {
