@@ -1,7 +1,7 @@
 import { getQuickEntryOption } from "../../application/controllers/contentController.js";
 import { escapeHtml } from "../ui/html.js";
 import { renderQuickEntryIcon } from "../ui/icons.js";
-import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-30";
+import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-31";
 
 const maxQuickActionCards = 8;
 const quickGridAnimationMs = 280;

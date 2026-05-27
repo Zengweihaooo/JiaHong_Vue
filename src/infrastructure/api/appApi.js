@@ -7,4 +7,4 @@ export {
   updateConsultationStatus,
   updateDoctorStatus,
   updateServiceAvailability
-} from "./mockApi.js?v=20260527-30";
+} from "./mockApi.js?v=20260527-31";

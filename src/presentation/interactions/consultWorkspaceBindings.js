@@ -4,7 +4,7 @@ import {
   openConsultConfirmDialog,
   openQuickReplyDialog,
   openRiskWarningDialog
-} from "./consultDialogBindings.js?v=20260527-30";
+} from "./consultDialogBindings.js?v=20260527-31";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
 import { bindVideoControls } from "./videoControls.js";

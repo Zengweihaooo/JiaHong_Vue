@@ -1142,7 +1142,7 @@ button {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background: linear-gradient(87deg, rgba(249, 187, 0, 0) 0%, #f99100 86%);
+  background: linear-gradient(87deg, rgba(249, 187, 0, 0.08) 0%, rgba(255, 198, 112, 0.38) 100%);
   content: "";
   opacity: 0;
   pointer-events: none;
@@ -1163,7 +1163,7 @@ button {
 }
 
 .consult-card--has-queue {
-  background: linear-gradient(230deg, #ffc670 0%, #f47f01 100%);
+  background: linear-gradient(270deg, #ffc670 0%, #f99100 48%, #f47f01 100%);
 }
 
 .consult-card--has-queue::before {
@@ -1208,9 +1208,9 @@ button {
 }
 
 .consult-card--has-queue .consult-card__bg {
-  opacity: 1;
-  filter: grayscale(1) contrast(1.16) brightness(1.08);
-  mix-blend-mode: luminosity;
+  opacity: 0.72;
+  filter: sepia(1) saturate(2.35) hue-rotate(350deg) brightness(1.08) contrast(0.94);
+  mix-blend-mode: soft-light;
 }
 
 .consult-card:hover .consult-card__bg,

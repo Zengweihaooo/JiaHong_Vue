@@ -1,4 +1,4 @@
-import { renderButton, renderRiskTag } from "../components/primitives.js?v=20260527-30";
+import { renderButton, renderRiskTag } from "../components/primitives.js?v=20260527-31";
 import { escapeHtml } from "../ui/html.js";
 import {
   renderDiagnosisSelectInput,
