@@ -3,6 +3,7 @@ import {
   mapRecordStateToMachineState
 } from "../../domain/consultationStateMachine.js";
 import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
+import { getNextOngoingVideoConsultationRecord } from "../../domain/consultationQueue.js";
 import { getNavigationEntry, getSessionStorage } from "../../infrastructure/browser/runtimeEnvironment.js";
 
 export const serviceState = {};
@@ -56,9 +57,7 @@ export function initRuntimeState({ services = [], consultationRecords = [], doct
   const storedActiveVideo = consultationRecords.find(
     (record) => record.id === storedActiveVideoId && record.type === "video" && record.state === "ongoing"
   );
-  const defaultActiveVideo = consultationRecords.find(
-    (record) => record.type === "video" && record.state === "ongoing"
-  );
+  const defaultActiveVideo = getNextOngoingVideoConsultationRecord(consultationRecords);
   activeVideoConsultationState.recordId = storedActiveVideo?.id || defaultActiveVideo?.id || "";
   if (activeVideoConsultationState.recordId) {
     safeSessionStorage.setItem(activeVideoConsultationStorageKey, activeVideoConsultationState.recordId);

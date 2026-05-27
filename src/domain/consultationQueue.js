@@ -1,4 +1,5 @@
 export const maxVisibleOngoingConsultations = 6;
+export const contactLayoutTypeOrder = ["text", "consult", "video"];
 
 function getRecordSortMinutes(record = {}) {
   const match = String(record.time || "").match(/^(\d{1,2}):(\d{2})$/);
@@ -16,12 +17,51 @@ function sortRecordsByRecentTime(records = []) {
     .map((item) => item.record);
 }
 
-export function getMessageListRecords(records = [], { type = "all", state = "ongoing" } = {}) {
+function getContactLayoutTypeRank(record = {}) {
+  const index = contactLayoutTypeOrder.indexOf(record.type);
+  return index === -1 ? contactLayoutTypeOrder.length : index;
+}
+
+function getPreferredVideoRecord(records = [], preferredRecordId = "") {
+  return (
+    records.find(
+      (record) => record.id === preferredRecordId && record.type === "video" && record.state === "ongoing"
+    ) ||
+    sortRecordsByRecentTime(records.filter((record) => record.type === "video" && record.state === "ongoing"))[0] ||
+    null
+  );
+}
+
+export function sortOngoingContactRecords(records = [], { activeVideoRecordId = "" } = {}) {
+  const preferredVideo = getPreferredVideoRecord(records, activeVideoRecordId);
+  return records
+    .map((record, index) => ({ record, index }))
+    .sort((left, right) => {
+      if (preferredVideo?.id) {
+        if (left.record.id === preferredVideo.id) return -1;
+        if (right.record.id === preferredVideo.id) return 1;
+      }
+      const typeDiff = getContactLayoutTypeRank(left.record) - getContactLayoutTypeRank(right.record);
+      if (typeDiff) return typeDiff;
+      const timeDiff = getRecordSortMinutes(right.record) - getRecordSortMinutes(left.record);
+      return timeDiff || left.index - right.index;
+    })
+    .map((item) => item.record);
+}
+
+export function getNextOngoingVideoConsultationRecord(records = [], { excludeRecordId = "", preferredRecordId = "" } = {}) {
+  const videoRecords = records.filter(
+    (record) => record.type === "video" && record.state === "ongoing" && record.id !== excludeRecordId
+  );
+  return getPreferredVideoRecord(videoRecords, preferredRecordId);
+}
+
+export function getMessageListRecords(records = [], { type = "all", state = "ongoing", activeVideoRecordId = "" } = {}) {
   const filteredRecords = records.filter(
     (record) => (type === "all" || record.type === type) && record.state === state
   );
   return state === "ongoing"
-    ? sortRecordsByRecentTime(filteredRecords).slice(0, maxVisibleOngoingConsultations)
+    ? sortOngoingContactRecords(filteredRecords, { activeVideoRecordId }).slice(0, maxVisibleOngoingConsultations)
     : filteredRecords;
 }
 

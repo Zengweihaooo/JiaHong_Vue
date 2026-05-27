@@ -1,4 +1,4 @@
-import { renderButton, renderRiskTag } from "./primitives.js?v=20260527-35";
+import { renderButton, renderRiskTag } from "./primitives.js?v=20260527-36";
 import { escapeHtml } from "../ui/html.js";
 
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];

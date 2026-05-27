@@ -1,5 +1,5 @@
 import { appView, getSessionIdParam } from "../../shared/core.js";
-import { getMessageListRecords } from "../../domain/consultationQueue.js";
+import { contactLayoutTypeOrder, getMessageListRecords } from "../../domain/consultationQueue.js";
 import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
 import {
   getActiveVideoConsultationRecordId,
@@ -54,9 +54,34 @@ export function renderRoomSidebar() {
 
 export function renderMessageList({ type = "all", state = "ongoing", activeRecord = "" } = {}) {
   const activeVideoRecordId = getActiveVideoConsultationRecordId(activeRecord);
-  return getMessageListRecords(renderData.consultationRecords, { type, state })
-    .map((record, index) => renderMessageItem(record, record.id === activeRecord, index, activeVideoRecordId))
+  const records = getMessageListRecords(renderData.consultationRecords, { type, state, activeVideoRecordId });
+  if (state !== "ongoing" || type !== "all") {
+    return records
+      .map((record, index) => renderMessageItem(record, record.id === activeRecord, index, activeVideoRecordId))
+      .join("");
+  }
+
+  return records
+    .map((record, index) => {
+      const previousRecord = records[index - 1];
+      const isPinnedVideo = record.id === activeVideoRecordId && record.type === "video";
+      const shouldRenderGroup =
+        !isPinnedVideo && (!previousRecord || previousRecord.type !== record.type || previousRecord.id === activeVideoRecordId);
+      return `
+        ${shouldRenderGroup ? renderMessageGroupLabel(record.type) : ""}
+        ${renderMessageItem(record, record.id === activeRecord, index, activeVideoRecordId)}`;
+    })
     .join("");
+}
+
+function renderMessageGroupLabel(type) {
+  if (!contactLayoutTypeOrder.includes(type)) return "";
+  const labels = {
+    text: "图文",
+    consult: "咨询",
+    video: "视频"
+  };
+  return `<div class="message-group-label" data-message-group="${type}">${labels[type]}</div>`;
 }
 
 export function renderMessageItem(record, active, index = 0, activeVideoRecordId = "") {

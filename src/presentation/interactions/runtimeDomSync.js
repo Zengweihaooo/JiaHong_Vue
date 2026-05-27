@@ -3,7 +3,7 @@ import {
   getServiceAvailabilityEntries,
   getWaitingQueueState
 } from "../../application/controllers/runtimeController.js";
-import { getDoctorStatusLabel } from "../components/primitives.js?v=20260527-35";
+import { getDoctorStatusLabel } from "../components/primitives.js?v=20260527-36";
 
 export function applyServiceStateToDom(serviceKey, enabled) {
   document.querySelectorAll(`[data-service-key="${serviceKey}"]`).forEach((node) => {

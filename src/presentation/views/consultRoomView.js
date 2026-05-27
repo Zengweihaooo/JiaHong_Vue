@@ -1,8 +1,8 @@
 import { assetUrl } from "../../shared/core.js";
-import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from "../components/primitives.js?v=20260527-35";
+import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from "../components/primitives.js?v=20260527-36";
 import { getActiveConsultationRecord } from "./renderRecordSelectors.js";
 import { renderChatInput, renderChatPanel, renderChatThread } from "./chatView.js";
-import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260527-35";
+import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260527-37";
 import { renderRoomSidebar } from "./roomMessageListView.js";
 import { renderRoomTopbar } from "./roomShellView.js";
 import { renderVideoToolbar, videoMediaState } from "./videoMedia.js";

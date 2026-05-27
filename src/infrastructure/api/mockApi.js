@@ -16,7 +16,7 @@ const baseWaitingQueue = {
   total: 4,
   byType: { text: 1, video: 1, consult: 2 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-35", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-36", import.meta.url);
 
 function delay(ms = mockLatencyMs) {
   return new Promise((resolve) => {
@@ -42,8 +42,10 @@ function pickRandomAvailableConsultation(poolRecords, runtimeRecords) {
   const usedIds = new Set(runtimeRecords.map((record) => record.id));
   const availableRecords = poolRecords.filter((record) => !usedIds.has(record.id));
   if (!availableRecords.length) return null;
-  const index = Math.floor(Math.random() * availableRecords.length);
-  return availableRecords[index];
+  const videoRecords = availableRecords.filter((record) => record.type === "video");
+  const prioritizedRecords = videoRecords.length ? videoRecords : availableRecords;
+  const index = Math.floor(Math.random() * prioritizedRecords.length);
+  return prioritizedRecords[index];
 }
 
 function buildWaitingQueue(runtimeRecords) {

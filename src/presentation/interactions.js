@@ -3,8 +3,8 @@ import { syncActiveElapsedSeconds } from "../application/controllers/consultatio
 import { refreshRealtimeState } from "../application/controllers/realtimeController.js";
 import { subscribeToRuntimeState } from "../application/controllers/runtimeController.js";
 import { isConsultReadonlyView } from "./ui/dom.js";
-import { showToast } from "./ui/interactionPrimitives.js?v=20260527-35";
-import { formatDuration, getDurationTone } from "./components/primitives.js?v=20260527-35";
+import { showToast } from "./ui/interactionPrimitives.js?v=20260527-36";
+import { formatDuration, getDurationTone } from "./components/primitives.js?v=20260527-36";
 import {
   applyRuntimeStateToDom,
   bindDoctorStatusMenus,
@@ -16,25 +16,26 @@ import {
   isServiceAvailable,
   setServiceTileState,
   toggleDoctorOnlineStatus
-} from "./interactions/runtimeUiBindings.js?v=20260527-35";
+} from "./interactions/runtimeUiBindings.js?v=20260527-36";
 import {
   bindChatMessageMenu,
   closeChatMessageMenu,
   configureChatBindings
 } from "./interactions/chatBindings.js";
-import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-35";
+import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-37";
 import { bindDragScrollContainers } from "./interactions/dragScrollBindings.js";
 import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js";
-import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260527-35";
+import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260527-36";
 import {
   bindConsultConfirmDialogs,
   bindConsultDialogOverlays,
   closeConsultDialogOverlays,
   configureConsultDialogBindings
-} from "./interactions/consultDialogBindings.js?v=20260527-35";
+} from "./interactions/consultDialogBindings.js?v=20260527-37";
 import {
   bindRoomInteractions,
   configureRoomInteractionBindings,
+  handleConsultResolved,
   updateRoomMessageList
 } from "./interactions/roomInteractionBindings.js";
 
@@ -97,7 +98,7 @@ export function startRealtimeMockUpdates() {
 export function bindInteractions() {
   configureChatBindings({ onThreadRendered: bindDragScrollContainers });
   configurePrescriptionEditorBindings({ getContext: getRouteConsultationContext, onPanelRendered: bindConsultWorkspace });
-  configureConsultDialogBindings({ getContext: getRouteConsultationContext, onResolved: updateRoomMessageList });
+  configureConsultDialogBindings({ getContext: getRouteConsultationContext, onResolved: handleConsultResolved });
   configureRoomInteractionBindings({
     bindWorkspace: bindConsultWorkspace,
     startTimers: startOngoingTimers,
@@ -144,6 +145,18 @@ export function bindInteractions() {
       setServiceTileState(currentTile, !isServiceAvailable(serviceKey));
     });
   }
+
+  document.querySelectorAll(".user-menu-service").forEach((tile) => {
+    if (tile.dataset.bound === "true") return;
+    tile.dataset.bound = "true";
+    const serviceKey = tile.dataset.serviceKey;
+    setServiceTileState(tile, isServiceAvailable(serviceKey), { sync: false });
+    tile.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setServiceTileState(tile, !isServiceAvailable(serviceKey));
+    });
+  });
 
   bindConsultWorkspace();
   bindChatMessageMenu();

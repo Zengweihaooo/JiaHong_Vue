@@ -1,7 +1,25 @@
 import { appView, getSessionIdParam } from "../../shared/core.js";
+import { getMessageListRecords } from "../../domain/consultationQueue.js";
 import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
 
 export function getDefaultOngoingRenderRecord(type = appView) {
+  if (!type || type === "room") {
+    return getMessageListRecords(renderData.consultationRecords, {
+      type: "all",
+      state: "ongoing",
+      activeVideoRecordId: renderRuntime.activeVideoConsultationId
+    })[0];
+  }
+  if (type === "video") {
+    return (
+      renderData.consultationRecords.find(
+        (record) => record.id === renderRuntime.activeVideoConsultationId && record.type === "video" && record.state === "ongoing"
+      ) ||
+      renderData.consultationRecords.find((record) => record.state === "ongoing" && record.targetView === type) ||
+      renderData.consultationRecords.find((record) => record.state === "ongoing" && record.type === type) ||
+      null
+    );
+  }
   return (
     renderData.consultationRecords.find((record) => record.state === "ongoing" && record.targetView === type) ||
     renderData.consultationRecords.find((record) => record.state === "ongoing" && record.type === type) ||
@@ -31,9 +49,9 @@ export function getActiveChatKey() {
 export function getActiveVideoConsultationRecordId(activeRecord = "") {
   const urlSessionId = getSessionIdParam();
   const candidates = [
-    activeRecord,
+    renderRuntime.activeVideoConsultationId,
     appView === "video" ? urlSessionId : "",
-    renderRuntime.activeVideoConsultationId
+    activeRecord
   ].filter(Boolean);
   return (
     candidates

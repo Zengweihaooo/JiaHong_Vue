@@ -2,6 +2,11 @@ import { generatePatientAutoReply } from "../../infrastructure/api/appApi.js";
 import { consultationRecords, ongoingChatState } from "../state/dataStore.js";
 import { rememberDismissedMessageBadge } from "../state/runtimeState.js";
 
+function formatChatDateTime(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 export function getOngoingChatMessage(chatKey, messageId) {
   return ongoingChatState[chatKey]?.messages.find((message) => message.id === messageId) || null;
 }
@@ -24,6 +29,7 @@ export function appendDoctorChatMessage(chatKey, text, date = new Date()) {
     id: `${chatKey}-doctor-${date.getTime()}`,
     from: "doctor",
     text,
+    time: formatChatDateTime(date),
     recalled: false
   };
   chat.messages = [...(chat.messages || []), message];

@@ -52,10 +52,103 @@ const consultConfirmConfig = {
   }
 };
 
+const cancelReasonGroups = [
+  {
+    key: "patient",
+    label: "患者原因",
+    reasons: ["患者原因不进行购买了、患者只进行咨询、用户取消、药店端无患者、有视频无人应答"]
+  },
+  {
+    key: "medicine",
+    label: "药品禁忌",
+    reasons: ["药品与性别不符", "药品与年龄不符", "处方内药品配伍冲突", "病情特殊存在用药禁忌", "重复用药", "违规药品，拒绝开方"]
+  },
+  {
+    key: "scope",
+    label: "诊疗范围",
+    reasons: ["疾病与科室不符", "诊断与拟购药品不符", "首诊开方、危急重症开方、动植物开方、超疗程处方"]
+  },
+  {
+    key: "prescription",
+    label: "处方信息",
+    reasons: ["药品名称错误", "药品规格错误", "凭证不符", "实名制药品超限"]
+  },
+  {
+    key: "connection",
+    label: "连接异常",
+    reasons: ["没有视频接不通", "问诊中对方视频中断", "医生超时未开方"]
+  }
+];
+
+function renderCancelReasonDialog() {
+  return `
+    <div class="consult-confirm-overlay" data-confirm-kind="cancel" aria-hidden="true">
+      <section
+        class="consult-confirm-dialog consult-confirm-dialog--cancel-reason"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="consult-confirm-title-cancel"
+      >
+        <header class="consult-confirm-dialog__header">
+          <h2 id="consult-confirm-title-cancel">取消问诊原因</h2>
+          <button type="button" class="consult-confirm-dialog__close" aria-label="关闭">
+            <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" />
+          </button>
+        </header>
+        <div class="consult-cancel-reasons">
+          <div class="consult-cancel-reasons__head">
+            <span>取消原因类型</span>
+            <span>具体内容</span>
+          </div>
+          <div class="consult-cancel-reasons__body">
+            <nav class="consult-cancel-reason-types" aria-label="取消原因类型">
+              ${cancelReasonGroups
+                .map(
+                  (group) => `
+                    <button class="consult-cancel-reason-type${group.key === "medicine" ? " is-active" : ""}" type="button" data-cancel-reason-type="${group.key}">
+                      ${escapeHtml(group.label)}
+                    </button>`
+                )
+                .join("")}
+            </nav>
+            <div class="consult-cancel-reason-list" role="list" aria-label="具体内容">
+              ${cancelReasonGroups
+                .map((group) =>
+                  group.reasons
+                    .map(
+                      (reason) => `
+                        <button
+                          class="consult-cancel-reason${group.key === "medicine" && reason === "病情特殊存在用药禁忌" ? " is-active" : ""}"
+                          type="button"
+                          role="listitem"
+                          data-cancel-reason="${escapeHtml(reason)}"
+                          data-cancel-reason-group="${group.key}"
+                          ${group.key !== "medicine" ? "hidden" : ""}
+                        >
+                          ${escapeHtml(reason)}
+                        </button>`
+                    )
+                    .join("")
+                )
+                .join("")}
+            </div>
+          </div>
+        </div>
+        <footer class="consult-confirm-dialog__footer">
+          ${renderButton({ text: "取消", tone: "outline-secondary", size: "md", className: "consult-confirm-dismiss" })}
+          ${renderButton({ text: "确定", tone: "primary", size: "md", className: "consult-confirm-submit" })}
+        </footer>
+      </section>
+    </div>`;
+}
+
 export function renderConsultConfirmDialogs() {
   return Object.entries(consultConfirmConfig)
     .map(
-      ([kind, config]) => `
+      ([kind, config]) =>
+        kind === "cancel"
+          ? renderCancelReasonDialog()
+          : `
     <div class="consult-confirm-overlay" data-confirm-kind="${kind}" aria-hidden="true">
       <section
         class="consult-confirm-dialog"

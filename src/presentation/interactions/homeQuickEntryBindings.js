@@ -1,6 +1,6 @@
 import { getQuickEntryOption } from "../../application/controllers/contentController.js";
 import { maxQuickActionCards } from "../../domain/quickEntries.js";
-import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-35";
+import { bindOverlayDismiss, closeOverlay, openOverlay, showToast } from "../ui/interactionPrimitives.js?v=20260527-36";
 import {
   addCustomQuickCardToGrid,
   ensureQuickAddCard,

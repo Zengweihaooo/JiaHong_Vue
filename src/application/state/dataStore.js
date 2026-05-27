@@ -1,4 +1,5 @@
 import { normalizeArchivedConsultationRecord } from "../../domain/archivedConsultation.js";
+import { getMessageListRecords, sortOngoingContactRecords } from "../../domain/consultationQueue.js";
 
 export const appData = {
   schemaVersion: null,
@@ -60,11 +61,12 @@ export function hydrateAppData(payload) {
 
 export function addConsultationRecord(record, chat) {
   if (!record?.id || consultationRecords.some((item) => item.id === record.id)) return false;
-  const ongoingRecords = consultationRecords.filter((item) => item.state === "ongoing");
+  const ongoingRecords = sortOngoingContactRecords([
+    ...consultationRecords.filter((item) => item.state === "ongoing"),
+    record
+  ]);
   const archivedRecords = consultationRecords.filter((item) => item.state !== "ongoing");
-  const insertIndex = Math.floor(Math.random() * (ongoingRecords.length + 1));
-  ongoingRecords.splice(insertIndex, 0, record);
-  consultationRecords = [...ongoingRecords.slice(0, 6), ...archivedRecords];
+  consultationRecords = [...ongoingRecords, ...archivedRecords];
   appData.consultations.records = consultationRecords;
   if (chat) {
     ongoingChatState[record.id] = chat;
@@ -75,7 +77,7 @@ export function addConsultationRecord(record, chat) {
 
 export function getDefaultOngoingConsultationRecord({ view = "" } = {}) {
   if (!view || view === "room") {
-    return consultationRecords.find((record) => record.state === "ongoing") || null;
+    return getMessageListRecords(consultationRecords, { type: "all", state: "ongoing" })[0] || null;
   }
   return consultationRecords.find((record) => record.state === "ongoing" && record.targetView === view) ||
     consultationRecords.find((record) => record.state === "ongoing" && record.type === view) ||

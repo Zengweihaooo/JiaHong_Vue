@@ -9,6 +9,7 @@ import {
 } from "../state/dataStore.js";
 import { consultationEvents } from "../../domain/consultationStateMachine.js";
 import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
+import { getNextOngoingVideoConsultationRecord } from "../../domain/consultationQueue.js";
 import {
   clearActiveVideoConsultation,
   sendConsultationEvent,
@@ -108,8 +109,18 @@ export async function resolveActiveConsultation(kind, context = {}) {
 
   sendConsultationEvent(recordId, config.event);
   const updatedRecord = updateConsultationRecordState(recordId, config.state);
+  let nextVideoRecord = null;
   if (record?.type === "video") {
-    clearActiveVideoConsultation(recordId);
+    if (kind === "end") {
+      nextVideoRecord = getNextOngoingVideoConsultationRecord(consultationRecords, { excludeRecordId: recordId });
+      if (nextVideoRecord) {
+        setActiveVideoConsultation(nextVideoRecord.id, { silent: true });
+      } else {
+        clearActiveVideoConsultation(recordId, { silent: true });
+      }
+    } else {
+      clearActiveVideoConsultation(recordId, { silent: true });
+    }
   }
   syncWaitingQueueToMessages();
 
@@ -117,6 +128,7 @@ export async function resolveActiveConsultation(kind, context = {}) {
   return {
     recordId,
     record: updatedRecord,
-    message: config.message
+    nextVideoRecord,
+    message: nextVideoRecord ? "问诊已结束，已自动接入下一位视频问诊" : config.message
   };
 }

@@ -1,9 +1,12 @@
 import { getRealtimeSnapshot } from "../../infrastructure/api/appApi.js";
 import { buildWaitingQueueFromRecords } from "../../domain/consultationQueue.js";
+import { getNextOngoingVideoConsultationRecord } from "../../domain/consultationQueue.js";
 import { addConsultationRecord, consultationRecords } from "../state/dataStore.js";
 import {
+  activeVideoConsultationState,
   registerConsultationMachine,
   setDoctorStatus,
+  setActiveVideoConsultation,
   setWaitingQueue
 } from "../state/runtimeState.js";
 
@@ -16,6 +19,12 @@ export async function refreshRealtimeState() {
     if (added) {
       registerConsultationMachine(snapshot.newConsultation.record);
       addedConsultation = snapshot.newConsultation;
+      if (!activeVideoConsultationState.recordId) {
+        const nextVideoRecord = getNextOngoingVideoConsultationRecord(consultationRecords);
+        if (nextVideoRecord) {
+          setActiveVideoConsultation(nextVideoRecord.id, { silent: true });
+        }
+      }
     }
   }
 

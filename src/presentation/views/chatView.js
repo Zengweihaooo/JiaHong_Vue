@@ -4,6 +4,8 @@ import { renderButton } from "../components/primitives.js";
 import { escapeHtml } from "../ui/html.js";
 import { getActiveChatKey } from "./renderRecordSelectors.js";
 
+const defaultMessageIntervalSeconds = 58;
+
 export function renderChatInput({ className = "" } = {}) {
   return `
     <div class="jh-chat-input${className ? ` ${className}` : ""}">
@@ -41,23 +43,87 @@ export function findOngoingChatMessage(chatKey, messageId) {
   return renderData.ongoingChatState[chatKey]?.messages.find((message) => message.id === messageId);
 }
 
-export function renderChatBubble(message) {
+function parseMessageDate(value = "") {
+  if (!value) return null;
+  const normalized = String(value).replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatChatTime(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function formatChatDateTime(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${formatChatTime(date)}`;
+}
+
+function getMessageDate(message = {}, chat = {}, index = 0) {
+  const explicitDate = parseMessageDate(message.time || message.sentAt || message.createdAt);
+  if (explicitDate) return explicitDate;
+  const sessionDate = parseMessageDate(chat.sessionDate);
+  if (!sessionDate) return null;
+  return new Date(sessionDate.getTime() + index * defaultMessageIntervalSeconds * 1000);
+}
+
+function getDoctorReadState(message = {}, messages = [], index = 0) {
+  if (message.readStatus === "read" || message.read === true) return "read";
+  if (message.readStatus === "unread" || message.read === false) return "unread";
+  return messages.slice(index + 1).some((item) => item.from === "patient") ? "read" : "unread";
+}
+
+function renderMessageTimeMeta(message, context, senderLabel) {
+  const sentDate = getMessageDate(message, context.chat, context.index);
+  const timeLabel = sentDate ? formatChatTime(sentDate) : "";
+  const fullTimeLabel = sentDate ? formatChatDateTime(sentDate) : "";
+  if (!timeLabel) return "";
+  return `
+    <div class="chat-message__meta" aria-label="${senderLabel}消息发送时间：${fullTimeLabel}">
+      <time class="chat-message__time" datetime="${fullTimeLabel}" title="${fullTimeLabel}">${timeLabel}</time>
+    </div>`;
+}
+
+function renderDoctorReadReceipt(message, context) {
+  const readState = getDoctorReadState(message, context.messages, context.index);
+  const label = readState === "read" ? "已读" : "未读";
+  return `<span class="chat-message__read-state chat-message__read-state--${readState}" aria-label="医生消息状态：${label}">${label}</span>`;
+}
+
+export function renderChatBubble(message, context = {}) {
   if (message.from === "doctor" && message.recalled) {
     return `
-      <div class="chat-bubble chat-bubble--doctor chat-bubble--recalled" data-message-id="${message.id}">
-        <p class="chat-bubble__recalled">您撤回了一条消息</p>
+      <div class="chat-message chat-message--doctor">
+        ${renderMessageTimeMeta(message, context, "医生")}
+        <div class="chat-bubble chat-bubble--doctor chat-bubble--recalled" data-message-id="${message.id}">
+          <p class="chat-bubble__recalled">您撤回了一条消息</p>
+        </div>
+        ${renderDoctorReadReceipt(message, context)}
       </div>`;
   }
 
   const isDoctor = message.from === "doctor";
-  return `
-    <div
-      class="chat-bubble chat-bubble--${message.from}${isDoctor ? " chat-bubble--actionable" : ""}"
-      data-message-id="${message.id}"
-      ${isDoctor ? 'data-chat-context="doctor"' : ""}
-    >
-      <p>${escapeHtml(message.text)}</p>
-    </div>`;
+  const bubble = `
+      <div
+        class="chat-bubble chat-bubble--${message.from}${isDoctor ? " chat-bubble--actionable" : ""}"
+        data-message-id="${message.id}"
+        ${isDoctor ? 'data-chat-context="doctor"' : ""}
+      >
+        <p>${escapeHtml(message.text)}</p>
+      </div>`;
+  return isDoctor
+    ? `
+      <div class="chat-message chat-message--doctor">
+        ${renderMessageTimeMeta(message, context, "医生")}
+        ${bubble}
+        ${renderDoctorReadReceipt(message, context)}
+      </div>`
+    : `
+      <div class="chat-message chat-message--patient">
+        ${renderMessageTimeMeta(message, context, "患者")}
+        ${bubble}
+      </div>`
 }
 
 export function renderChatThread(chatKey = getActiveChatKey(), { threadClass = "chat-thread" } = {}) {
@@ -67,7 +133,15 @@ export function renderChatThread(chatKey = getActiveChatKey(), { threadClass = "
   return `
     <div class="${threadClass}" data-chat-key="${chatKey}">
       <p class="chat-date">${chat.sessionDate}</p>
-      ${chat.messages.map((message) => renderChatBubble(message)).join("")}
+      ${chat.messages
+        .map((message, index) =>
+          renderChatBubble(message, {
+            chat,
+            index,
+            messages: chat.messages
+          })
+        )
+        .join("")}
     </div>`;
 }
 

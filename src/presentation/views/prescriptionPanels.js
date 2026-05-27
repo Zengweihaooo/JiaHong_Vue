@@ -30,21 +30,32 @@ export const defaultPatientDetail = {
   allergies: "--"
 };
 
+function renderPatientInfoField(label, value, { required = false } = {}) {
+  return `
+    <span class="patient-info__field">
+      <span class="patient-info__field-label">${required ? "<em>*</em>" : ""}${label}：</span>
+      <span class="patient-info__field-value">${escapeHtml(value || "--")}</span>
+    </span>`;
+}
+
 export function renderPatientInfoGrid(patientDetail = defaultPatientDetail) {
   return `
-    <span>体重 /KG：${patientDetail.weight}</span>
-    <span>*妊娠哺乳：　${patientDetail.pregnancy}</span>
-    <span>手机号：${patientDetail.phone}</span>
-    <span>*肝功能异常：　${patientDetail.liverAbnormal}</span>
-    <span>证件号：${patientDetail.idCard}</span>
-    <span>*肾功能异常：　${patientDetail.kidneyAbnormal}</span>
-    <span>过敏史：${patientDetail.allergies}</span>`;
+    ${renderPatientInfoField("过敏史", patientDetail.allergies)}
+    ${renderPatientInfoField("肝功能异常", patientDetail.liverAbnormal, { required: true })}
+    ${renderPatientInfoField("妊娠哺乳", patientDetail.pregnancy, { required: true })}
+    ${renderPatientInfoField("肾功能异常", patientDetail.kidneyAbnormal, { required: true })}`;
 }
 
 function getPatientName(record) {
   return record
     ? `${record.patient}&nbsp;&nbsp;${record.patientGender || ""}&nbsp;&nbsp;${record.age}`
     : "暂无患者信息";
+}
+
+function getPatientWeight(patientDetail = defaultPatientDetail) {
+  const weight = String(patientDetail.weight || "").trim();
+  if (!weight || weight === "--") return "";
+  return `${weight}${/kg$/i.test(weight) ? "" : "KG"}`;
 }
 
 function getDiagnosisTags(record, { excludeConsultationTag = false } = {}) {
@@ -54,9 +65,16 @@ function getDiagnosisTags(record, { excludeConsultationTag = false } = {}) {
 
 function renderPatientSection(record) {
   const patientDetail = record?.patientDetail ? record.patientDetail : defaultPatientDetail;
+  const patientWeight = getPatientWeight(patientDetail);
   return `
       <div class="patient-info">
-        <div class="patient-info__name">${getPatientName(record)}</div>
+        <div class="patient-info__header">
+          <div class="patient-info__name">${getPatientName(record)}${patientWeight ? `&nbsp;&nbsp;${escapeHtml(patientWeight)}` : ""}</div>
+          <div class="patient-info__meta">
+            <span>证件号：${escapeHtml(patientDetail.idCard || "--")}</span>
+            <span>手机号：${escapeHtml(patientDetail.phone || "--")}</span>
+          </div>
+        </div>
         <div class="patient-info__grid">${renderPatientInfoGrid(patientDetail)}</div>
       </div>`;
 }

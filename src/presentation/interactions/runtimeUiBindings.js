@@ -9,7 +9,7 @@ import {
   closePopupMenus,
   showToast,
   togglePopupMenu
-} from "../ui/interactionPrimitives.js?v=20260527-35";
+} from "../ui/interactionPrimitives.js?v=20260527-36";
 
 const userMenuConfig = {
   menuSelector: ".user-menu",

@@ -36,14 +36,23 @@ function getRoomFilters() {
   };
 }
 
-export function updateRoomMessageList() {
+export function updateRoomMessageList({ activeRecord = "" } = {}) {
   const messageList = document.querySelector(".message-list");
   syncWaitingQueueToMessages();
   if (!messageList) return;
   const filters = getRoomFilters();
-  const activeId = document.querySelector(".message-item.is-active")?.dataset.recordId || "";
+  const activeId = activeRecord || document.querySelector(".message-item.is-active")?.dataset.recordId || "";
   messageList.innerHTML = renderMessageList({ ...filters, activeRecord: activeId });
   bindMessageItems();
+}
+
+export function handleConsultResolved(result = {}) {
+  const nextVideoRecord = result?.nextVideoRecord;
+  updateRoomMessageList({ activeRecord: nextVideoRecord?.id || "" });
+  if (!nextVideoRecord?.id) return;
+  if (!openConsultationInCurrentPage(nextVideoRecord, "video")) {
+    window.location.href = getVideoHref(nextVideoRecord.id);
+  }
 }
 
 function restoreOngoingMain() {

@@ -1,32 +1,7 @@
 import { assetUrl, getHomeHref } from "../../shared/core.js";
 import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
-import { getDoctorStatusLabel, renderButton, renderCheckbox, renderStatusBadge } from "../components/primitives.js";
+import { renderButton, renderCheckbox, renderStatusBadge, renderSwitch } from "../components/primitives.js";
 import { icons } from "../ui/icons.js";
-
-export function renderDoctorStatusMenu() {
-  const options = [
-    { value: "online", label: "在线" },
-    { value: "busy", label: "忙碌" },
-    { value: "offline", label: "离线" }
-  ];
-  return `
-    <div class="doctor-status-menu" role="menu" aria-hidden="true">
-      ${options
-        .map(
-          (option) => `
-            <button
-              class="doctor-status-menu__item${renderRuntime.doctorStatus === option.value ? " is-active" : ""}"
-              type="button"
-              role="menuitemradio"
-              aria-checked="${renderRuntime.doctorStatus === option.value}"
-              data-doctor-status="${option.value}"
-            >
-              ${renderStatusBadge(option.value, "", { live: false })}
-            </button>`
-        )
-        .join("")}
-    </div>`;
-}
 
 export function renderMenu() {
   return renderData.menuGroups
@@ -86,44 +61,47 @@ export function renderTopbar() {
 }
 
 export function renderUserMenu() {
+  const serviceOrder = ["text", "video", "consult"];
+  const orderedServices = renderData.services
+    .filter((service) => serviceOrder.includes(service.key))
+    .sort((left, right) => serviceOrder.indexOf(left.key) - serviceOrder.indexOf(right.key));
   return `
     <div class="user-menu" role="menu" aria-hidden="true">
-      <button class="user-menu__item" type="button" role="menuitem" data-action="个人中心">个人中心</button>
-      <button class="user-menu__item" type="button" role="menuitem" data-action="账号安全">账号安全</button>
-      <button class="user-menu__item" type="button" role="menuitem" data-action="消息通知">消息通知</button>
-      <div class="user-menu__divider"></div>
-      <button class="user-menu__item user-menu__item--danger" type="button" role="menuitem" data-action="退出登录">退出登录</button>
+      <section class="user-menu-status" aria-label="接诊状态与服务开关">
+        <div class="user-menu-status__row">
+          <div class="user-menu-status__left">
+            <span>出诊状态</span>
+            ${renderStatusBadge(renderRuntime.doctorStatus)}
+          </div>
+          ${renderSwitch({ checked: renderRuntime.doctorStatus !== "offline", label: "切换出诊状态", className: "user-menu-status__switch" })}
+        </div>
+        <div class="user-menu-services" aria-label="服务类型">
+          ${orderedServices
+            .map(
+              (service) => `
+                <button class="user-menu-service${renderRuntime.serviceState[service.key] ? " is-selected" : ""}" type="button" role="checkbox" aria-checked="${Boolean(renderRuntime.serviceState[service.key])}" data-service-key="${service.key}">
+                  ${renderCheckbox({ label: service.label, className: "user-menu-service__check", labelClassName: "user-menu-service__label" })}
+                </button>`
+            )
+            .join("")}
+        </div>
+      </section>
+      <div class="user-menu-actions">
+        <button class="user-menu__item user-menu__item--settings" type="button" role="menuitem" data-action="账号设置">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 7a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+          <span>账号设置</span>
+        </button>
+        <span class="user-menu-actions__divider" aria-hidden="true"></span>
+        <button class="user-menu__item user-menu__item--logout" type="button" role="menuitem" data-action="退出登录">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M10 7V5a2 2 0 0 1 2-2h7v18h-7a2 2 0 0 1-2-2v-2m-3-1 4-4-4-4m4 4H3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+          <span>退出登录</span>
+        </button>
+      </div>
     </div>`;
-}
-
-export function renderRoomCheckbox(label) {
-  return renderCheckbox({ label, className: "room-check", labelClassName: "room-check__label" });
-}
-
-function getOrderedRoomServices() {
-  const order = ["video", "text"];
-  return renderData.services.filter((service) => order.includes(service.key)).sort((left, right) => {
-    const leftIndex = order.indexOf(left.key);
-    const rightIndex = order.indexOf(right.key);
-    return (leftIndex === -1 ? order.length : leftIndex) - (rightIndex === -1 ? order.length : rightIndex);
-  });
-}
-
-function renderRoomServiceSwitches() {
-  return getOrderedRoomServices()
-    .map(
-      (service) => `
-        <button
-          class="room-service-check${renderRuntime.serviceState[service.key] ? " is-selected" : ""}"
-          type="button"
-          role="checkbox"
-          aria-checked="${Boolean(renderRuntime.serviceState[service.key])}"
-          data-service-key="${service.key}"
-        >
-          ${renderRoomCheckbox(service.label)}
-        </button>`
-    )
-    .join("");
 }
 
 export function renderRoomTopbar() {
@@ -136,18 +114,6 @@ export function renderRoomTopbar() {
         </a>
         <div class="room-topbar__right">
           ${renderButton({ text: "在线客服", tone: "primary", size: "md", className: "room-service-btn" })}
-          <div class="doctor-status-control room-status-control">
-            <button class="room-status doctor-status-trigger" type="button" aria-label="出诊状态：${getDoctorStatusLabel()}，展开状态菜单" aria-expanded="false" aria-haspopup="menu">
-              ${renderStatusBadge(renderRuntime.doctorStatus, "room-status__badge")}
-              <span class="room-status__chevron doctor-status-trigger__chevron" aria-hidden="true">
-                <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
-              </span>
-            </button>
-            ${renderDoctorStatusMenu()}
-          </div>
-          <div class="room-service-switches" aria-label="服务类型">
-            ${renderRoomServiceSwitches()}
-          </div>
           <div class="room-user">
             <span class="room-user__divider" aria-hidden="true">
               <img src="${assetUrl("assets/figma-consult/topbar-divider.svg")}" alt="" />
@@ -157,6 +123,9 @@ export function renderRoomTopbar() {
                 <img src="${assetUrl("assets/figma-consult/avatar-source.png")}" alt="" />
               </span>
               <span>张医生</span>
+              <span class="room-user__chevron" aria-hidden="true">
+                <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
+              </span>
             </button>
             ${renderUserMenu()}
           </div>

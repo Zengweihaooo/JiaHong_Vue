@@ -1,5 +1,5 @@
 import { videoPrescriptionSubmitLockSeconds } from "../../domain/consultationRules.js";
-import { renderButton, renderClockIcon } from "./primitives.js?v=20260527-35";
+import { renderButton, renderClockIcon } from "./primitives.js?v=20260527-36";
 import { renderPrescriptionRemarkSelect } from "../views/prescriptionFormFields.js";
 
 function renderArchivedActionHint(readonly) {

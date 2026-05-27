@@ -4,7 +4,7 @@ import {
   openConsultConfirmDialog,
   openQuickReplyDialog,
   requestPrescriptionSubmit
-} from "./consultDialogBindings.js?v=20260527-35";
+} from "./consultDialogBindings.js?v=20260527-37";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
 import { bindVideoControls } from "./videoControls.js";
@@ -127,16 +127,16 @@ function bindConsultFinishTriggers() {
   document.querySelectorAll(".end-consult-trigger").forEach((button) => {
     if (button.dataset.bound === "true") return;
     button.dataset.bound = "true";
-    button.addEventListener("pointerdown", (event) => {
+    const openEndConfirm = (event) => {
       event.preventDefault();
       event.stopPropagation();
       if (button.disabled) return;
       openConsultConfirmDialog("end");
-    });
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
+    };
+    button.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
     });
+    button.addEventListener("click", openEndConfirm);
   });
 }
 

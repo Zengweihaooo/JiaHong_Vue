@@ -193,7 +193,39 @@ async function handleConsultConfirm(kind) {
   }
   onConsultResolved(result);
   showToast(result?.message || "问诊状态已更新");
-  window.location.href = result?.redirectHref || getRoomHref();
+  if (!result?.nextVideoRecord) {
+    window.location.href = result?.redirectHref || getRoomHref();
+  }
+}
+
+function bindCancelReasonDialog(overlay) {
+  const reasonTypes = overlay.querySelectorAll(".consult-cancel-reason-type");
+  const reasons = overlay.querySelectorAll(".consult-cancel-reason");
+  reasonTypes.forEach((type) => {
+    type.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const group = type.dataset.cancelReasonType;
+      reasonTypes.forEach((node) => node.classList.toggle("is-active", node === type));
+      let firstVisibleReason = null;
+      reasons.forEach((reason) => {
+        const visible = reason.dataset.cancelReasonGroup === group;
+        reason.hidden = !visible;
+        if (visible && !firstVisibleReason) firstVisibleReason = reason;
+      });
+      if (firstVisibleReason) {
+        reasons.forEach((reason) => reason.classList.toggle("is-active", reason === firstVisibleReason));
+      }
+    });
+  });
+
+  reasons.forEach((reason) => {
+    reason.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      reasons.forEach((node) => node.classList.toggle("is-active", node === reason));
+    });
+  });
 }
 
 export function bindConsultConfirmDialogs() {
@@ -201,21 +233,24 @@ export function bindConsultConfirmDialogs() {
     if (overlay.dataset.confirmBound === "true") return;
     overlay.dataset.confirmBound = "true";
     const kind = overlay.dataset.confirmKind;
+    if (kind === "cancel") {
+      bindCancelReasonDialog(overlay);
+    }
     overlay.querySelector(".consult-confirm-dialog__close")?.addEventListener("click", () => {
       closeConsultConfirmDialog(kind);
     });
     overlay.querySelector(".consult-confirm-dismiss")?.addEventListener("click", () => {
       closeConsultConfirmDialog(kind);
     });
-    overlay.querySelector(".consult-confirm-submit")?.addEventListener("pointerdown", (event) => {
+    const submitConfirm = (event) => {
       event.preventDefault();
       event.stopPropagation();
       handleConsultConfirm(kind);
-    });
-    overlay.querySelector(".consult-confirm-submit")?.addEventListener("click", (event) => {
-      event.preventDefault();
+    };
+    overlay.querySelector(".consult-confirm-submit")?.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
     });
+    overlay.querySelector(".consult-confirm-submit")?.addEventListener("click", submitConfirm);
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) {
         closeConsultConfirmDialog(kind);
