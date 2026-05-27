@@ -1,4 +1,4 @@
-import { appView, getSessionIdParam } from "../../shared/core.js";
+import { appView, assetUrl, getSessionIdParam } from "../../shared/core.js";
 import { contactLayoutTypeOrder, getMessageListRecords } from "../../domain/consultationQueue.js";
 import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
 import {
@@ -11,6 +11,21 @@ function renderRoomFilterButton({ text, type, state, active = false, wide = fals
   const dataAttr = type ? `data-filter-type="${type}"` : `data-filter-state="${state}"`;
   return `<button class="jh-btn jh-btn--md jh-btn--outline-secondary room-tag${wide ? " room-tag--wide" : ""}${active ? " is-active" : ""}" type="button" ${dataAttr}>${text}</button>`;
 }
+
+const messageTypeMeta = {
+  video: {
+    label: "视频",
+    icon: "assets/figma-room/video-consult.svg"
+  },
+  text: {
+    label: "图文",
+    icon: "assets/figma-room/text-consult.svg"
+  },
+  consult: {
+    label: "咨询",
+    icon: "assets/figma-room/consult.svg"
+  }
+};
 
 function getInitialActiveRecordId() {
   return (
@@ -35,12 +50,6 @@ export function renderRoomSidebar() {
         </div>
       </div>
       <div class="room-sidebar__section room-sidebar__section--filters">
-        <div class="room-tags room-tags--type">
-          ${renderRoomFilterButton({ text: "全部", type: "all", active: true })}
-          ${renderRoomFilterButton({ text: "图文", type: "text" })}
-          ${renderRoomFilterButton({ text: "视频", type: "video" })}
-          ${renderRoomFilterButton({ text: "咨询", type: "consult" })}
-        </div>
         <div class="room-tags room-tags--state">
           ${renderRoomFilterButton({ text: "进行中", state: "ongoing", active: initialState === "ongoing", wide: true })}
           ${renderRoomFilterButton({ text: "已结束", state: "ended", active: initialState === "ended", wide: true })}
@@ -55,7 +64,7 @@ export function renderRoomSidebar() {
 export function renderMessageList({ type = "all", state = "ongoing", activeRecord = "" } = {}) {
   const activeVideoRecordId = getActiveVideoConsultationRecordId(activeRecord);
   const records = getMessageListRecords(renderData.consultationRecords, { type, state, activeVideoRecordId });
-  if (state !== "ongoing" || type !== "all") {
+  if (type !== "all") {
     return records
       .map((record, index) => renderMessageItem(record, record.id === activeRecord, index, activeVideoRecordId))
       .join("");
@@ -64,9 +73,7 @@ export function renderMessageList({ type = "all", state = "ongoing", activeRecor
   return records
     .map((record, index) => {
       const previousRecord = records[index - 1];
-      const isPinnedVideo = record.id === activeVideoRecordId && record.type === "video";
-      const shouldRenderGroup =
-        !isPinnedVideo && (!previousRecord || previousRecord.type !== record.type || previousRecord.id === activeVideoRecordId);
+      const shouldRenderGroup = !previousRecord || previousRecord.type !== record.type;
       return `
         ${shouldRenderGroup ? renderMessageGroupLabel(record.type) : ""}
         ${renderMessageItem(record, record.id === activeRecord, index, activeVideoRecordId)}`;
@@ -76,35 +83,37 @@ export function renderMessageList({ type = "all", state = "ongoing", activeRecor
 
 function renderMessageGroupLabel(type) {
   if (!contactLayoutTypeOrder.includes(type)) return "";
-  const labels = {
-    text: "图文",
-    consult: "咨询",
-    video: "视频"
-  };
-  return `<div class="message-group-label" data-message-group="${type}">${labels[type]}</div>`;
+  return `
+    <button class="message-group-label message-group-toggle" type="button" data-message-group="${type}" aria-expanded="true">
+      <span>${messageTypeMeta[type].label}</span>
+      <img src="${assetUrl("assets/figma-room/group-chevron.svg")}" alt="" aria-hidden="true" />
+    </button>`;
 }
 
 export function renderMessageItem(record, active, index = 0, activeVideoRecordId = "") {
   const badgeKey = renderRuntime.getMessageBadgeKey(record.id);
   const unreadCount = Number(record.unreadCount ?? record.badge ?? 0);
   const showBadge = unreadCount > 0 && !renderRuntime.isMessageBadgeDismissed(record.id);
+  const typeMeta = messageTypeMeta[record.type] || messageTypeMeta.consult;
+  const currentVideo = record.type === "video" && active;
+  const compact = record.type === "video" && !active;
   const videoLocked =
     !active && record.type === "video" && record.state === "ongoing" && activeVideoRecordId && record.id !== activeVideoRecordId;
   const lockedAttrs = videoLocked
     ? ` aria-disabled="true" data-video-locked="true" title="当前视频问诊未结束，暂不可进入新的视频问诊"`
     : "";
   return `
-    <button class="message-item${active ? " is-active" : ""}${videoLocked ? " is-video-locked" : ""}" type="button" data-record-id="${record.id}" data-target-view="${record.targetView || ""}" data-record-state="${record.state}" data-badge-key="${badgeKey}"${lockedAttrs}>
+    <button class="message-item message-item--${record.type}${compact ? " message-item--compact" : ""}${active ? " is-active" : ""}${videoLocked ? " is-video-locked" : ""}" type="button" data-record-id="${record.id}" data-target-view="${record.targetView || ""}" data-record-state="${record.state}" data-badge-key="${badgeKey}"${lockedAttrs}>
       <span class="message-item__stripe" aria-hidden="true"></span>
-      <span class="message-item__body">
-        <span class="message-item__meta">
-          <span class="message-item__type message-item__type--${record.type}">${record.typeLabel}</span>
-          <span class="message-item__time">${record.time}</span>
-        </span>
-        <span class="message-item__title">${record.title}</span>
-        <span class="message-item__preview">${record.preview}</span>
-        ${videoLocked ? `<span class="message-item__lock-hint">请先结束当前视频问诊</span>` : ""}
+      <span class="message-item__icon" aria-hidden="true">
+        <img src="${assetUrl(typeMeta.icon)}" alt="" />
       </span>
-      ${showBadge ? `<span class="message-item__badge">${unreadCount}</span>` : ""}
+      <span class="message-item__body">
+        <span class="message-item__title">${record.title}</span>
+        ${compact ? "" : `<span class="message-item__preview">${record.preview}</span>`}
+        ${videoLocked && !compact ? `<span class="message-item__lock-hint">请先结束当前视频问诊</span>` : ""}
+      </span>
+      ${currentVideo ? `<span class="message-item__current" aria-label="当前视频问诊进行中"><img src="${assetUrl("assets/figma-room/current-video-indicator.svg")}" alt="" /></span>` : ""}
+      ${!currentVideo && showBadge ? `<span class="message-item__badge">${unreadCount}</span>` : ""}
     </button>`;
 }

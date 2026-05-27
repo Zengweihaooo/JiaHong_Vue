@@ -10,7 +10,7 @@ import { getConsultMainElement, isConsultReadonlyView, setConsultShellReadonly }
 import { showToast } from "../ui/interactionPrimitives.js";
 import { renderTextMain, renderVideoMain } from "../views/consultRoomView.js";
 import { renderPrescriptionTraceMain } from "../views/historyView.js";
-import { renderMessageList } from "../views/roomMessageListView.js";
+import { renderMessageList } from "../views/roomMessageListView.js?v=20260527-42";
 import { renderRoomMain } from "../views/roomShellView.js";
 import { bindChatMessageMenu } from "./chatBindings.js";
 import { bindConsultConfirmDialogs } from "./consultDialogBindings.js?v=20260527-41";
@@ -21,6 +21,7 @@ const videoConsultationLockedMessage = "请先结束当前视频问诊，再进�
 let bindConsultWorkspace = () => {};
 let startOngoingTimers = () => {};
 let stopOngoingTimers = () => {};
+const collapsedMessageGroups = new Set();
 
 export function configureRoomInteractionBindings({ bindWorkspace, startTimers, stopTimers } = {}) {
   bindConsultWorkspace = typeof bindWorkspace === "function" ? bindWorkspace : bindConsultWorkspace;
@@ -43,6 +44,8 @@ export function updateRoomMessageList({ activeRecord = "" } = {}) {
   const filters = getRoomFilters();
   const activeId = activeRecord || document.querySelector(".message-item.is-active")?.dataset.recordId || "";
   messageList.innerHTML = renderMessageList({ ...filters, activeRecord: activeId });
+  bindMessageGroupToggles();
+  applyMessageGroupCollapseState(messageList);
   bindMessageItems();
 }
 
@@ -166,6 +169,47 @@ export function bindMessageItems() {
   });
 }
 
+function setMessageGroupCollapsed(toggle, collapsed, { persist = true } = {}) {
+  const group = toggle.dataset.messageGroup;
+  if (persist && group) {
+    if (collapsed) {
+      collapsedMessageGroups.add(group);
+    } else {
+      collapsedMessageGroups.delete(group);
+    }
+  }
+  toggle.setAttribute("aria-expanded", String(!collapsed));
+  toggle.classList.toggle("is-collapsed", collapsed);
+  let node = toggle.nextElementSibling;
+  while (node && !node.classList.contains("message-group-label")) {
+    if (node.classList.contains("message-item")) {
+      node.hidden = collapsed;
+    }
+    node = node.nextElementSibling;
+  }
+}
+
+function applyMessageGroupCollapseState(root = document) {
+  root.querySelectorAll(".message-group-toggle").forEach((toggle) => {
+    setMessageGroupCollapsed(toggle, collapsedMessageGroups.has(toggle.dataset.messageGroup), { persist: false });
+  });
+}
+
+function bindMessageGroupToggles() {
+  document.querySelectorAll(".message-list").forEach((messageList) => {
+    if (messageList.dataset.groupToggleBound === "true") return;
+    messageList.dataset.groupToggleBound = "true";
+    messageList.addEventListener("click", (event) => {
+      const toggle = event.target.closest(".message-group-toggle");
+      if (!toggle || !messageList.contains(toggle)) return;
+      event.preventDefault();
+      const collapsed = toggle.getAttribute("aria-expanded") === "true";
+      setMessageGroupCollapsed(toggle, collapsed);
+    });
+    applyMessageGroupCollapseState(messageList);
+  });
+}
+
 export function bindPrescriptionTraceCards() {
   document.querySelectorAll(".prescription-history-open").forEach((button) => {
     if (button.dataset.bound === "true") return;
@@ -241,6 +285,7 @@ export function bindRoomInteractions() {
   bindRoomRefresh();
   bindRoomFilters();
   bindRoomServiceSwitches();
+  bindMessageGroupToggles();
   bindMessageItems();
   bindPrescriptionTraceCards();
   bindHistoryBackButtons();

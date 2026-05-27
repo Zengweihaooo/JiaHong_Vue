@@ -37,7 +37,7 @@ import {
   configureRoomInteractionBindings,
   handleConsultResolved,
   updateRoomMessageList
-} from "./interactions/roomInteractionBindings.js?v=20260527-41";
+} from "./interactions/roomInteractionBindings.js?v=20260527-42";
 
 function getRouteConsultationContext() {
   return {

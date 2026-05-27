@@ -1,5 +1,5 @@
 export const maxVisibleOngoingConsultations = 6;
-export const contactLayoutTypeOrder = ["text", "consult", "video"];
+export const contactLayoutTypeOrder = ["video", "text", "consult"];
 
 function getRecordSortMinutes(record = {}) {
   const match = String(record.time || "").match(/^(\d{1,2}):(\d{2})$/);
