@@ -15,6 +15,7 @@ import {
   setActiveVideoConsultation,
   setWaitingQueue
 } from "../state/runtimeState.js";
+import { hasUnresolvedPrescriptionWarnings } from "./prescriptionController.js";
 
 const terminalConsultationEvents = {
   cancel: {
@@ -64,8 +65,26 @@ export function openRiskReviewForActiveConsultation(context = {}) {
   return syncActiveConsultationEvent(consultationEvents.OPEN_RISK_REVIEW, context);
 }
 
-export function submitPrescriptionForActiveConsultation(context = {}) {
-  return syncActiveConsultationEvent(consultationEvents.SUBMIT_PRESCRIPTION, context);
+export function activePrescriptionHasWarnings(context = {}) {
+  return hasUnresolvedPrescriptionWarnings(getActiveConsultationRecord(context));
+}
+
+export function showPrescriptionWarningsForActiveConsultation(context = {}) {
+  const record = getActiveConsultationRecord(context);
+  if (record) {
+    record.inlineRiskWarningVisible = true;
+  }
+  return openRiskReviewForActiveConsultation(context);
+}
+
+export async function submitPrescriptionForActiveConsultation(context = {}) {
+  const response = await syncActiveConsultationEvent(consultationEvents.SUBMIT_PRESCRIPTION, context);
+  const record = getActiveConsultationRecord(context);
+  if (record) {
+    record.prescriptionSubmitted = true;
+    record.inlineRiskWarningVisible = false;
+  }
+  return response;
 }
 
 export function syncActiveConsultationEvent(event, context = {}) {

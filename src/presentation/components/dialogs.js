@@ -110,10 +110,22 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
   }));
   const warningMessage = warningExampleMedicine?.warningMessage || `[警示信息]${rows[0]?.name || "当前药品"}需完成风险核对`;
   const warningSuggestion = warningExampleMedicine?.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。";
+  const messageItems = (medicines.length ? medicines : [{ warningMessage, warningSuggestion }])
+    .flatMap((medicine) => [medicine.warningMessage, medicine.warningSuggestion])
+    .filter(Boolean);
+  const structuredMessageItems = (messageItems.length ? messageItems : [warningMessage, warningSuggestion]).map((message) => {
+    const match = String(message).match(/^\[([^\]]+)\](.*)$/);
+    return {
+      label: match ? match[1] : "提示信息",
+      content: match ? match[2] : message,
+      copyText: message,
+      tone: match?.[1]?.includes("警示") ? "warning" : "suggestion"
+    };
+  });
 
   return `
     <div class="risk-warning-overlay" aria-hidden="true">
-      <section class="risk-warning-dialog" role="dialog" aria-modal="true" aria-labelledby="risk-warning-title">
+      <section class="risk-warning-dialog" role="dialog" aria-modal="false" aria-labelledby="risk-warning-title">
         <header class="risk-warning-dialog__header">
           <h2 id="risk-warning-title">风险检测提醒</h2>
           <button class="risk-warning-dialog__close" type="button" aria-label="关闭风险检测提醒">
@@ -142,7 +154,7 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
               .map(
                 (row) => `
                   <div class="risk-warning-row${row.linked ? " risk-warning-row--linked" : ""}" role="row">
-                    <div class="risk-warning-cell risk-warning-cell--name" role="cell">${row.name}</div>
+                    <div class="risk-warning-cell risk-warning-cell--name" role="cell">${escapeHtml(row.name)}</div>
                     ${headers
                       .slice(1)
                       .map((_, index) => {
@@ -159,9 +171,17 @@ export function renderRiskWarningDialogView({ medicines = [] } = {}) {
         </div>
         <div class="risk-warning-dialog__divider"></div>
         <div class="risk-warning-dialog__message-wrap">
-          <div class="risk-warning-message">
-            <p>${escapeHtml(warningMessage)}</p>
-            <p>${escapeHtml(warningSuggestion)}</p>
+          <div class="risk-warning-message-list" aria-label="警示与建议信息">
+            ${structuredMessageItems
+              .map(
+                (item) => `
+                  <button class="risk-warning-message-item risk-warning-message-item--${item.tone}" type="button" data-copy-text="${escapeHtml(item.copyText)}" title="点击复制">
+                    <span class="risk-warning-message-item__label">[${escapeHtml(item.label)}]</span>
+                    <span class="risk-warning-message-item__content">${escapeHtml(item.content)}</span>
+                    <span class="risk-warning-message-item__copy">点击复制</span>
+                  </button>`
+              )
+              .join("")}
           </div>
         </div>
       </section>

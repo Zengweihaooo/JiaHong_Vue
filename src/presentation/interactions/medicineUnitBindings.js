@@ -53,9 +53,24 @@ function selectMedicineUnit(option) {
   const row = option.closest("[data-medicine-index]");
   const trigger = control?.querySelector(".medicine-unit-select");
   const unit = option.dataset.medicineUnit || "";
-  updateMedicineFieldInActiveRecord(row?.dataset.medicineIndex, "unit", unit, getPrescriptionContext());
+  const result = updateMedicineFieldInActiveRecord(row?.dataset.medicineIndex, "unit", unit, getPrescriptionContext());
   if (trigger) {
     trigger.querySelector("span").textContent = unit;
+    if (result.fieldWarningCleared) {
+      trigger.classList.remove("medicine-warning-target");
+    }
+  }
+  if (result.medicineWarningsResolved) {
+    row?.classList.remove("medicine-table__row--warning-linked");
+  }
+  if (result.recordWarningsResolved) {
+    const panel = row?.closest(".prescription-panel");
+    const warning = panel?.querySelector("[data-inline-risk-warning]");
+    if (warning) {
+      warning.hidden = true;
+      warning.classList.remove("is-visible");
+      panel?.classList.remove("has-inline-risk-warning");
+    }
   }
   control?.querySelectorAll(".medicine-unit-option").forEach((item) => {
     const active = item === option;

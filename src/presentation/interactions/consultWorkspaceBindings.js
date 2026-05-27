@@ -3,7 +3,7 @@ import {
   openConsultAttachmentDialog,
   openConsultConfirmDialog,
   openQuickReplyDialog,
-  openRiskWarningDialog
+  requestPrescriptionSubmit
 } from "./consultDialogBindings.js?v=20260527-35";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
@@ -61,7 +61,7 @@ function bindPrescriptionSubmitTriggers() {
       event.preventDefault();
       event.stopPropagation();
       if (button.disabled || button.getAttribute("aria-disabled") === "true") return;
-      openRiskWarningDialog();
+      requestPrescriptionSubmit();
     };
     button.addEventListener("pointerdown", (event) => {
       event.stopPropagation();

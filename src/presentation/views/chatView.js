@@ -106,9 +106,10 @@ export function renderConsultInfoCard(record) {
           ${consultInfo.attachments
             .map(
               (attachment, index) => `
-                <button class="consult-attachment" type="button" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment.title)}" data-consult-attachment-image="${assetUrl(attachment.image)}">
-                  <img src="${assetUrl("assets/figma-consult/attachment.svg")}" alt="" aria-hidden="true" />
-                  <span>${escapeHtml(attachment.title)}</span>
+                <button class="consult-attachment" type="button" aria-label="预览${escapeHtml(attachment.title)}" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment.title)}" data-consult-attachment-image="${assetUrl(attachment.image)}">
+                  <span class="consult-attachment__thumb">
+                    <img src="${assetUrl(attachment.image)}" alt="${escapeHtml(attachment.title)}" loading="lazy" />
+                  </span>
                 </button>`
             )
             .join("")}

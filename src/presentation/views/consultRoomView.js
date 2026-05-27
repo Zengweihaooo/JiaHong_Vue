@@ -20,6 +20,7 @@ function getConsultMainTitle(record) {
 }
 
 function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, prescriptionPanel, record = null }) {
+  const cancelDisabled = Boolean(record?.prescriptionSubmitted);
   return `
     <main class="text-main consult-room-main">
       <section class="text-card consult-room-card" aria-label="${label}">
@@ -31,7 +32,7 @@ function renderConsultMainShell({ label, title, elapsedSeconds = 0, chatPanel, p
           </div>
           <div class="pharmacy-bar__right">
             ${renderDurationChip("icon", elapsedSeconds)}
-            ${renderButton({ text: "取消问诊", tone: "outline-secondary", size: "md", className: "cancel-consult-trigger" })}
+            ${renderButton({ text: "取消问诊", tone: "outline-secondary", size: "md", className: "cancel-consult-trigger", disabled: cancelDisabled })}
           </div>
         </div>
         <div class="consult-workspace">

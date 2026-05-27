@@ -14,34 +14,45 @@ function renderVideoSubmitCountdown(remainingSeconds = videoPrescriptionSubmitLo
     </span>`;
 }
 
-function renderPrescriptionActionButtons({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
+function renderPrescriptionActionButtons({
+  readonly = false,
+  consultation = false,
+  videoSubmitLock = false,
+  prescriptionSubmitted = false
+} = {}) {
   if (readonly) {
     return renderButton({ text: "查看开方历史", tone: "primary", size: "md", className: "prescription-history-open" });
   }
   if (consultation) {
     return renderButton({ text: "完成问诊", tone: "primary", size: "md", className: "end-consult-trigger consultation-complete-trigger" });
   }
+  const submitLocked = videoSubmitLock && !prescriptionSubmitted;
   const submitButton = renderButton({
     text: "提交处方",
     tone: "primary",
     size: "md",
     className: "jh-prescription-submit",
-    disabled: videoSubmitLock
+    disabled: submitLocked || prescriptionSubmitted
   });
-  return `${renderButton({ text: "结束问诊", tone: "success", size: "md", className: "end-consult-trigger", disabled: true })}
+  return `${renderButton({ text: "结束问诊", tone: "success", size: "md", className: "end-consult-trigger", disabled: !prescriptionSubmitted })}
           ${
-            videoSubmitLock
+            submitLocked
               ? `<span class="video-prescription-submit-wrap">${renderVideoSubmitCountdown()}${submitButton}</span>`
               : submitButton
           }`;
 }
 
-export function renderPrescriptionActions({ readonly = false, consultation = false, videoSubmitLock = false } = {}) {
+export function renderPrescriptionActions({
+  readonly = false,
+  consultation = false,
+  videoSubmitLock = false,
+  prescriptionSubmitted = false
+} = {}) {
   return `
       <div class="prescription-actions${consultation ? " consultation-actions" : ""}${readonly ? " prescription-actions--readonly" : ""}">
         ${renderArchivedActionHint(readonly)}
         <div class="prescription-actions__controls">
-          ${renderPrescriptionActionButtons({ readonly, consultation, videoSubmitLock })}
+          ${renderPrescriptionActionButtons({ readonly, consultation, videoSubmitLock, prescriptionSubmitted })}
         </div>
       </div>`;
 }

@@ -294,7 +294,16 @@
             "dose": "30mg",
             "quantity": "1",
             "unit": "盒",
-            "risk": "低"
+            "risk": "高",
+            "warningFields": [
+              "frequency",
+              "dose"
+            ],
+            "warningColumns": {
+              "3": "severe"
+            },
+            "warningMessage": "[警示信息]盐酸氨溴索片当前频次与用量需核对，请确认是否符合患者咳嗽咳痰情况。",
+            "warningSuggestion": "[建议信息]请调整服用频次或用量后，再提交处方。"
           }
         ]
       },
@@ -409,7 +418,15 @@
             "dose": "0.25g",
             "quantity": "1",
             "unit": "盒",
-            "risk": "高"
+            "risk": "高",
+            "warningFields": [
+              "dose"
+            ],
+            "warningColumns": {
+              "3": "severe"
+            },
+            "warningMessage": "[警示信息]阿奇霉素分散片为儿童带药场景，当前单次剂量需结合体重复核。",
+            "warningSuggestion": "[建议信息]请根据患儿体重调整单次剂量后，再提交处理。"
           },
           {
             "index": 2,
@@ -433,7 +450,15 @@
             "dose": "0.5袋",
             "quantity": "1",
             "unit": "盒",
-            "risk": "低"
+            "risk": "中",
+            "warningFields": [
+              "frequency"
+            ],
+            "warningColumns": {
+              "3": "general"
+            },
+            "warningMessage": "[警示信息]小儿氨酚黄那敏颗粒含复方成分，需核对是否与其他退热药重复。",
+            "warningSuggestion": "[建议信息]请确认服用频次与联合用药情况，必要时调整处方。"
           }
         ]
       },
@@ -736,7 +761,15 @@
               "dose": "10mg",
               "quantity": "1",
               "unit": "盒",
-              "risk": "低"
+              "risk": "中",
+              "warningFields": [
+                "dose"
+              ],
+              "warningColumns": {
+                "3": "general"
+              },
+              "warningMessage": "[警示信息]氯雷他定片需结合患者过敏史和既往用药核对剂量。",
+              "warningSuggestion": "[建议信息]请确认单次剂量与患者既往用药情况后，再提交处方。"
             }
           ]
         },
@@ -780,7 +813,15 @@
               "dose": "20mg",
               "quantity": "1",
               "unit": "盒",
-              "risk": "低"
+              "risk": "中",
+              "warningFields": [
+                "frequency"
+              ],
+              "warningColumns": {
+                "3": "general"
+              },
+              "warningMessage": "[警示信息]奥美拉唑肠溶胶囊需核对服用时机与疗程，避免长期自行服用。",
+              "warningSuggestion": "[建议信息]请补充或调整服用频次后，再提交处方。"
             }
           ]
         },
@@ -824,7 +865,15 @@
               "dose": "5mg",
               "quantity": "2",
               "unit": "盒",
-              "risk": "中"
+              "risk": "高",
+              "warningFields": [
+                "dose"
+              ],
+              "warningColumns": {
+                "3": "severe"
+              },
+              "warningMessage": "[警示信息]苯磺酸氨氯地平片续方需核对血压控制情况和单次剂量。",
+              "warningSuggestion": "[建议信息]请结合患者近期血压记录确认剂量后，再提交处方。"
             }
           ]
         },
@@ -868,7 +917,17 @@
               "dose": "薄涂患处",
               "quantity": "1",
               "unit": "支",
-              "risk": "中"
+              "risk": "高",
+              "warningFields": [
+                "usage",
+                "frequency"
+              ],
+              "warningColumns": {
+                "3": "general",
+                "4": "severe"
+              },
+              "warningMessage": "[警示信息]糠酸莫米松乳膏为激素外用药，需核对给药途径和使用频次。",
+              "warningSuggestion": "[建议信息]请明确外用范围与频次，避免长期或大面积使用。"
             }
           ]
         }

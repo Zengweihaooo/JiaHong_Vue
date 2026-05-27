@@ -18,7 +18,11 @@ export function renderQuickCardMarkup(entry = {}) {
       ${
         isAdd
           ? ""
-          : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${escapeHtml(title)}"></button>
+          : `<button class="quick-card__delete" type="button" aria-label="删除快捷入口：${escapeHtml(title)}">
+              <svg class="quick-card__delete-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M4 4L12 12M12 4L4 12" />
+              </svg>
+            </button>
              <button class="quick-card__drag" type="button" aria-label="拖动排序：${escapeHtml(title)}" draggable="true"></button>`
       }
       <span class="quick-card__body">

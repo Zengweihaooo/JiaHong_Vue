@@ -24,6 +24,7 @@ const transitions = {
   },
   [consultationStates.ONGOING]: {
     [consultationEvents.OPEN_RISK_REVIEW]: consultationStates.RISK_REVIEW,
+    [consultationEvents.SUBMIT_PRESCRIPTION]: consultationStates.PRESCRIPTION_SUBMITTED,
     [consultationEvents.CANCEL]: consultationStates.CANCELLED,
     [consultationEvents.END]: consultationStates.ENDED
   },

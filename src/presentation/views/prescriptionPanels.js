@@ -66,6 +66,7 @@ function renderReadonlyDiagnosisValue(diagnosisTags) {
 }
 
 function renderDiagnosisSection({ title, diagnosisTags, readonly = false, className = "", treatmentAdvice = "" }) {
+  const hasEditableDiagnosisTags = !readonly && diagnosisTags.length > 0;
   return `
       <div class="diagnosis-section${className ? ` ${className}` : ""}">
         <h3>${title}</h3>
@@ -74,6 +75,11 @@ function renderDiagnosisSection({ title, diagnosisTags, readonly = false, classN
           ${readonly ? renderReadonlyDiagnosisValue(diagnosisTags) : renderDiagnosisSelectInput()}
           <div class="diagnosis-input">
             ${renderDiagnosisTags(diagnosisTags, readonly)}
+            ${
+              hasEditableDiagnosisTags
+                ? `<button class="diagnosis-clear-all-btn" type="button" aria-label="双击清空全部诊断" title="双击清空全部诊断"></button>`
+                : ""
+            }
           </div>
         </div>
         ${
@@ -98,6 +104,82 @@ function renderMedicineSection({ medicines, readonly = false, className = "" }) 
       </div>`;
 }
 
+const inlineRiskWarningHeaders = [
+  "药品名称",
+  "患者条件",
+  "重复用药",
+  "用法用量",
+  "给药途径",
+  "相互作用",
+  "生化指标",
+  "配伍",
+  "过敏",
+  "孕产",
+  "其他"
+];
+
+const inlineRiskWarningLegendItems = [
+  { status: "must", label: "必须处理" },
+  { status: "severe", label: "严重警告" },
+  { status: "general", label: "一般警告" }
+];
+
+function getInlineRiskWarningRows(medicines = []) {
+  return medicines.filter((medicine) => Array.isArray(medicine.warningFields) && medicine.warningFields.length > 0);
+}
+
+function renderInlineRiskWarning(medicines = [], visible = false) {
+  const rows = getInlineRiskWarningRows(medicines);
+  if (!rows.length) return "";
+  return `
+    <section class="inline-risk-warning${visible ? " is-visible" : ""}" data-inline-risk-warning${visible ? "" : " hidden"} aria-label="处方风险提醒">
+      <div class="inline-risk-warning__legend" aria-label="风险状态说明">
+        ${inlineRiskWarningLegendItems
+          .map(
+            (item) => `
+              <span class="inline-risk-warning__legend-item">
+                <span class="risk-warning-status risk-warning-status--${item.status}" aria-hidden="true"></span>
+                <span>${item.label}</span>
+              </span>`
+          )
+          .join("")}
+      </div>
+      <div class="inline-risk-warning__table" role="table" aria-label="处方风险提醒">
+        <div class="inline-risk-warning__row inline-risk-warning__row--head" role="row">
+          ${inlineRiskWarningHeaders.map((header) => `<div role="columnheader">${header}</div>`).join("")}
+        </div>
+        ${rows
+          .map(
+            (row) => `
+              <div class="inline-risk-warning__row" role="row">
+                <div class="inline-risk-warning__medicine" role="cell">${escapeHtml(row.name)}</div>
+                ${inlineRiskWarningHeaders
+                  .slice(1)
+                  .map((_, index) => {
+                    const status = row.warningColumns?.[index + 1];
+                    return `<div role="cell">${
+                      status ? `<span class="risk-warning-status risk-warning-status--${status}" aria-hidden="true"></span>` : ""
+                    }</div>`;
+                  })
+                  .join("")}
+              </div>`
+          )
+          .join("")}
+      </div>
+      <div class="inline-risk-warning__messages">
+        ${rows
+          .map(
+            (row) => `
+              <div class="inline-risk-warning__message">
+                <p>${escapeHtml(row.warningMessage || `[警示信息]${row.name}需完成风险核对`)}</p>
+                <p>${escapeHtml(row.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。")}</p>
+              </div>`
+          )
+          .join("")}
+      </div>
+    </section>`;
+}
+
 export function renderPrescriptionPanel(options = {}) {
   const normalized = typeof options === "boolean" ? { includeSecondMedicine: options } : options;
   const { includeSecondMedicine = false, readonly = false, record = null, videoSubmitLock = false } = normalized;
@@ -115,13 +197,14 @@ export function renderPrescriptionPanel(options = {}) {
   const panelLabel = readonly ? "只读处方信息" : "处方信息";
 
   return `
-    <section class="prescription-panel${readonly ? " prescription-panel--readonly" : ""}" aria-label="${panelLabel}">
+    <section class="prescription-panel${readonly ? " prescription-panel--readonly" : ""}${record?.inlineRiskWarningVisible ? " has-inline-risk-warning" : ""}" aria-label="${panelLabel}">
       ${renderPatientSection(record)}
       <div class="section-divider"></div>
       ${renderDiagnosisSection({ title: "疾病信息", diagnosisTags, readonly, treatmentAdvice: null })}
       <div class="section-divider"></div>
       ${renderMedicineSection({ medicines: medicineRows, readonly })}
-      ${renderPrescriptionActions({ readonly, videoSubmitLock })}
+      ${readonly ? "" : renderInlineRiskWarning(medicineRows, Boolean(record?.inlineRiskWarningVisible))}
+      ${renderPrescriptionActions({ readonly, videoSubmitLock, prescriptionSubmitted: Boolean(record?.prescriptionSubmitted) })}
     </section>`;
 }
 

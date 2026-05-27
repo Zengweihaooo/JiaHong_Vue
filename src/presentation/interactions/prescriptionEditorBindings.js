@@ -2,6 +2,7 @@ import { getActiveConsultationRecord } from "../../application/controllers/consu
 import {
   addDiagnosisToActiveRecord,
   addMedicineToActiveRecord,
+  clearDiagnosesFromActiveRecord,
   getDiagnosisOptions,
   getMedicineOptions,
   removeDiagnosisFromActiveRecord,
@@ -43,6 +44,14 @@ function refreshActivePrescriptionPanel(record = getActiveConsultationRecord(get
     window.requestAnimationFrame(restoreScroll);
     window.setTimeout(restoreScroll, 0);
   }
+}
+
+function hideResolvedInlineRiskWarning(panel) {
+  const warning = panel?.querySelector("[data-inline-risk-warning]");
+  if (!warning) return;
+  warning.hidden = true;
+  warning.classList.remove("is-visible");
+  panel?.classList.remove("has-inline-risk-warning");
 }
 
 async function renderDiagnosisDropdown(input) {
@@ -144,6 +153,17 @@ export function bindPrescriptionEditor() {
       event.stopPropagation();
     });
   });
+  panel.querySelectorAll(".diagnosis-clear-all-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handlePrescriptionResult(clearDiagnosesFromActiveRecord(getPrescriptionContext()));
+    });
+  });
   const diagnosisInput = panel.querySelector(".diagnosis-select-input");
   diagnosisInput?.addEventListener("focus", () => {
     renderDiagnosisDropdown(diagnosisInput);
@@ -209,21 +229,39 @@ export function bindPrescriptionEditor() {
   panel.querySelectorAll(".medicine-edit-field[data-medicine-field]").forEach((input) => {
     input.addEventListener("input", () => {
       const row = input.closest("[data-medicine-index]");
-      updateMedicineFieldInActiveRecord(
+      const result = updateMedicineFieldInActiveRecord(
         row?.dataset.medicineIndex,
         input.dataset.medicineField,
         input.value,
         getPrescriptionContext()
       );
+      if (result.fieldWarningCleared) {
+        input.classList.remove("medicine-warning-target");
+      }
+      if (result.medicineWarningsResolved) {
+        row?.classList.remove("medicine-table__row--warning-linked");
+      }
+      if (result.recordWarningsResolved) {
+        hideResolvedInlineRiskWarning(panel);
+      }
     });
     input.addEventListener("change", () => {
       const row = input.closest("[data-medicine-index]");
-      updateMedicineFieldInActiveRecord(
+      const result = updateMedicineFieldInActiveRecord(
         row?.dataset.medicineIndex,
         input.dataset.medicineField,
         input.value,
         getPrescriptionContext()
       );
+      if (result.fieldWarningCleared) {
+        input.classList.remove("medicine-warning-target");
+      }
+      if (result.medicineWarningsResolved) {
+        row?.classList.remove("medicine-table__row--warning-linked");
+      }
+      if (result.recordWarningsResolved) {
+        hideResolvedInlineRiskWarning(panel);
+      }
     });
   });
 }

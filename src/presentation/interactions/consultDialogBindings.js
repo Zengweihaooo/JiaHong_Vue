@@ -1,7 +1,9 @@
 import { getRoomHref } from "../../shared/core.js";
 import {
+  activePrescriptionHasWarnings,
   openRiskReviewForActiveConsultation,
   resolveActiveConsultation,
+  showPrescriptionWarningsForActiveConsultation,
   submitPrescriptionForActiveConsultation
 } from "../../application/controllers/consultationController.js";
 import {
@@ -30,20 +32,79 @@ function closeQuickReplyDialog() {
   closeOverlay(".quick-reply-overlay");
 }
 
-function enableEndConsultButton() {
+function setPrescriptionSubmittedControlsState(submitted) {
   document.querySelectorAll(".end-consult-trigger").forEach((button) => {
-    button.disabled = false;
+    if (button.classList.contains("consultation-complete-trigger")) return;
+    button.disabled = !submitted;
+    button.setAttribute("aria-disabled", String(!submitted));
     button.classList.remove("jh-btn--soft-danger", "jh-btn--danger");
     button.classList.add("jh-btn--success");
   });
+  document.querySelectorAll(".jh-prescription-submit, .cancel-consult-trigger").forEach((button) => {
+    button.disabled = submitted;
+    button.setAttribute("aria-disabled", String(submitted));
+  });
 }
 
-export function openRiskWarningDialog() {
+function revealInlineRiskWarning() {
+  const warning = document.querySelector("[data-inline-risk-warning]");
+  const panel = warning?.closest(".prescription-panel");
+  if (!warning || !panel) return;
+  warning.hidden = false;
+  warning.classList.add("is-visible");
+  panel.classList.add("has-inline-risk-warning");
+  const scrollToWarning = () => {
+    panel.scrollTo({
+      top: panel.scrollHeight,
+      behavior: "smooth"
+    });
+    warning.scrollIntoView({
+      block: "end",
+      behavior: "smooth"
+    });
+  };
+  scrollToWarning();
+  window.requestAnimationFrame(scrollToWarning);
+}
+
+export async function requestPrescriptionSubmit() {
+  const context = getConsultContext();
+  if (activePrescriptionHasWarnings(context)) {
+    const inlineWarning = document.querySelector("[data-inline-risk-warning]");
+    if (inlineWarning && !inlineWarning.hidden) {
+      revealInlineRiskWarning();
+      return;
+    }
+    try {
+      await showPrescriptionWarningsForActiveConsultation(context);
+    } catch {
+      showToast("问诊状态同步失败");
+    }
+    openRiskWarningDialog({ revealInlineOnClose: true, syncRiskReview: false });
+    return;
+  }
+  try {
+    await submitPrescriptionForActiveConsultation(context);
+    setPrescriptionSubmittedControlsState(true);
+    showToast("处方已提交，可结束问诊");
+  } catch {
+    showToast("处方状态同步失败");
+  }
+}
+
+export function openRiskWarningDialog({ revealInlineOnClose = false, syncRiskReview = true } = {}) {
   const overlay = document.querySelector(".risk-warning-overlay");
   if (!overlay) return;
-  openRiskReviewForActiveConsultation(getConsultContext())?.catch(() => {
-    showToast("问诊状态同步失败");
-  });
+  if (revealInlineOnClose) {
+    overlay.dataset.revealInlineOnClose = "true";
+  } else {
+    delete overlay.dataset.revealInlineOnClose;
+  }
+  if (syncRiskReview) {
+    openRiskReviewForActiveConsultation(getConsultContext())?.catch(() => {
+      showToast("问诊状态同步失败");
+    });
+  }
   setOverlayOpen(overlay, true, { focusSelector: ".risk-warning-dialog__close" });
 }
 
@@ -51,12 +112,11 @@ function closeRiskWarningDialog() {
   const overlay = document.querySelector(".risk-warning-overlay");
   if (!overlay) return;
   const wasOpen = overlay.classList.contains("is-open");
+  const shouldRevealInline = overlay.dataset.revealInlineOnClose === "true";
+  delete overlay.dataset.revealInlineOnClose;
   setOverlayOpen(overlay, false);
-  if (wasOpen) {
-    submitPrescriptionForActiveConsultation(getConsultContext())?.catch(() => {
-      showToast("处方状态同步失败");
-    });
-    enableEndConsultButton();
+  if (wasOpen && shouldRevealInline) {
+    revealInlineRiskWarning();
   }
 }
 
@@ -102,6 +162,18 @@ export function openConsultConfirmDialog(kind) {
 
 function closeConsultConfirmDialog(kind) {
   closeOverlay(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`);
+}
+
+async function copyRiskWarningMessage(button, event) {
+  stopEvent(event);
+  const text = button?.dataset.copyText || "";
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("已复制警示信息");
+  } catch {
+    showToast("复制失败");
+  }
 }
 
 function closeAllConsultConfirmDialogs() {
@@ -193,6 +265,11 @@ function bindRiskWarningOverlay() {
   bindOverlayDismiss(riskWarningOverlay, {
     close: closeRiskWarningDialog,
     closeSelector: ".risk-warning-dialog__close"
+  });
+  riskWarningOverlay.querySelectorAll(".risk-warning-message-item[data-copy-text]").forEach((button) => {
+    if (button.dataset.copyBound === "true") return;
+    button.dataset.copyBound = "true";
+    button.addEventListener("click", (event) => copyRiskWarningMessage(button, event));
   });
 }
 

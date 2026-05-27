@@ -1896,22 +1896,17 @@ button {
   transform: translateY(-1px) scale(1.06);
 }
 
-.quick-card__delete::before,
-.quick-card__delete::after {
-  position: absolute;
-  width: 11px;
-  height: 1.6px;
-  border-radius: 999px;
-  background: currentColor;
-  content: "";
-}
-
-.quick-card__delete::before {
-  transform: rotate(45deg);
-}
-
-.quick-card__delete::after {
-  transform: rotate(-45deg);
+.quick-card__delete-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  shape-rendering: geometricPrecision;
 }
 
 .quick-card__drag::before {
@@ -1968,6 +1963,11 @@ button {
   border-radius: 6px;
   background: #ffffff;
   color: var(--jh-blue);
+}
+
+.quick-card .icon-box {
+  border-color: transparent;
+  background: #ffffff;
 }
 
 .quick-icon {
@@ -3898,35 +3898,43 @@ body.page-view-room {
 }
 
 .consult-attachment {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-width: 88px;
-  height: 30px;
-  padding: 5px 10px;
+  width: 48px;
+  height: 48px;
+  padding: 3px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #f8f8f9;
-  color: var(--jh-blue);
   cursor: pointer;
-  font-size: 12px;
-  line-height: 20px;
-  white-space: nowrap;
 }
 
-.consult-attachment img {
+.consult-attachment:hover,
+.consult-attachment:focus-visible {
+  background: #eef6ff;
+}
+
+.consult-attachment:focus-visible {
+  outline: 2px solid var(--jh-blue);
+  outline-offset: 2px;
+}
+
+.consult-attachment__thumb {
   display: block;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border: 0.8px solid #d8dde1;
+  border-radius: 1.5px;
+  background: #fcfcfc;
 }
 
-.consult-attachment span {
-  color: inherit;
-  font: inherit;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.consult-attachment__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .consult-attachment-overlay {
@@ -4807,9 +4815,11 @@ body.page-view-room {
   inset: 0;
   z-index: 90;
   display: none;
-  align-items: center;
-  justify-content: center;
-  background: rgba(122, 136, 152, 0.3);
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 96px 32px 0 264px;
+  background: transparent;
+  pointer-events: none;
 }
 
 .risk-warning-overlay.is-open {
@@ -4820,13 +4830,15 @@ body.page-view-room {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 838px;
+  width: min(720px, calc(100vw - 296px));
+  max-height: calc(100vh - 128px);
   overflow: hidden;
   border-radius: 8px;
   background: #ffffff;
+  pointer-events: auto;
   box-shadow:
-    0 84px 32px rgba(16, 42, 67, 0.18),
-    0 8px 8px rgba(16, 42, 67, 0.1);
+    0 20px 48px rgba(16, 42, 67, 0.16),
+    0 6px 16px rgba(16, 42, 67, 0.08);
 }
 
 .risk-warning-dialog__header {
@@ -4870,50 +4882,51 @@ body.page-view-room {
 
 .risk-warning-dialog__legend {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  width: 838px;
-  height: 64px;
-  padding: 12px 12px 0;
+  gap: 18px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 24px 6px;
   background: #ffffff;
 }
 
 .risk-warning-legend-item {
   display: flex;
   align-items: center;
-  width: 140px;
-  height: 52px;
-  padding-right: 16px;
+  gap: 6px;
+  width: auto;
+  height: 24px;
+  padding-right: 0;
 }
 
 .risk-warning-legend-item__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 52px;
-  flex: 0 0 60px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .risk-warning-legend-item__label {
   color: #424751;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 18px;
   white-space: nowrap;
 }
 
 .risk-warning-dialog__table-wrap {
-  width: 838px;
-  height: 212px;
-  padding: 12px 24px 24px;
+  width: 100%;
+  height: auto;
+  padding: 8px 24px 16px;
   background: #ffffff;
 }
 
 .risk-warning-table {
-  width: 790px;
-  height: 176px;
+  width: 100%;
+  height: auto;
   overflow: hidden;
   border: 1px solid #d8dde1;
   border-radius: 8px;
@@ -4922,11 +4935,11 @@ body.page-view-room {
 
 .risk-warning-row {
   display: grid;
-  grid-template-columns: 103px repeat(10, 58.5px);
-  gap: 8px;
+  grid-template-columns: minmax(88px, 1.4fr) repeat(10, minmax(34px, 1fr));
+  gap: 4px;
   width: 100%;
-  height: 56px;
-  padding: 0 10px;
+  min-height: 44px;
+  padding: 0 8px;
   border-bottom: 1px solid #e5e8eb;
   background: #ffffff;
 }
@@ -4945,13 +4958,13 @@ body.page-view-room {
 }
 
 .risk-warning-row--head {
-  height: 64px;
+  min-height: 48px;
   background: #f2f3f4;
 }
 
 .risk-warning-row--head .risk-warning-cell:not(:first-child) {
   justify-self: center;
-  width: 30px;
+  width: auto;
   white-space: normal;
 }
 
@@ -4961,10 +4974,11 @@ body.page-view-room {
   justify-content: center;
   min-width: 0;
   color: #424751;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 22px;
+  line-height: 17px;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .risk-warning-row:not(.risk-warning-row--head) .risk-warning-cell {
@@ -4976,7 +4990,7 @@ body.page-view-room {
 }
 
 .risk-warning-cell--status {
-  height: 52px;
+  min-height: 40px;
 }
 
 .risk-warning-status {
@@ -5042,38 +5056,260 @@ body.page-view-room {
 }
 
 .risk-warning-dialog__divider {
-  width: 838px;
+  width: 100%;
   height: 1px;
   background: #e5e8eb;
 }
 
 .risk-warning-dialog__message-wrap {
-  width: 838px;
-  height: 144px;
-  padding: 24px;
+  width: 100%;
+  height: auto;
+  padding: 0 24px 24px;
   background: #ffffff;
 }
 
-.risk-warning-message {
+.risk-warning-message-list {
   display: flex;
-  align-items: center;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  width: 790px;
-  height: 72px;
-  padding: 24px;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+  padding: 16px 18px;
   border-radius: 8px;
   background: #f8f8f9;
 }
 
-.risk-warning-message p {
-  margin: 0;
-  color: #000000;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+.risk-warning-message-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #1e2939;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.risk-warning-message-item:hover,
+.risk-warning-message-item:focus-visible {
+  background: #ffffff;
+}
+
+.risk-warning-message-item:focus-visible {
+  outline: 2px solid var(--jh-blue);
+  outline-offset: 2px;
+}
+
+.risk-warning-message-item__label {
+  color: #e1251b;
   white-space: nowrap;
+}
+
+.risk-warning-message-item--suggestion .risk-warning-message-item__label {
+  color: #ff7a00;
+}
+
+.risk-warning-message-item__content {
+  min-width: 0;
+  color: #000000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.risk-warning-message-item__copy {
+  margin-left: 12px;
+  color: #8a929f;
+  font-size: 12px;
+  line-height: 18px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.risk-warning-message-item:hover .risk-warning-message-item__copy,
+.risk-warning-message-item:focus-visible .risk-warning-message-item__copy {
+  opacity: 1;
+}
+
+.risk-warning-dialog .risk-warning-status--must {
+  width: 22px;
+  height: 22px;
+}
+
+.risk-warning-dialog .risk-warning-status--must::before,
+.risk-warning-dialog .risk-warning-status--must::after {
+  width: 9px;
+  height: 2px;
+}
+
+.risk-warning-dialog .risk-warning-status--severe {
+  width: 22px;
+  height: 22px;
+}
+
+.risk-warning-dialog .risk-warning-status--severe::before {
+  font-size: 15px;
+}
+
+.risk-warning-dialog .risk-warning-status--general {
+  width: 24px;
+  height: 21px;
+}
+
+.risk-warning-dialog .risk-warning-status--general::before {
+  top: 5px;
+  font-size: 12px;
+}
+
+.inline-risk-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: calc(100% - 48px);
+  margin: 0 24px 16px;
+  overflow: visible;
+  color: #424751;
+}
+
+.inline-risk-warning[hidden] {
+  display: none;
+}
+
+.prescription-panel.has-inline-risk-warning .prescription-actions {
+  margin-top: 0;
+}
+
+.inline-risk-warning__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px 28px;
+  width: 100%;
+}
+
+.inline-risk-warning__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e2939;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.inline-risk-warning .risk-warning-status--must {
+  width: 24px;
+  height: 24px;
+}
+
+.inline-risk-warning .risk-warning-status--must::before,
+.inline-risk-warning .risk-warning-status--must::after {
+  width: 10px;
+  height: 2px;
+}
+
+.inline-risk-warning .risk-warning-status--severe {
+  width: 24px;
+  height: 24px;
+}
+
+.inline-risk-warning .risk-warning-status--severe::before,
+.inline-risk-warning .risk-warning-status--general::before {
+  font-size: 18px;
+}
+
+.inline-risk-warning .risk-warning-status--general {
+  width: 26px;
+  height: 24px;
+}
+
+.inline-risk-warning .risk-warning-status--general::before {
+  top: 6px;
+  font-size: 14px;
+}
+
+.inline-risk-warning__table {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #ffd6d6;
+  border-radius: 8px;
+  background: #fffafa;
+}
+
+.inline-risk-warning__row {
+  display: grid;
+  grid-template-columns: minmax(92px, 1.45fr) repeat(10, minmax(38px, 1fr));
+  align-items: center;
+  min-height: 64px;
+  border-top: 1px solid #ffdede;
+}
+
+.inline-risk-warning__row:first-child {
+  border-top: 0;
+}
+
+.inline-risk-warning__row--head {
+  min-height: 56px;
+  background: #fff0f0;
+}
+
+.inline-risk-warning__row > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 10px 4px;
+  color: #424751;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.inline-risk-warning__medicine {
+  justify-content: flex-start !important;
+  color: #697383 !important;
+  text-align: left !important;
+}
+
+.inline-risk-warning__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.inline-risk-warning__message {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.inline-risk-warning__message p {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #f2f3f4;
+  color: #1e2939;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: normal;
+}
+
+.inline-risk-warning__message p:first-child {
+  color: #d92d20;
 }
 
 .prescription-panel {
@@ -5133,11 +5369,24 @@ body.page-view-room {
 
 .diagnosis-section h3,
 .medicine-section h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
   color: var(--jh-text-primary);
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 400;
-  line-height: 28px;
+  line-height: 24px;
+}
+
+.diagnosis-section h3::before,
+.medicine-section h3::before {
+  width: 4px;
+  height: 15px;
+  flex: 0 0 auto;
+  border-radius: 1px;
+  background: var(--jh-blue);
+  content: "";
 }
 
 .diagnosis-row {
@@ -5228,6 +5477,52 @@ body.page-view-room {
   border: 1px solid var(--jh-tag-input-border);
   border-radius: 6px;
   background: #ffffff;
+}
+
+.diagnosis-clear-all-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: #f8f8f9;
+  color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.diagnosis-clear-all-btn:hover,
+.diagnosis-clear-all-btn:focus-visible {
+  background: #eef2f6;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.diagnosis-clear-all-btn:focus-visible {
+  outline: 2px solid var(--jh-blue);
+  outline-offset: 2px;
+}
+
+.diagnosis-clear-all-btn::before,
+.diagnosis-clear-all-btn::after {
+  position: absolute;
+  width: 13px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.diagnosis-clear-all-btn::before {
+  transform: rotate(45deg);
+}
+
+.diagnosis-clear-all-btn::after {
+  transform: rotate(-45deg);
 }
 
 .diagnosis-tag {
@@ -6201,6 +6496,34 @@ body.page-view-room {
 
 .video-input-wrap .jh-chat-input {
   width: 100%;
+}
+
+@media (max-width: 720px) {
+  .risk-warning-overlay {
+    justify-content: center;
+    padding: 72px 12px 0;
+  }
+
+  .risk-warning-dialog {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 96px);
+  }
+
+  .risk-warning-dialog__table-wrap {
+    overflow-x: auto;
+  }
+
+  .risk-warning-table {
+    min-width: 620px;
+  }
+
+  .risk-warning-message-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .risk-warning-message-item__copy {
+    display: none;
+  }
 }
 
 @media (max-width: 1180px) {

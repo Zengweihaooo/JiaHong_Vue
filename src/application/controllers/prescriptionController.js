@@ -32,6 +32,16 @@ export function removeDiagnosisFromActiveRecord(tag, context = {}) {
   return { ok: true, record, message: "诊断已更新" };
 }
 
+export function clearDiagnosesFromActiveRecord(context = {}) {
+  const record = getActiveOngoingConsultationRecord(context);
+  if (!record) return { ok: false, message: "当前诊断不可删除" };
+  normalizeRecordDiagnosis(record);
+  if (!record.diagnosisTags.length) return { ok: false, record };
+  record.diagnosisTags = [];
+  normalizeRecordDiagnosis(record, { allowEmpty: true });
+  return { ok: true, record, message: "诊断已清空" };
+}
+
 export async function getMedicineOptions(keyword = "", context = {}) {
   const record = getActiveOngoingConsultationRecord(context);
   const response = await searchMedicineCatalog({
@@ -39,6 +49,22 @@ export async function getMedicineOptions(keyword = "", context = {}) {
     exclude: (record?.prescriptionMedicines || []).map((medicine) => medicine.name)
   });
   return response.items;
+}
+
+const warningFieldColumns = {
+  frequency: "3",
+  dose: "3",
+  quantity: "3",
+  unit: "3",
+  usage: "4"
+};
+
+export function hasUnresolvedPrescriptionWarnings(record = null) {
+  return Boolean(
+    record?.prescriptionMedicines?.some((medicine) => (
+      Array.isArray(medicine.warningFields) && medicine.warningFields.length > 0
+    ))
+  );
 }
 
 export async function addMedicineToActiveRecord(input = "", context = {}) {
@@ -74,8 +100,39 @@ export function updateMedicineFieldInActiveRecord(index, field, value, context =
   if (!record || !index || !field) return { ok: false };
   const medicine = (record.prescriptionMedicines || []).find((item) => Number(item.index) === Number(index));
   if (!medicine) return { ok: false, record };
-  medicine[field] = value.trim();
-  return { ok: true, record };
+  const previousValue = medicine[field] ?? "";
+  const nextValue = value.trim();
+  medicine[field] = nextValue;
+
+  const warningFields = Array.isArray(medicine.warningFields) ? medicine.warningFields : [];
+  const fieldWarningCleared = warningFields.includes(field) && nextValue && nextValue !== previousValue;
+  if (fieldWarningCleared) {
+    medicine.warningFields = warningFields.filter((item) => item !== field);
+    if (medicine.warningFields.length) {
+      medicine.warningColumns = medicine.warningFields.reduce((columns, warningField) => {
+        const column = warningFieldColumns[warningField];
+        return column ? { ...columns, [column]: "severe" } : columns;
+      }, {});
+    } else {
+      delete medicine.warningFields;
+      delete medicine.warningColumns;
+      delete medicine.warningMessage;
+      delete medicine.warningSuggestion;
+    }
+  }
+
+  const recordWarningsResolved = !hasUnresolvedPrescriptionWarnings(record);
+  if (recordWarningsResolved) {
+    record.inlineRiskWarningVisible = false;
+  }
+
+  return {
+    ok: true,
+    record,
+    fieldWarningCleared,
+    medicineWarningsResolved: !Array.isArray(medicine.warningFields) || medicine.warningFields.length === 0,
+    recordWarningsResolved
+  };
 }
 
 function normalizeRecordDiagnosis(record, { allowEmpty = false } = {}) {
