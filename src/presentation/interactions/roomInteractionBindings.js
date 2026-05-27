@@ -13,7 +13,7 @@ import { renderPrescriptionTraceMain } from "../views/historyView.js";
 import { renderMessageList } from "../views/roomMessageListView.js";
 import { renderRoomMain } from "../views/roomShellView.js";
 import { bindChatMessageMenu } from "./chatBindings.js";
-import { bindConsultConfirmDialogs } from "./consultDialogBindings.js";
+import { bindConsultConfirmDialogs } from "./consultDialogBindings.js?v=20260527-41";
 import { setServiceTileState } from "./runtimeUiBindings.js";
 
 const videoConsultationLockedMessage = "请先结束当前视频问诊，再进入新的视频问诊";

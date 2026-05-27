@@ -3,7 +3,7 @@ import {
   renderConsultConfirmDialogs,
   renderQuickReplyDialogView,
   renderRiskWarningDialogView
-} from "./components/dialogs.js?v=20260527-37";
+} from "./components/dialogs.js?v=20260527-41";
 import { renderData } from "../application/viewModels/renderViewModel.js";
 import {
   renderAnnouncementDialog,
@@ -14,13 +14,13 @@ import {
 import {
   renderTextPage,
   renderVideoPage
-} from "./views/consultRoomView.js?v=20260527-37";
+} from "./views/consultRoomView.js?v=20260527-39";
 import { renderHistoryPage } from "./views/historyView.js";
 import { getActiveConsultationRecord } from "./views/renderRecordSelectors.js";
 import {
   renderChatMessageMenu,
   renderConsultAttachmentDialog
-} from "./views/chatView.js";
+} from "./views/chatView.js?v=20260527-39";
 import {
   renderRoomMain,
   renderRoomTopbar,

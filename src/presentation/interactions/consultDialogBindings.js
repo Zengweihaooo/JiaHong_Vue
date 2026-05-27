@@ -157,7 +157,10 @@ function closeConsultAttachmentDialog(event) {
 }
 
 export function openConsultConfirmDialog(kind) {
-  openOverlay(`.consult-confirm-overlay[data-confirm-kind="${kind}"]`, ".consult-confirm-submit");
+  openOverlay(
+    `.consult-confirm-overlay[data-confirm-kind="${kind}"]`,
+    kind === "cancel" ? ".consult-cancel-reason.is-active:not([hidden])" : ".consult-confirm-submit"
+  );
 }
 
 function closeConsultConfirmDialog(kind) {
@@ -201,12 +204,28 @@ async function handleConsultConfirm(kind) {
 function bindCancelReasonDialog(overlay) {
   const reasonTypes = overlay.querySelectorAll(".consult-cancel-reason-type");
   const reasons = overlay.querySelectorAll(".consult-cancel-reason");
+  const selectReason = (selectedReason) => {
+    if (!selectedReason) return;
+    reasons.forEach((reason) => {
+      const selected = reason === selectedReason;
+      reason.classList.toggle("is-active", selected);
+      reason.setAttribute("aria-pressed", String(selected));
+    });
+    overlay.dataset.selectedCancelReason = selectedReason.dataset.cancelReason || selectedReason.textContent.trim();
+  };
+
+  selectReason(overlay.querySelector(".consult-cancel-reason.is-active:not([hidden])"));
+
   reasonTypes.forEach((type) => {
     type.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       const group = type.dataset.cancelReasonType;
-      reasonTypes.forEach((node) => node.classList.toggle("is-active", node === type));
+      reasonTypes.forEach((node) => {
+        const selected = node === type;
+        node.classList.toggle("is-active", selected);
+        node.setAttribute("aria-pressed", String(selected));
+      });
       let firstVisibleReason = null;
       reasons.forEach((reason) => {
         const visible = reason.dataset.cancelReasonGroup === group;
@@ -214,7 +233,7 @@ function bindCancelReasonDialog(overlay) {
         if (visible && !firstVisibleReason) firstVisibleReason = reason;
       });
       if (firstVisibleReason) {
-        reasons.forEach((reason) => reason.classList.toggle("is-active", reason === firstVisibleReason));
+        selectReason(firstVisibleReason);
       }
     });
   });
@@ -223,7 +242,7 @@ function bindCancelReasonDialog(overlay) {
     reason.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      reasons.forEach((node) => node.classList.toggle("is-active", node === reason));
+      selectReason(reason);
     });
   });
 }

@@ -39,6 +39,50 @@ export function renderAiReplyOptions(options = []) {
     </div>`;
 }
 
+function getAiReplies(record = null) {
+  if (record?.type === "consult") {
+    return [
+      { text: "考虑颈部肌肉劳损，多休息少低头", tag: "休息姿势" },
+      { text: "颈椎姿势不良引发不适，局部热敷缓解", tag: "热敷缓解" },
+      { text: "颈肩筋膜炎，避免久坐适当活动颈部", tag: "活动建议" }
+    ];
+  }
+  if (record?.type === "video") {
+    return [
+      { text: "我先看一下您的咳嗽情况，请把镜头对准面部", tag: "视频确认" },
+      { text: "请描述痰色、体温和胸闷气促情况", tag: "症状追问" },
+      { text: "如果呼吸明显费力，建议尽快线下就诊", tag: "风险提示" }
+    ];
+  }
+  return [
+    { text: "头痛发烧多久啦？体温多少度？", tag: "时间体温" },
+    { text: "持续几天了？头痛具体位置在哪，程度如何？", tag: "位置程度" },
+    { text: "这是一串智能回复的文字内容，并且这是一行的最长字符数", tag: "语义简介" }
+  ];
+}
+
+export function renderAiReplyComposer(record = null) {
+  return `
+    <div class="ai-reply ai-reply--collapsed" data-ai-reply-state="collapsed">
+      <div class="ai-reply__head">
+        <div class="ai-reply__title">
+          <span class="ai-spark" aria-hidden="true"></span>
+          <h3>智能推荐回复</h3>
+        </div>
+        <p class="ai-reply__hint">双击快捷回复展开或收起智能回复</p>
+        <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M13.4 5.8A5.5 5.5 0 0 0 3.1 4.2L1.5 5.8M1.5 2.4v3.4h3.4M2.6 10.2a5.5 5.5 0 0 0 10.3 1.6l1.6-1.6m0 3.4v-3.4h-3.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+          </svg>
+          <span>换一批</span>
+        </button>
+      </div>
+      ${renderAiReplyOptions(getAiReplies(record))}
+      <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
+      ${renderChatInput()}
+    </div>`;
+}
+
 export function findOngoingChatMessage(chatKey, messageId) {
   return renderData.ongoingChatState[chatKey]?.messages.find((message) => message.id === messageId);
 }
@@ -232,39 +276,10 @@ export function renderChatMessageMenu() {
 }
 
 export function renderChatPanel(chatKey = getActiveChatKey(), { record = null } = {}) {
-  const aiReplies =
-    record?.type === "consult"
-      ? [
-          { text: "考虑颈部肌肉劳损，多休息少低头", tag: "休息姿势" },
-          { text: "颈椎姿势不良引发不适，局部热敷缓解", tag: "热敷缓解" },
-          { text: "颈肩筋膜炎，避免久坐适当活动颈部", tag: "活动建议" }
-        ]
-      : [
-          { text: "头痛发烧多久啦？体温多少度？", tag: "时间体温" },
-          { text: "持续几天了？头痛具体位置在哪，程度如何？", tag: "位置程度" },
-          { text: "这是一串智能回复的文字内容，并且这是一行的最长字符数", tag: "语义简介" }
-        ];
   return `
     <section class="chat-panel" aria-label="聊天区域">
       ${renderConsultInfoCard(record)}
       ${renderChatThread(chatKey)}
-      <div class="ai-reply ai-reply--collapsed" data-ai-reply-state="collapsed">
-        <div class="ai-reply__head">
-          <div class="ai-reply__title">
-            <span class="ai-spark" aria-hidden="true"></span>
-            <h3>智能推荐回复</h3>
-          </div>
-          <p class="ai-reply__hint">双击快捷回复进入智能回复</p>
-          <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复">
-            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path d="M13.4 5.8A5.5 5.5 0 0 0 3.1 4.2L1.5 5.8M1.5 2.4v3.4h3.4M2.6 10.2a5.5 5.5 0 0 0 10.3 1.6l1.6-1.6m0 3.4v-3.4h-3.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
-            </svg>
-            <span>换一批</span>
-          </button>
-        </div>
-        ${renderAiReplyOptions(aiReplies)}
-        <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
-        ${renderChatInput()}
-      </div>
+      ${renderAiReplyComposer(record)}
     </section>`;
 }

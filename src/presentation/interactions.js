@@ -22,7 +22,7 @@ import {
   closeChatMessageMenu,
   configureChatBindings
 } from "./interactions/chatBindings.js";
-import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-37";
+import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-41";
 import { bindDragScrollContainers } from "./interactions/dragScrollBindings.js";
 import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js";
 import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260527-36";
@@ -31,13 +31,13 @@ import {
   bindConsultDialogOverlays,
   closeConsultDialogOverlays,
   configureConsultDialogBindings
-} from "./interactions/consultDialogBindings.js?v=20260527-37";
+} from "./interactions/consultDialogBindings.js?v=20260527-41";
 import {
   bindRoomInteractions,
   configureRoomInteractionBindings,
   handleConsultResolved,
   updateRoomMessageList
-} from "./interactions/roomInteractionBindings.js";
+} from "./interactions/roomInteractionBindings.js?v=20260527-41";
 
 function getRouteConsultationContext() {
   return {

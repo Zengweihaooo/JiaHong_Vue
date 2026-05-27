@@ -56,7 +56,7 @@ const cancelReasonGroups = [
   {
     key: "patient",
     label: "患者原因",
-    reasons: ["患者原因不进行购买了、患者只进行咨询、用户取消、药店端无患者、有视频无人应答"]
+    reasons: ["患者原因不进行购买了", "患者只进行咨询", "用户取消", "药店端无患者", "有视频无人应答"]
   },
   {
     key: "medicine",
@@ -66,7 +66,7 @@ const cancelReasonGroups = [
   {
     key: "scope",
     label: "诊疗范围",
-    reasons: ["疾病与科室不符", "诊断与拟购药品不符", "首诊开方、危急重症开方、动植物开方、超疗程处方"]
+    reasons: ["疾病与科室不符", "诊断与拟购药品不符", "首诊开方", "危急重症开方", "动植物开方", "超疗程处方"]
   },
   {
     key: "prescription",
@@ -105,7 +105,12 @@ function renderCancelReasonDialog() {
               ${cancelReasonGroups
                 .map(
                   (group) => `
-                    <button class="consult-cancel-reason-type${group.key === "medicine" ? " is-active" : ""}" type="button" data-cancel-reason-type="${group.key}">
+                    <button
+                      class="consult-cancel-reason-type${group.key === "medicine" ? " is-active" : ""}"
+                      type="button"
+                      aria-pressed="${group.key === "medicine" ? "true" : "false"}"
+                      data-cancel-reason-type="${group.key}"
+                    >
                       ${escapeHtml(group.label)}
                     </button>`
                 )
@@ -121,6 +126,7 @@ function renderCancelReasonDialog() {
                           class="consult-cancel-reason${group.key === "medicine" && reason === "病情特殊存在用药禁忌" ? " is-active" : ""}"
                           type="button"
                           role="listitem"
+                          aria-pressed="${group.key === "medicine" && reason === "病情特殊存在用药禁忌" ? "true" : "false"}"
                           data-cancel-reason="${escapeHtml(reason)}"
                           data-cancel-reason-group="${group.key}"
                           ${group.key !== "medicine" ? "hidden" : ""}

@@ -4,7 +4,7 @@ import {
   openConsultConfirmDialog,
   openQuickReplyDialog,
   requestPrescriptionSubmit
-} from "./consultDialogBindings.js?v=20260527-37";
+} from "./consultDialogBindings.js?v=20260527-41";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
 import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
 import { bindVideoControls } from "./videoControls.js";
@@ -14,8 +14,15 @@ function bindAiReplyOptions() {
   document.querySelectorAll(".ai-reply__options button").forEach((option) => {
     if (option.dataset.bound === "true") return;
     option.dataset.bound = "true";
+    const getOptionText = () => option.querySelector(".jh-btn--ai-pill__text")?.textContent || option.textContent;
     option.addEventListener("click", () => {
-      fillChatInput(option.querySelector(".jh-btn--ai-pill__text")?.textContent || option.textContent);
+      fillChatInput(getOptionText());
+    });
+    option.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!fillChatInput(getOptionText())) return;
+      sendChatInputMessage(document.querySelector(".jh-chat-input textarea"));
     });
   });
 
@@ -40,13 +47,18 @@ function bindAiReplyOptions() {
   });
 }
 
-function expandAiReply(button) {
+function toggleAiReply(button) {
   const aiReply = button.closest(".ai-reply");
-  if (!aiReply || aiReply.dataset.aiReplyState === "expanded") return;
-  aiReply.dataset.aiReplyState = "expanded";
-  aiReply.classList.remove("ai-reply--collapsed");
-  aiReply.classList.add("ai-reply--expanded");
-  aiReply.querySelector(".ai-reply__options button")?.focus();
+  if (!aiReply) return;
+  const expanded = aiReply.dataset.aiReplyState === "expanded";
+  aiReply.dataset.aiReplyState = expanded ? "collapsed" : "expanded";
+  aiReply.classList.toggle("ai-reply--collapsed", expanded);
+  aiReply.classList.toggle("ai-reply--expanded", !expanded);
+  if (!expanded) {
+    aiReply.querySelector(".ai-reply__options button")?.focus();
+  } else {
+    button.focus();
+  }
 }
 
 function bindQuickReplyTriggers() {
@@ -68,7 +80,7 @@ function bindQuickReplyTriggers() {
         window.clearTimeout(clickTimer);
         clickTimer = null;
       }
-      expandAiReply(button);
+      toggleAiReply(button);
     });
   });
 }

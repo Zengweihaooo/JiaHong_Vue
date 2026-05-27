@@ -1,7 +1,7 @@
 import { assetUrl } from "../../shared/core.js";
 import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from "../components/primitives.js?v=20260527-36";
 import { getActiveConsultationRecord } from "./renderRecordSelectors.js";
-import { renderChatInput, renderChatPanel, renderChatThread } from "./chatView.js";
+import { renderAiReplyComposer, renderChatPanel, renderChatThread } from "./chatView.js?v=20260527-39";
 import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260527-37";
 import { renderRoomSidebar } from "./roomMessageListView.js";
 import { renderRoomTopbar } from "./roomShellView.js";
@@ -87,7 +87,7 @@ export function renderVideoChatPanel() {
       </div>
       ${renderChatThread(record?.id, { threadClass: "video-chat-thread" })}
       <div class="video-input-wrap">
-        ${renderChatInput()}
+        ${renderAiReplyComposer(record)}
       </div>
     </section>`;
 }
