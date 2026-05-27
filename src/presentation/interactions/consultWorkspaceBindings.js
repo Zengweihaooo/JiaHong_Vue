@@ -15,16 +15,61 @@ function bindAiReplyOptions() {
     if (option.dataset.bound === "true") return;
     option.dataset.bound = "true";
     option.addEventListener("click", () => {
-      fillChatInput(option.textContent);
+      fillChatInput(option.querySelector(".jh-btn--ai-pill__text")?.textContent || option.textContent);
     });
   });
+
+  document.querySelectorAll(".ai-reply__refresh").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", () => {
+      const options = Array.from(button.closest(".ai-reply")?.querySelectorAll(".jh-btn--ai-pill") || []);
+      if (options.length < 2) return;
+      const firstText = options[0].querySelector(".jh-btn--ai-pill__text")?.textContent || "";
+      const firstTag = options[0].querySelector(".jh-btn--ai-pill__tag")?.textContent || "";
+      options.forEach((option, index) => {
+        const nextOption = options[index + 1];
+        const nextText = nextOption?.querySelector(".jh-btn--ai-pill__text")?.textContent || firstText;
+        const nextTag = nextOption?.querySelector(".jh-btn--ai-pill__tag")?.textContent || firstTag;
+        const textNode = option.querySelector(".jh-btn--ai-pill__text");
+        const tagNode = option.querySelector(".jh-btn--ai-pill__tag");
+        if (textNode) textNode.textContent = nextText;
+        if (tagNode) tagNode.textContent = nextTag;
+      });
+    });
+  });
+}
+
+function expandAiReply(button) {
+  const aiReply = button.closest(".ai-reply");
+  if (!aiReply || aiReply.dataset.aiReplyState === "expanded") return;
+  aiReply.dataset.aiReplyState = "expanded";
+  aiReply.classList.remove("ai-reply--collapsed");
+  aiReply.classList.add("ai-reply--expanded");
+  aiReply.querySelector(".ai-reply__options button")?.focus();
 }
 
 function bindQuickReplyTriggers() {
   document.querySelectorAll(".quick-reply-trigger").forEach((button) => {
     if (button.dataset.bound === "true") return;
     button.dataset.bound = "true";
-    button.addEventListener("click", openQuickReplyDialog);
+    let clickTimer = null;
+    button.addEventListener("click", (event) => {
+      if (event.detail > 1) return;
+      clickTimer = window.setTimeout(() => {
+        clickTimer = null;
+        openQuickReplyDialog();
+      }, 260);
+    });
+    button.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (clickTimer) {
+        window.clearTimeout(clickTimer);
+        clickTimer = null;
+      }
+      expandAiReply(button);
+    });
   });
 }
 
