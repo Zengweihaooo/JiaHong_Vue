@@ -27,7 +27,17 @@ export const waitingQueueState = {
 const runtimeStateListeners = new Set();
 export const activeVideoConsultationStorageKey = "jh.activeVideoConsultationId.v1";
 export const dismissedBadgeStorageKey = "jh.dismissedMessageBadges.v2";
+export const waitingQueueClearedStorageKey = "jh.waitingQueueCleared.v1";
+export const waitingQueueClearCooldownMs = 30_000;
 export const safeSessionStorage = getSessionStorage();
+const emptyWaitingQueue = {
+  total: 0,
+  byType: {
+    text: 0,
+    video: 0,
+    consult: 0
+  }
+};
 
 export function subscribeRuntimeState(listener) {
   runtimeStateListeners.add(listener);
@@ -36,6 +46,19 @@ export function subscribeRuntimeState(listener) {
 
 function emitRuntimeStateChange() {
   runtimeStateListeners.forEach((listener) => listener());
+}
+
+export function isWaitingQueueManuallyCleared() {
+  const rawClearedUntil = safeSessionStorage.getItem(waitingQueueClearedStorageKey);
+  const clearedUntil = Number(rawClearedUntil || 0);
+  if (!rawClearedUntil) return false;
+  if (!Number.isFinite(clearedUntil) || clearedUntil <= 0) {
+    safeSessionStorage.removeItem(waitingQueueClearedStorageKey);
+    return false;
+  }
+  if (Date.now() < clearedUntil) return true;
+  safeSessionStorage.removeItem(waitingQueueClearedStorageKey);
+  return false;
 }
 
 export function initRuntimeState({ services = [], consultationRecords = [], doctor = null } = {}) {
@@ -99,19 +122,24 @@ export function setDoctorStatus(status, { silent = false } = {}) {
   if (!silent) emitRuntimeStateChange();
 }
 
-export function setWaitingQueue(queue, { silent = false } = {}) {
-  const byType = queue?.byType || {};
+export function setWaitingQueue(queue, { silent = false, force = false } = {}) {
+  const nextQueue = isWaitingQueueManuallyCleared() && !force ? emptyWaitingQueue : queue;
   waitingQueueState.byType = {
-    text: Number(byType.text) || 0,
-    video: Number(byType.video) || 0,
-    consult: Number(byType.consult) || 0
+    text: Number(nextQueue?.byType?.text) || 0,
+    video: Number(nextQueue?.byType?.video) || 0,
+    consult: Number(nextQueue?.byType?.consult) || 0
   };
   waitingQueueState.total =
-    typeof queue?.total === "number"
-      ? queue.total
+    typeof nextQueue?.total === "number"
+      ? nextQueue.total
       : waitingQueueState.byType.text + waitingQueueState.byType.video + waitingQueueState.byType.consult;
-  waitingQueueState.updatedAt = queue?.updatedAt || new Date().toISOString();
+  waitingQueueState.updatedAt = nextQueue?.updatedAt || new Date().toISOString();
   if (!silent) emitRuntimeStateChange();
+}
+
+export function clearWaitingQueue({ silent = false } = {}) {
+  safeSessionStorage.setItem(waitingQueueClearedStorageKey, String(Date.now() + waitingQueueClearCooldownMs));
+  setWaitingQueue(emptyWaitingQueue, { silent, force: true });
 }
 
 export const currentNavigation = getNavigationEntry();

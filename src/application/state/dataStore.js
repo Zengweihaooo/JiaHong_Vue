@@ -85,7 +85,7 @@ export function getDefaultOngoingConsultationRecord({ view = "" } = {}) {
 }
 
 export function getDefaultEndedConsultationRecord() {
-  return consultationRecords.find((record) => record.state === "ended") || null;
+  return getMessageListRecords(consultationRecords, { type: "all", state: "ended" })[0] || null;
 }
 
 export function getActiveOngoingConsultationRecordId({ sessionId = "", recordId = "", view = "" } = {}) {
@@ -107,9 +107,7 @@ export function getActiveOngoingConsultationRecord(context = {}) {
 }
 
 export function getFirstEndedConsultationRecordByType(type = "all") {
-  return consultationRecords.find(
-    (record) => (type === "all" || record.type === type) && record.state === "ended"
-  ) || null;
+  return getMessageListRecords(consultationRecords, { type, state: "ended" })[0] || null;
 }
 
 function formatEndedAt(date = new Date()) {

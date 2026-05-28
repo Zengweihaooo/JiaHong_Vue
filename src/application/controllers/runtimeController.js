@@ -4,11 +4,12 @@ import {
 } from "../../infrastructure/api/appApi.js";
 import {
   doctorStatusState,
+  clearWaitingQueue,
   serviceState,
   setDoctorStatus,
   subscribeRuntimeState,
   waitingQueueState
-} from "../state/runtimeState.js";
+} from "../state/runtimeState.js?v=20260528-06";
 
 export function getDoctorStatus() {
   return doctorStatusState.status;
@@ -28,6 +29,11 @@ export function getServiceAvailabilityEntries() {
 }
 
 export function getWaitingQueueState() {
+  return waitingQueueState;
+}
+
+export function clearWaitingQueueState() {
+  clearWaitingQueue();
   return waitingQueueState;
 }
 

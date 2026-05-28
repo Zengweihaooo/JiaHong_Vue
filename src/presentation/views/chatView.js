@@ -1,10 +1,11 @@
 import { assetUrl } from "../../shared/core.js";
-import { renderData } from "../../application/viewModels/renderViewModel.js";
+import { renderData } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 import { renderButton } from "../components/primitives.js";
 import { escapeHtml } from "../ui/html.js";
-import { getActiveChatKey } from "./renderRecordSelectors.js";
+import { getActiveChatKey } from "./renderRecordSelectors.js?v=20260528-06";
 
 const defaultMessageIntervalSeconds = 58;
+const defaultAiReplyHighlights = ["多久", "体温", "几天", "位置", "程度", "痰色", "胸闷气促", "呼吸", "低头", "热敷", "活动颈部"];
 
 export function renderChatInput({ className = "" } = {}) {
   return `
@@ -22,7 +23,9 @@ export function renderChatInput({ className = "" } = {}) {
 export function renderAiReplyOptions(options = []) {
   const layoutTextThreshold = "这是一串智能回复的文字内容，并且这是一行的最长字符数".length;
   const normalizedOptions = options.map((option) =>
-    typeof option === "string" ? { text: option, tag: "" } : { text: option.text || "", tag: option.tag || "" }
+    typeof option === "string"
+      ? { text: option, tag: "", highlights: getAiReplyHighlights(option) }
+      : { text: option.text || "", tag: option.tag || "", highlights: option.highlights || getAiReplyHighlights(option.text || "") }
   );
   const maxTextLength = Math.max(0, ...normalizedOptions.map((option) => option.text.length));
   const layoutClass = maxTextLength >= layoutTextThreshold ? " ai-reply__options--long" : "";
@@ -30,13 +33,45 @@ export function renderAiReplyOptions(options = []) {
     <div class="ai-reply__options${layoutClass}" data-layout-threshold="${layoutTextThreshold}">
       ${normalizedOptions
         .map((option) =>
-          `<button class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill" type="button">
-            <span class="jh-btn--ai-pill__text">${escapeHtml(option.text)}</span>
+          `<button class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill" type="button" data-reply-text="${escapeHtml(option.text)}">
+            <span class="jh-btn--ai-pill__text">${renderAiReplyText(option.text, option.highlights)}</span>
             ${option.tag ? `<span class="jh-btn--ai-pill__tag">${escapeHtml(option.tag)}</span>` : ""}
           </button>`
         )
         .join("")}
     </div>`;
+}
+
+function getAiReplyHighlights(text = "") {
+  return defaultAiReplyHighlights.filter((keyword) => String(text).includes(keyword));
+}
+
+function renderAiReplyText(text = "", highlights = []) {
+  const source = String(text);
+  const matches = highlights
+    .map((keyword) => {
+      const value = String(keyword || "");
+      return value ? { keyword: value, index: source.indexOf(value) } : null;
+    })
+    .filter((match) => match && match.index >= 0)
+    .sort((a, b) => a.index - b.index || b.keyword.length - a.keyword.length)
+    .reduce((result, match) => {
+      const previous = result[result.length - 1];
+      if (previous && match.index < previous.index + previous.keyword.length) return result;
+      return [...result, match];
+    }, []);
+
+  if (!matches.length) return escapeHtml(source);
+
+  let cursor = 0;
+  return matches
+    .map((match) => {
+      const before = source.slice(cursor, match.index);
+      const highlighted = source.slice(match.index, match.index + match.keyword.length);
+      cursor = match.index + match.keyword.length;
+      return `${escapeHtml(before)}<strong class="jh-btn--ai-pill__keyword">${escapeHtml(highlighted)}</strong>`;
+    })
+    .join("") + escapeHtml(source.slice(cursor));
 }
 
 function getAiReplies(record = null) {
@@ -55,8 +90,8 @@ function getAiReplies(record = null) {
     ];
   }
   return [
-    { text: "头痛发烧多久啦？体温多少度？", tag: "时间体温" },
-    { text: "持续几天了？头痛具体位置在哪，程度如何？", tag: "位置程度" },
+    { text: "头痛发烧多久啦？体温多少度？", tag: "时间体温", highlights: ["多久", "体温"] },
+    { text: "持续几天了？头痛具体位置在哪，程度如何？", tag: "位置程度", highlights: ["几天", "位置", "程度"] },
     { text: "这是一串智能回复的文字内容，并且这是一行的最长字符数", tag: "语义简介" }
   ];
 }

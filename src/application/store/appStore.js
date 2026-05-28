@@ -1,6 +1,6 @@
 import { getAppBootstrap } from "../../infrastructure/api/appApi.js?v=20260527-36";
 import { consultationRecords, doctor, hydrateAppData, services } from "../state/dataStore.js";
-import { initRuntimeState } from "../state/runtimeState.js";
+import { initRuntimeState } from "../state/runtimeState.js?v=20260528-06";
 
 export const appStore = {
   ready: false,

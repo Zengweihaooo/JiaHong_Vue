@@ -1,12 +1,12 @@
 import { escapeHtml } from "../ui/html.js";
-import { renderMedicineTable } from "../components/medicineTable.js";
-import { renderPrescriptionActions } from "../components/prescriptionActions.js";
+import { renderMedicineTable } from "../components/medicineTable.js?v=20260528-06";
+import { renderPrescriptionActions } from "../components/prescriptionActions.js?v=20260528-06";
 import {
   renderDiagnosisSelectInput,
   renderDiagnosisTags,
   renderMedicineSearchCombobox,
   renderPrescriptionRemarkSelect
-} from "./prescriptionFormFields.js";
+} from "./prescriptionFormFields.js?v=20260528-06";
 
 export {
   renderDiagnosisSelectInput,
@@ -15,7 +15,7 @@ export {
   renderPrescriptionRemarkSelect,
   renderSearchField,
   renderSelectField
-} from "./prescriptionFormFields.js";
+} from "./prescriptionFormFields.js?v=20260528-06";
 
 
 export const defaultPrescriptionMedicines = [];

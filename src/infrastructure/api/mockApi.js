@@ -12,6 +12,7 @@ export { searchDiagnosisCatalog, searchMedicineCatalog } from "./mockCatalogSear
 const mockLatencyMs = 80;
 let realtimeTick = 0;
 const maxRuntimeConsultations = 6;
+const dispatchDelayAfterOnlineMs = 20_000;
 const baseWaitingQueue = {
   total: 4,
   byType: { text: 1, video: 1, consult: 2 }
@@ -60,6 +61,36 @@ function buildWaitingQueue(runtimeRecords) {
     total: Math.min(text + video + consult, maxRuntimeConsultations),
     byType: { text, video, consult },
     updatedAt: new Date().toISOString()
+  };
+}
+
+function getDispatchGate(runtimeState, fallbackStatus = "offline", date = new Date()) {
+  const doctorStatus = runtimeState.doctorStatus || fallbackStatus;
+  if (doctorStatus !== "online") {
+    return {
+      doctorStatus,
+      canDispatch: false,
+      dispatchEnabledAt: null
+    };
+  }
+
+  const existingEnabledAt = Date.parse(runtimeState.dispatchEnabledAt || "");
+  const dispatchEnabledAt = Number.isNaN(existingEnabledAt)
+    ? date.getTime() + dispatchDelayAfterOnlineMs
+    : existingEnabledAt;
+
+  if (Number.isNaN(existingEnabledAt)) {
+    writeRuntimeState({
+      doctorStatus,
+      doctorOnlineAt: date.toISOString(),
+      dispatchEnabledAt: new Date(dispatchEnabledAt).toISOString()
+    });
+  }
+
+  return {
+    doctorStatus,
+    canDispatch: date.getTime() >= dispatchEnabledAt,
+    dispatchEnabledAt: new Date(dispatchEnabledAt).toISOString()
   };
 }
 
@@ -125,7 +156,21 @@ export async function updateServiceAvailability(serviceKey, enabled) {
 
 export async function updateDoctorStatus(status) {
   await delay(40);
-  writeRuntimeState({ doctorStatus: status });
+  const runtimeState = readRuntimeState();
+  const patch = { doctorStatus: status };
+  if (status === "online") {
+    const alreadyOnline = runtimeState.doctorStatus === "online";
+    patch.doctorOnlineAt = alreadyOnline && runtimeState.doctorOnlineAt
+      ? runtimeState.doctorOnlineAt
+      : new Date().toISOString();
+    patch.dispatchEnabledAt = alreadyOnline && runtimeState.dispatchEnabledAt
+      ? runtimeState.dispatchEnabledAt
+      : new Date(Date.now() + dispatchDelayAfterOnlineMs).toISOString();
+  } else {
+    patch.doctorOnlineAt = null;
+    patch.dispatchEnabledAt = null;
+  }
+  writeRuntimeState(patch);
   return { status, updatedAt: new Date().toISOString() };
 }
 
@@ -134,6 +179,8 @@ export async function getRealtimeSnapshot() {
   realtimeTick += 1;
 
   const payload = await fetchJson(bootstrapUrl);
+  const runtimeState = readRuntimeState();
+  const dispatchGate = getDispatchGate(runtimeState, payload.doctor?.status);
   const poolRecords = payload.consultations?.realtimePool?.records || [];
   const poolChats = payload.consultations?.realtimePool?.chats || {};
   let currentConsultations = getRuntimeConsultations();
@@ -142,7 +189,7 @@ export async function getRealtimeSnapshot() {
   const currentTotal =
     baseWaitingQueue.total +
     currentConsultations.records.filter((record) => record.state === "ongoing").length;
-  if (currentTotal < maxRuntimeConsultations) {
+  if (dispatchGate.canDispatch && currentTotal < maxRuntimeConsultations) {
     const record = pickRandomAvailableConsultation(poolRecords, currentConsultations.records);
     if (record) {
       newConsultation = {
@@ -162,6 +209,8 @@ export async function getRealtimeSnapshot() {
   return {
     waitingQueue,
     newConsultation,
+    doctorStatus: dispatchGate.doctorStatus,
+    dispatchEnabledAt: dispatchGate.dispatchEnabledAt,
     tick: realtimeTick
   };
 }

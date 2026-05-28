@@ -15,7 +15,7 @@ import {
   sendConsultationEvent,
   setActiveVideoConsultation,
   setWaitingQueue
-} from "../state/runtimeState.js";
+} from "../state/runtimeState.js?v=20260528-06";
 import { hasUnresolvedPrescriptionWarnings } from "./prescriptionController.js";
 
 const terminalConsultationEvents = {

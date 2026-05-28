@@ -1,19 +1,24 @@
 import { appView, getSessionIdParam } from "../../shared/core.js";
 import { normalizeArchivedConsultationRecord } from "../../domain/archivedConsultation.js";
-import { renderData } from "../../application/viewModels/renderViewModel.js";
+import { renderData } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 import { renderButton, renderLabelTag, renderReadTag } from "../components/primitives.js";
-import { renderPrescriptionPanel } from "./prescriptionPanels.js";
-import { getDefaultEndedRenderRecord } from "./renderRecordSelectors.js";
-import { renderRoomSidebar } from "./roomMessageListView.js?v=20260527-43";
-import { renderRoomTopbar } from "./roomShellView.js";
+import { renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260528-06";
+import { getDefaultEndedRenderRecord } from "./renderRecordSelectors.js?v=20260528-06";
+import { renderRoomSidebar } from "./roomMessageListView.js?v=20260528-06";
+import { renderRoomTopbar } from "./roomShellView.js?v=20260528-06";
 
 export function getConsultMainClass() {
   return appView === "text" || appView === "video" ? "text-main" : "room-main";
 }
 
+function getArchivedTypeDisplay(record = {}) {
+  return record.type === "consult" ? "咨询" : `${record.typeLabel}问诊`;
+}
+
 export function renderPrescriptionTraceMain(record = renderData.consultationRecords.find((item) => item.state === "ended")) {
   const mainClass = getConsultMainClass();
   const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
+  const typeDisplay = getArchivedTypeDisplay(archivedRecord);
   return `
     <main class="${mainClass}">
       <section class="text-card text-card--readonly" aria-label="历史问诊回看">
@@ -21,7 +26,7 @@ export function renderPrescriptionTraceMain(record = renderData.consultationReco
           <div class="pharmacy-bar__left">
             <h2>${archivedRecord.title}</h2>
             ${renderReadTag("read", "readonly-seal-tag").replace("已读", "已封存")}
-            ${renderLabelTag({ text: `${archivedRecord.typeLabel}问诊`, tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
+            ${renderLabelTag({ text: typeDisplay, tone: "focus", size: "lg", className: "risk-tag--medicine medicine-type-tag" })}
           </div>
           <div class="pharmacy-bar__right">
             <span class="readonly-ended-time">结束时间：${archivedRecord.endedAt}</span>
@@ -73,11 +78,12 @@ export function renderReadonlyPrescriptionPanel(record) {
 
 export function renderPrescriptionTraceCard(record) {
   const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
+  const typeDisplay = getArchivedTypeDisplay(archivedRecord);
   return `
     <button class="prescription-trace-card" type="button" data-history-record-id="${archivedRecord.id}" aria-label="查看${archivedRecord.patient}开方历史">
       <span class="prescription-trace-card__head">
         <span>
-          <span class="prescription-trace-card__eyebrow">${archivedRecord.typeLabel}问诊已结束</span>
+          <span class="prescription-trace-card__eyebrow">${typeDisplay}已结束</span>
           <strong>${archivedRecord.patient}｜${archivedRecord.age}</strong>
         </span>
         ${renderReadTag("read", "prescription-trace-card__status").replace("已读", "已归档")}
@@ -113,6 +119,7 @@ export function renderHistoryPage({ quickReplyDialog = "", riskWarningDialog = "
     renderData.consultationRecords.find((item) => item.id === sessionId && item.state === "ended") ||
     getDefaultEndedRenderRecord();
   const archivedRecord = normalizeArchivedConsultationRecord(record, renderData.ongoingChatState[record?.id]);
+  const typeDisplay = getArchivedTypeDisplay(archivedRecord);
   const medicines = archivedRecord.prescriptionMedicines || [];
   return `
     <div class="app-shell room-shell history-shell app-shell--responsive">
@@ -128,7 +135,7 @@ export function renderHistoryPage({ quickReplyDialog = "", riskWarningDialog = "
             ${renderButton({ text: "返回问诊室", tone: "outline-secondary", size: "md", className: "history-back" })}
           </div>
           <div class="prescription-history__summary">
-            <span><em>问诊类型</em><strong>${archivedRecord.typeLabel}问诊</strong></span>
+            <span><em>问诊类型</em><strong>${typeDisplay}</strong></span>
             <span><em>诊断</em><strong>${archivedRecord.diagnosis}</strong></span>
             <span><em>处方编号</em><strong>${archivedRecord.prescriptionNo}</strong></span>
             <span><em>归档时间</em><strong>${archivedRecord.endedAt}</strong></span>

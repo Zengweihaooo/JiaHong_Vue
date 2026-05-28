@@ -1,6 +1,6 @@
 import { videoPrescriptionSubmitLockSeconds } from "../../domain/consultationRules.js";
 import { renderButton, renderClockIcon } from "./primitives.js?v=20260527-36";
-import { renderPrescriptionRemarkSelect } from "../views/prescriptionFormFields.js";
+import { renderPrescriptionRemarkSelect } from "../views/prescriptionFormFields.js?v=20260528-06";
 
 function renderArchivedActionHint(readonly) {
   return readonly ? `<span class="prescription-actions__hint">已封存，仅支持查看</span>` : renderPrescriptionRemarkSelect();

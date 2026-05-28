@@ -1,6 +1,6 @@
 import { generatePatientAutoReply } from "../../infrastructure/api/appApi.js";
 import { consultationRecords, ongoingChatState } from "../state/dataStore.js";
-import { rememberDismissedMessageBadge } from "../state/runtimeState.js";
+import { rememberDismissedMessageBadge } from "../state/runtimeState.js?v=20260528-06";
 
 function formatChatDateTime(date = new Date()) {
   const pad = (value) => String(value).padStart(2, "0");

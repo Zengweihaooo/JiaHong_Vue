@@ -3,8 +3,8 @@ import {
   getServiceAvailability,
   setDoctorStatusState,
   setServiceAvailabilityState
-} from "../../application/controllers/runtimeController.js";
-import { applyRuntimeStateToDom, applyServiceStateToDom } from "./runtimeDomSync.js";
+} from "../../application/controllers/runtimeController.js?v=20260528-06";
+import { applyRuntimeStateToDom, applyServiceStateToDom } from "./runtimeDomSync.js?v=20260528-06";
 import {
   closePopupMenus,
   showToast,

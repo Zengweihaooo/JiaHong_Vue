@@ -6,7 +6,7 @@ import {
   requestPrescriptionSubmit
 } from "./consultDialogBindings.js?v=20260527-41";
 import { bindDragScrollContainers } from "./dragScrollBindings.js";
-import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js";
+import { bindPrescriptionEditor } from "./prescriptionEditorBindings.js?v=20260528-06";
 import { bindVideoControls } from "./videoControls.js";
 import { bindVideoPrescriptionSubmitCountdown } from "./videoSubmitLockBindings.js";
 
@@ -14,7 +14,7 @@ function bindAiReplyOptions() {
   document.querySelectorAll(".ai-reply__options button").forEach((option) => {
     if (option.dataset.bound === "true") return;
     option.dataset.bound = "true";
-    const getOptionText = () => option.querySelector(".jh-btn--ai-pill__text")?.textContent || option.textContent;
+    const getOptionText = () => option.dataset.replyText || option.querySelector(".jh-btn--ai-pill__text")?.textContent || option.textContent;
     option.addEventListener("click", () => {
       fillChatInput(getOptionText());
     });
@@ -32,16 +32,19 @@ function bindAiReplyOptions() {
     button.addEventListener("click", () => {
       const options = Array.from(button.closest(".ai-reply")?.querySelectorAll(".jh-btn--ai-pill") || []);
       if (options.length < 2) return;
-      const firstText = options[0].querySelector(".jh-btn--ai-pill__text")?.textContent || "";
+      const firstText = options[0].querySelector(".jh-btn--ai-pill__text")?.innerHTML || "";
       const firstTag = options[0].querySelector(".jh-btn--ai-pill__tag")?.textContent || "";
+      const firstReplyText = options[0].dataset.replyText || "";
       options.forEach((option, index) => {
         const nextOption = options[index + 1];
-        const nextText = nextOption?.querySelector(".jh-btn--ai-pill__text")?.textContent || firstText;
+        const nextText = nextOption?.querySelector(".jh-btn--ai-pill__text")?.innerHTML || firstText;
         const nextTag = nextOption?.querySelector(".jh-btn--ai-pill__tag")?.textContent || firstTag;
+        const nextReplyText = nextOption?.dataset.replyText || firstReplyText;
         const textNode = option.querySelector(".jh-btn--ai-pill__text");
         const tagNode = option.querySelector(".jh-btn--ai-pill__tag");
-        if (textNode) textNode.textContent = nextText;
+        if (textNode) textNode.innerHTML = nextText;
         if (tagNode) tagNode.textContent = nextTag;
+        option.dataset.replyText = nextReplyText;
       });
     });
   });

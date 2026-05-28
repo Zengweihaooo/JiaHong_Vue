@@ -1,12 +1,15 @@
-import { getRoomHref } from "../../shared/core.js";
+import { appView, getRoomHref } from "../../shared/core.js";
 import { getAnnouncementById } from "../../application/controllers/contentController.js";
+import { clearWaitingQueueState } from "../../application/controllers/runtimeController.js?v=20260528-06";
 import {
   bindOverlayDismiss,
   closeOverlay,
   openOverlay,
   setOverlayOpen,
+  showToast,
   stopEvent
 } from "../ui/interactionPrimitives.js";
+import { applyRuntimeStateToDom } from "./runtimeUiBindings.js?v=20260528-06";
 import { bindQuickEntryInteractions, closeQuickEntryDialog, closeQuickSchedulePanel } from "./homeQuickEntryBindings.js?v=20260527-36";
 
 function openAnnouncementDialog(event) {
@@ -84,9 +87,28 @@ function bindConsultCard() {
   });
 }
 
+function isTextEntryTarget(target) {
+  return Boolean(target?.closest?.("input, textarea, select, [contenteditable='true']"));
+}
+
+function bindWaitingQueueShortcut() {
+  if (bindWaitingQueueShortcut.bound || appView !== "home") return;
+  bindWaitingQueueShortcut.bound = true;
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "9" || event.isComposing || event.metaKey || event.ctrlKey || event.altKey || isTextEntryTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    clearWaitingQueueState();
+    applyRuntimeStateToDom();
+    showToast("候诊室已清零，30秒后恢复新增", { tone: "info", placement: "home-status" });
+  });
+}
+
 export function bindHomeInteractions() {
   bindAnnouncementDialogs();
   bindConsultCard();
+  bindWaitingQueueShortcut();
   bindQuickEntryInteractions();
 }
 

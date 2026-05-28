@@ -52,12 +52,26 @@ export function renderPrescriptionRemarkSelect() {
   return `
     <label class="prescription-remark-field">
       <span class="prescription-remark-field__label">处方备注：</span>
-      <select class="jh-input-field jh-input-field--sm prescription-remark-select" aria-label="处方备注">
-        <option value="">请选择</option>
+      <span class="prescription-remark-combobox">
+        <input
+          class="jh-input-field jh-input-field--lg diagnosis-select prescription-remark-select prescription-remark-input"
+          type="text"
+          aria-label="处方备注"
+          aria-expanded="false"
+          autocomplete="off"
+          placeholder="请选择"
+        />
+        <span class="prescription-remark-options" role="listbox" hidden>
         ${prescriptionRemarkOptions
-          .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
+          .map(
+            (option) => `
+              <button class="prescription-remark-option" type="button" role="option" data-prescription-remark="${escapeHtml(option)}">
+                ${escapeHtml(option)}
+              </button>`
+          )
           .join("")}
-      </select>
+        </span>
+      </span>
     </label>`;
 }
 

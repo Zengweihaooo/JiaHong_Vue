@@ -1,6 +1,6 @@
 import { appView, getSessionIdParam } from "../../shared/core.js";
 import { getMessageListRecords } from "../../domain/consultationQueue.js";
-import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
+import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 
 export function getDefaultOngoingRenderRecord(type = appView) {
   if (!type || type === "room") {
@@ -28,7 +28,7 @@ export function getDefaultOngoingRenderRecord(type = appView) {
 }
 
 export function getDefaultEndedRenderRecord() {
-  return renderData.consultationRecords.find((record) => record.state === "ended");
+  return getMessageListRecords(renderData.consultationRecords, { type: "all", state: "ended" })[0];
 }
 
 export function getActiveConsultationRecord(type = appView) {

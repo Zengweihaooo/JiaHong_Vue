@@ -58,7 +58,7 @@ export function buildArchivedTrace(record = {}) {
   if (trace.length) return trace;
 
   const time = fallbackTraceTime(record);
-  const typeLabel = record.typeLabel || (record.type === "video" ? "视频" : "图文");
+  const typeLabel = record.typeLabel || (record.type === "video" ? "视频" : record.type === "consult" ? "咨询" : "图文");
   return [
     {
       label: "问诊结束",
@@ -79,7 +79,7 @@ export function buildArchivedTrace(record = {}) {
 }
 
 export function normalizeArchivedConsultationRecord(record = {}, chat = null) {
-  const typeLabel = record.typeLabel || (record.type === "video" ? "视频" : "图文");
+  const typeLabel = record.typeLabel || (record.type === "video" ? "视频" : record.type === "consult" ? "咨询" : "图文");
   return {
     ...record,
     typeLabel,

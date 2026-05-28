@@ -9,13 +9,15 @@ import {
   removeMedicineFromActiveRecord,
   updateMedicineFieldInActiveRecord
 } from "../../application/controllers/prescriptionController.js";
-import { renderConsultationPanel, renderPrescriptionPanel } from "../views/prescriptionPanels.js";
+import { renderConsultationPanel, renderPrescriptionPanel } from "../views/prescriptionPanels.js?v=20260528-06";
 import { showToast } from "../ui/interactionPrimitives.js";
 import {
+  bindMedicineUsageControls,
   bindMedicineUnitControls,
+  closeMedicineUsageDropdowns,
   closeMedicineUnitDropdowns,
   configureMedicineUnitBindings
-} from "./medicineUnitBindings.js";
+} from "./medicineUnitBindings.js?v=20260528-06";
 
 let getPrescriptionContext = () => ({});
 let onPrescriptionPanelRendered = () => {};
@@ -84,6 +86,30 @@ async function renderDiagnosisDropdown(input) {
 function closeDiagnosisDropdown(input) {
   const panel = input.closest(".prescription-panel");
   const dropdown = panel?.querySelector(".diagnosis-options");
+  if (!dropdown) return;
+  dropdown.hidden = true;
+  input.setAttribute("aria-expanded", "false");
+}
+
+function renderPrescriptionRemarkDropdown(input, { filter = true } = {}) {
+  const combobox = input.closest(".prescription-remark-combobox");
+  const dropdown = combobox?.querySelector(".prescription-remark-options");
+  if (!dropdown) return;
+  const keyword = input.value.trim();
+  const options = Array.from(dropdown.querySelectorAll(".prescription-remark-option"));
+  let visibleCount = 0;
+  options.forEach((option) => {
+    const visible = !filter || !keyword || option.dataset.prescriptionRemark.includes(keyword);
+    option.hidden = !visible;
+    if (visible) visibleCount += 1;
+  });
+  dropdown.hidden = visibleCount === 0;
+  input.setAttribute("aria-expanded", String(visibleCount > 0));
+}
+
+function closePrescriptionRemarkDropdown(input) {
+  const combobox = input.closest(".prescription-remark-combobox");
+  const dropdown = combobox?.querySelector(".prescription-remark-options");
   if (!dropdown) return;
   dropdown.hidden = true;
   input.setAttribute("aria-expanded", "false");
@@ -181,6 +207,50 @@ export function bindPrescriptionEditor() {
     if (!diagnosisText) return;
     handlePrescriptionResult(addDiagnosisToActiveRecord(diagnosisText, getPrescriptionContext()));
   });
+  const prescriptionRemarkInput = panel.querySelector(".prescription-remark-input");
+  prescriptionRemarkInput?.addEventListener("pointerdown", () => {
+    renderPrescriptionRemarkDropdown(prescriptionRemarkInput, { filter: false });
+  });
+  prescriptionRemarkInput?.addEventListener("focus", () => {
+    renderPrescriptionRemarkDropdown(prescriptionRemarkInput, { filter: false });
+  });
+  prescriptionRemarkInput?.addEventListener("input", () => {
+    renderPrescriptionRemarkDropdown(prescriptionRemarkInput, { filter: true });
+  });
+  prescriptionRemarkInput?.addEventListener("blur", () => {
+    window.setTimeout(() => closePrescriptionRemarkDropdown(prescriptionRemarkInput), 0);
+  });
+  prescriptionRemarkInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closePrescriptionRemarkDropdown(prescriptionRemarkInput);
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "Enter") return;
+    const firstOption = panel.querySelector(".prescription-remark-options:not([hidden]) .prescription-remark-option:not([hidden])");
+    if (!firstOption) return;
+    event.preventDefault();
+    if (event.key === "ArrowDown") {
+      firstOption.focus();
+      return;
+    }
+    prescriptionRemarkInput.value = firstOption.dataset.prescriptionRemark || firstOption.textContent.trim();
+    closePrescriptionRemarkDropdown(prescriptionRemarkInput);
+  });
+  panel.querySelectorAll(".prescription-remark-option[data-prescription-remark]").forEach((option) => {
+    option.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      prescriptionRemarkInput.value = option.dataset.prescriptionRemark || option.textContent.trim();
+      closePrescriptionRemarkDropdown(prescriptionRemarkInput);
+    });
+    option.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      prescriptionRemarkInput.value = option.dataset.prescriptionRemark || option.textContent.trim();
+      closePrescriptionRemarkDropdown(prescriptionRemarkInput);
+      prescriptionRemarkInput.focus();
+    });
+  });
   const medicineInput = panel.querySelector(".medicine-search input");
   medicineInput?.setAttribute("aria-expanded", "false");
   medicineInput?.addEventListener("focus", () => {
@@ -203,11 +273,17 @@ export function bindPrescriptionEditor() {
       if (!event.target.closest(".diagnosis-combobox")) {
         document.querySelectorAll(".diagnosis-select-input").forEach((input) => closeDiagnosisDropdown(input));
       }
+      if (!event.target.closest(".prescription-remark-combobox")) {
+        document.querySelectorAll(".prescription-remark-input").forEach((input) => closePrescriptionRemarkDropdown(input));
+      }
       if (!event.target.closest(".medicine-search-combobox")) {
         document.querySelectorAll(".medicine-search input").forEach((input) => closeMedicineDropdown(input));
       }
       if (!event.target.closest(".medicine-unit-control")) {
         closeMedicineUnitDropdowns();
+      }
+      if (!event.target.closest(".medicine-usage-control")) {
+        closeMedicineUsageDropdowns();
       }
     });
   }
@@ -225,6 +301,7 @@ export function bindPrescriptionEditor() {
       event.stopPropagation();
     });
   });
+  bindMedicineUsageControls(panel);
   bindMedicineUnitControls(panel);
   panel.querySelectorAll(".medicine-edit-field[data-medicine-field]").forEach((input) => {
     input.addEventListener("input", () => {

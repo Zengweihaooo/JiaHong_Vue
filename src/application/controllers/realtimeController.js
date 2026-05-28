@@ -4,13 +4,23 @@ import { getNextOngoingVideoConsultationRecord } from "../../domain/consultation
 import { addConsultationRecord, consultationRecords } from "../state/dataStore.js";
 import {
   activeVideoConsultationState,
+  isWaitingQueueManuallyCleared,
   registerConsultationMachine,
   setDoctorStatus,
   setActiveVideoConsultation,
-  setWaitingQueue
-} from "../state/runtimeState.js";
+  setWaitingQueue,
+  waitingQueueState
+} from "../state/runtimeState.js?v=20260528-06";
 
 export async function refreshRealtimeState() {
+  if (isWaitingQueueManuallyCleared()) {
+    return {
+      waitingQueue: waitingQueueState,
+      newConsultation: null,
+      addedConsultation: null
+    };
+  }
+
   const snapshot = await getRealtimeSnapshot();
   let addedConsultation = null;
 

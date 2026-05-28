@@ -4690,6 +4690,11 @@ body.page-view-room {
   white-space: nowrap;
 }
 
+.jh-btn--ai-pill__keyword {
+  color: var(--jh-text-primary);
+  font-weight: 700;
+}
+
 .jh-btn--ai-pill__tag {
   flex: 0 0 auto;
   color: #7c5cff;
@@ -6457,8 +6462,8 @@ body.page-view-room {
     minmax(0, 17fr)
     minmax(0, 103fr)
     minmax(0, 56fr)
-    minmax(0, 90fr)
-    minmax(0, 44fr)
+    minmax(0, 82fr)
+    minmax(0, 58fr)
     minmax(0, 59fr)
     minmax(0, 73fr)
     minmax(0, 28fr)
@@ -6529,6 +6534,7 @@ body.page-view-room {
   border-radius: 6px;
 }
 
+.medicine-usage-control,
 .medicine-unit-control {
   position: relative;
   width: 100%;
@@ -6537,6 +6543,7 @@ body.page-view-room {
   overflow: visible;
 }
 
+.medicine-usage-input,
 .medicine-unit-select {
   justify-content: flex-start;
   width: 100%;
@@ -6549,29 +6556,35 @@ body.page-view-room {
   outline: 0;
 }
 
+.medicine-usage-input {
+  text-overflow: ellipsis;
+}
+
 .medicine-unit-select span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.medicine-usage-input:hover,
+.medicine-usage-input[aria-expanded="true"],
 .medicine-unit-select:hover,
 .medicine-unit-select[aria-expanded="true"] {
   border-color: var(--jh-search-field-hover-border);
 }
 
+.medicine-usage-input:focus,
+.medicine-usage-input:focus-visible,
 .medicine-unit-select:focus-visible {
   border-color: var(--jh-search-field-active-border);
 }
 
+.medicine-usage-options,
 .medicine-unit-options {
   position: fixed;
-  top: var(--medicine-unit-menu-top, 0);
-  left: var(--medicine-unit-menu-left, 0);
   z-index: 80;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 64px;
   padding: 8px;
   border-radius: 8px;
   background: #ffffff;
@@ -6580,15 +6593,29 @@ body.page-view-room {
     0 4px 8px -2px rgba(16, 42, 67, 0.08);
 }
 
+.medicine-usage-options {
+  top: var(--medicine-usage-menu-top, 0);
+  left: var(--medicine-usage-menu-left, 0);
+  width: var(--medicine-usage-menu-width, 112px);
+}
+
+.medicine-unit-options {
+  top: var(--medicine-unit-menu-top, 0);
+  left: var(--medicine-unit-menu-left, 0);
+  width: 64px;
+}
+
+.medicine-usage-options[hidden],
 .medicine-unit-options[hidden] {
   display: none;
 }
 
+.medicine-usage-option,
+.medicine-usage-empty,
 .medicine-unit-option {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 48px;
+  justify-content: flex-start;
   height: 24px;
   padding: 2px 8px;
   border: 0;
@@ -6600,15 +6627,36 @@ body.page-view-room {
   font-size: 12px;
   font-weight: 400;
   line-height: 20px;
+  text-align: left;
+}
+
+.medicine-usage-empty {
+  width: 100%;
+  color: var(--jh-text-muted);
+  cursor: default;
+}
+
+.medicine-usage-option {
+  width: 100%;
+}
+
+.medicine-unit-option {
+  justify-content: center;
+  width: 48px;
   text-align: center;
 }
 
+.medicine-usage-option:hover,
+.medicine-usage-option:focus-visible,
 .medicine-unit-option:hover,
 .medicine-unit-option:focus-visible {
   background: var(--jh-btn-outline-hover-bg);
   outline: 0;
 }
 
+.medicine-usage-option.is-active,
+.medicine-usage-option.is-active:hover,
+.medicine-usage-option.is-active:focus-visible,
 .medicine-unit-option.is-active,
 .medicine-unit-option.is-active:hover,
 .medicine-unit-option.is-active:focus-visible {
@@ -6794,6 +6842,54 @@ body.page-view-room {
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
+}
+
+.prescription-remark-combobox {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.prescription-remark-options {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--jh-input-field-border);
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.prescription-remark-options[hidden] {
+  display: none;
+}
+
+.prescription-remark-option {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--jh-text-primary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.prescription-remark-option:hover,
+.prescription-remark-option:focus-visible {
+  background: var(--jh-btn-outline-hover-bg);
+  outline: 0;
 }
 
 .jh-prescription-submit {

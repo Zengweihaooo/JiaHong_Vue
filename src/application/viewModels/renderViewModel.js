@@ -17,7 +17,7 @@ import {
   getMessageBadgeKey,
   serviceState,
   waitingQueueState
-} from "../state/runtimeState.js";
+} from "../state/runtimeState.js?v=20260528-06";
 
 export const renderData = {
   get announcements() {

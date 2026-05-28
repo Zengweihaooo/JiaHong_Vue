@@ -1,7 +1,7 @@
 import { appView, getSessionIdParam } from "../shared/core.js";
 import { syncActiveElapsedSeconds } from "../application/controllers/consultationController.js";
-import { refreshRealtimeState } from "../application/controllers/realtimeController.js";
-import { subscribeToRuntimeState } from "../application/controllers/runtimeController.js";
+import { refreshRealtimeState } from "../application/controllers/realtimeController.js?v=20260528-06";
+import { subscribeToRuntimeState } from "../application/controllers/runtimeController.js?v=20260528-06";
 import { isConsultReadonlyView } from "./ui/dom.js";
 import { showToast } from "./ui/interactionPrimitives.js?v=20260527-36";
 import { formatDuration, getDurationTone } from "./components/primitives.js?v=20260527-36";
@@ -16,16 +16,16 @@ import {
   isServiceAvailable,
   setServiceTileState,
   toggleDoctorOnlineStatus
-} from "./interactions/runtimeUiBindings.js?v=20260527-36";
+} from "./interactions/runtimeUiBindings.js?v=20260528-06";
 import {
   bindChatMessageMenu,
   closeChatMessageMenu,
   configureChatBindings
 } from "./interactions/chatBindings.js";
-import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260527-41";
+import { bindConsultWorkspace } from "./interactions/consultWorkspaceBindings.js?v=20260528-06";
 import { bindDragScrollContainers } from "./interactions/dragScrollBindings.js?v=20260527-45";
-import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js";
-import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260527-36";
+import { configurePrescriptionEditorBindings } from "./interactions/prescriptionEditorBindings.js?v=20260528-06";
+import { bindHomeInteractions, closeHomeOverlays } from "./interactions/homeInteractionBindings.js?v=20260528-06";
 import {
   bindConsultConfirmDialogs,
   bindConsultDialogOverlays,
@@ -37,7 +37,7 @@ import {
   configureRoomInteractionBindings,
   handleConsultResolved,
   updateRoomMessageList
-} from "./interactions/roomInteractionBindings.js?v=20260527-45";
+} from "./interactions/roomInteractionBindings.js?v=20260528-06";
 
 function getRouteConsultationContext() {
   return {

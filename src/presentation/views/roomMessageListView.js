@@ -1,11 +1,11 @@
 import { appView, assetUrl, getSessionIdParam } from "../../shared/core.js";
 import { contactLayoutTypeOrder, getMessageListRecords } from "../../domain/consultationQueue.js";
-import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
+import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 import {
   getActiveVideoConsultationRecordId,
   getDefaultEndedRenderRecord,
   getDefaultOngoingRenderRecord
-} from "./renderRecordSelectors.js";
+} from "./renderRecordSelectors.js?v=20260528-06";
 
 function renderRoomFilterButton({ text, type, state, active = false, wide = false }) {
   const dataAttr = type ? `data-filter-type="${type}"` : `data-filter-state="${state}"`;

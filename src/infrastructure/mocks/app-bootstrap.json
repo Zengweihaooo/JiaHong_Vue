@@ -647,6 +647,75 @@
             "detail": "药师审核通过，开方留痕可追溯"
           }
         ]
+      },
+      {
+        "id": "cs_20260518_111500_903",
+        "type": "consult",
+        "typeLabel": "咨询",
+        "state": "ended",
+        "title": "图文咨询",
+        "patient": "赵女士",
+        "age": "34岁",
+        "preview": "图文咨询已完成，用药建议已归档",
+        "time": "11:15",
+        "diagnosis": "过敏性鼻炎咨询",
+        "diagnosisTags": [
+          "过敏性鼻炎咨询"
+        ],
+        "patientGender": "女",
+        "patientDetail": {
+          "weight": "55",
+          "pregnancy": "否",
+          "phone": "13658602819",
+          "liverAbnormal": "否",
+          "idCard": "420106199202182819",
+          "kidneyAbnormal": "否",
+          "allergies": "无"
+        },
+        "prescriptionNo": "RX202605180903",
+        "endedAt": "2026-05-18 11:15",
+        "targetView": "text",
+        "consultationAttribute": "without-medicine",
+        "prescriptionMedicines": [],
+        "transcript": [
+          {
+            "from": "patient",
+            "time": "2026-05-18 11:05:24",
+            "text": "最近早晚打喷嚏、流清鼻涕，想问下家里的氯雷他定还能不能吃。"
+          },
+          {
+            "from": "doctor",
+            "time": "2026-05-18 11:07:18",
+            "text": "可以先按说明短期使用，同时注意避免粉尘和冷空气刺激。若症状持续或加重，建议线下耳鼻喉科复诊。"
+          },
+          {
+            "from": "patient",
+            "time": "2026-05-18 11:10:42",
+            "text": "好的，那鼻喷剂可以一起用吗？"
+          },
+          {
+            "from": "doctor",
+            "time": "2026-05-18 11:12:03",
+            "text": "可以，但请按原药品说明控制频次，不要自行叠加同类抗过敏药。"
+          }
+        ],
+        "trace": [
+          {
+            "label": "咨询结束",
+            "time": "11:12",
+            "detail": "医生完成图文咨询回复"
+          },
+          {
+            "label": "用药建议",
+            "time": "11:13",
+            "detail": "已告知抗过敏药使用注意事项"
+          },
+          {
+            "label": "记录归档",
+            "time": "11:15",
+            "detail": "咨询记录已归档"
+          }
+        ]
       }
     ],
     "ongoingChats": {

@@ -2,6 +2,11 @@ import { renderButton, renderRiskTag } from "./primitives.js?v=20260527-36";
 import { escapeHtml } from "../ui/html.js";
 
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
+const medicineFieldOptions = {
+  usage: ["口服", "外用", "适量冲洗", "口腔吸入", "鼻吸入"],
+  frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "必要时", "按需", "单次"],
+  dose: ["0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
+};
 
 function getMedicineWarningFields(row = {}) {
   return new Set(Array.isArray(row.warningFields) ? row.warningFields : []);
@@ -16,6 +21,42 @@ function renderEditableBox(row, warningFields, field, label, readonly = false) {
   const warningClass = getMedicineWarningClass(warningFields, field);
   if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
   return `<input class="table-input medicine-edit-field${warningClass}" type="text" value="${escapeHtml(value)}" aria-label="${label}" data-medicine-field="${field}" />`;
+}
+
+function renderFieldCombobox(row, warningFields, field, label, readonly = false) {
+  const value = row[field] ?? "";
+  const warningClass = getMedicineWarningClass(warningFields, field);
+  if (readonly) return `<span class="table-input${warningClass}">${escapeHtml(value)}</span>`;
+  const optionValues = Array.from(new Set([value, ...(medicineFieldOptions[field] || [])].filter(Boolean)));
+  return `
+    <div class="medicine-usage-control">
+      <input
+        class="table-input medicine-edit-field medicine-usage-input${warningClass}"
+        type="text"
+        value="${escapeHtml(value)}"
+        aria-label="${escapeHtml(label)}"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        autocomplete="off"
+        data-medicine-field="${escapeHtml(field)}"
+      />
+      <div class="medicine-usage-options" role="listbox" hidden>
+        ${optionValues
+          .map(
+            (option) => `
+              <button
+                class="medicine-usage-option${option === value ? " is-active" : ""}"
+                type="button"
+                role="option"
+                aria-selected="${option === value ? "true" : "false"}"
+                data-medicine-option="${escapeHtml(option)}"
+              >
+                ${escapeHtml(option)}
+              </button>`
+          )
+          .join("")}
+      </div>
+    </div>`;
 }
 
 function renderUnitSelector(row, warningFields, readonly = false) {
@@ -65,9 +106,9 @@ export function renderMedicineTableRow(row, readonly = false) {
       <span class="${getMedicineWarningClass(warningFields, "name").trim()}">${escapeHtml(row.name)}</span>
       <span>${escapeHtml(row.type)}</span>
       <span class="medicine-spec-text">${escapeHtml(row.spec)}</span>
-      ${renderEditableBox(row, warningFields, "usage", "用法", readonly)}
-      ${renderEditableBox(row, warningFields, "frequency", "服用频次", readonly)}
-      ${renderEditableBox(row, warningFields, "dose", "用量", readonly)}
+      ${renderFieldCombobox(row, warningFields, "usage", "用法", readonly)}
+      ${renderFieldCombobox(row, warningFields, "frequency", "服用频次", readonly)}
+      ${renderFieldCombobox(row, warningFields, "dose", "用量", readonly)}
       <span>${escapeHtml(row.quantity)}</span>
       ${renderUnitSelector(row, warningFields, readonly)}
       ${renderRiskTag({ text: row.risk, size: "sm", className: "risk-small" })}

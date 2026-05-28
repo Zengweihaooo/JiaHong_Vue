@@ -4,30 +4,30 @@ import {
   renderQuickReplyDialogView,
   renderRiskWarningDialogView
 } from "./components/dialogs.js?v=20260527-41";
-import { renderData } from "../application/viewModels/renderViewModel.js";
+import { renderData } from "../application/viewModels/renderViewModel.js?v=20260528-06";
 import {
   renderAnnouncementDialog,
   renderAnnouncementListDialog,
   renderMain,
   renderQuickEntryDialog
-} from "./views/homeView.js?v=20260527-36";
+} from "./views/homeView.js?v=20260528-06";
 import {
   renderTextPage,
   renderVideoPage
-} from "./views/consultRoomView.js?v=20260527-43";
-import { renderHistoryPage } from "./views/historyView.js?v=20260527-43";
-import { getActiveConsultationRecord } from "./views/renderRecordSelectors.js";
+} from "./views/consultRoomView.js?v=20260528-06";
+import { renderHistoryPage } from "./views/historyView.js?v=20260528-06";
+import { getActiveConsultationRecord } from "./views/renderRecordSelectors.js?v=20260528-06";
 import {
   renderChatMessageMenu,
   renderConsultAttachmentDialog
-} from "./views/chatView.js?v=20260527-39";
+} from "./views/chatView.js?v=20260528-06";
 import {
   renderRoomMain,
   renderRoomTopbar,
   renderSidebar,
   renderTopbar
-} from "./views/roomShellView.js";
-import { renderRoomSidebar } from "./views/roomMessageListView.js?v=20260527-43";
+} from "./views/roomShellView.js?v=20260528-06";
+import { renderRoomSidebar } from "./views/roomMessageListView.js?v=20260528-06";
 
 export function renderQuickReplyDialog() {
   return renderQuickReplyDialogView({

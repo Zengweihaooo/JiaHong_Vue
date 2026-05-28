@@ -60,9 +60,8 @@ export function getMessageListRecords(records = [], { type = "all", state = "ong
   const filteredRecords = records.filter(
     (record) => (type === "all" || record.type === type) && record.state === state
   );
-  return state === "ongoing"
-    ? sortOngoingContactRecords(filteredRecords, { activeVideoRecordId }).slice(0, maxVisibleOngoingConsultations)
-    : filteredRecords;
+  const sortedRecords = sortOngoingContactRecords(filteredRecords, { activeVideoRecordId });
+  return state === "ongoing" ? sortedRecords.slice(0, maxVisibleOngoingConsultations) : sortedRecords;
 }
 
 export function buildWaitingQueueFromRecords(records = [], date = new Date()) {

@@ -1,5 +1,5 @@
 import { assetUrl } from "../../shared/core.js";
-import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js";
+import { renderData, renderRuntime } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 import {
   renderButton,
   renderCheckbox,

@@ -2,7 +2,7 @@ import {
   getDoctorStatus,
   getServiceAvailabilityEntries,
   getWaitingQueueState
-} from "../../application/controllers/runtimeController.js";
+} from "../../application/controllers/runtimeController.js?v=20260528-06";
 import { getDoctorStatusLabel } from "../components/primitives.js?v=20260527-36";
 
 export function applyServiceStateToDom(serviceKey, enabled) {
