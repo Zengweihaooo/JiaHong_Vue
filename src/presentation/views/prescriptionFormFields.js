@@ -2,12 +2,13 @@ import { assetUrl } from "../../shared/core.js";
 import { escapeHtml } from "../ui/html.js";
 
 export function renderSearchField({ className = "", placeholder = "请输入药品名称或首字母做模糊查询", disabled = false } = {}) {
+  const safePlaceholder = escapeHtml(placeholder);
   return `
     <label class="jh-search-field${className ? ` ${className}` : ""}${disabled ? " is-disabled" : ""}">
       <span class="jh-search-field__icon" aria-hidden="true">
         <img src="${assetUrl("assets/search-icon.png")}" alt="" />
       </span>
-      <input type="text" placeholder="${placeholder}" aria-label="${placeholder}"${disabled ? " disabled" : ""} />
+      <input type="text" placeholder="${safePlaceholder}" aria-label="${safePlaceholder}"${disabled ? " disabled" : ""} />
     </label>`;
 }
 
@@ -21,9 +22,10 @@ export function renderMedicineSearchCombobox() {
 
 export function renderSelectField({ label = "请选择", size = "sm", className = "", showChevron = true } = {}) {
   const safeSize = size === "lg" ? "lg" : "sm";
+  const safeLabel = escapeHtml(label);
   return `
     <button class="jh-input-field jh-input-field--${safeSize}${className ? ` ${className}` : ""}" type="button">
-      <span>${label}</span>
+      <span>${safeLabel}</span>
       ${
         showChevron
           ? `<span class="jh-input-field__chevron" aria-hidden="true">

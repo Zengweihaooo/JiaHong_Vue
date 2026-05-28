@@ -18,7 +18,7 @@ export function renderQuickReplyDialogView({ categories = [], messages = [] } = 
               .map(
                 (category, index) => `
                   <button class="quick-reply-category${index === 0 ? " is-active" : ""}" type="button">
-                    ${category}
+                    ${escapeHtml(category)}
                   </button>`
               )
               .join("")}
@@ -28,7 +28,7 @@ export function renderQuickReplyDialogView({ categories = [], messages = [] } = 
               .map(
                 (message) => `
                   <button class="quick-reply-message" type="button" role="listitem">
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                   </button>`
               )
               .join("")}

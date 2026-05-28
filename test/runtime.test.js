@@ -14,6 +14,7 @@ import {
   initRuntimeState,
   isWaitingQueueManuallyCleared,
   rememberDismissedMessageBadge,
+  registerConsultationMachine,
   safeSessionStorage,
   sendConsultationEvent,
   serviceState,
@@ -117,6 +118,34 @@ test("waiting queue manual clear suppresses future queue updates until forced or
   safeSessionStorage.removeItem(waitingQueueClearedStorageKey);
   setWaitingQueue({ total: 9, byType: { text: 3, video: 3, consult: 3 } }, { silent: true });
   assert.equal(waitingQueueState.total, 9);
+});
+
+test("waiting queue manual clear ignores invalid storage and force updates during cooldown", () => {
+  safeSessionStorage.setItem(waitingQueueClearedStorageKey, "not-a-number");
+  assert.equal(isWaitingQueueManuallyCleared(), false);
+  assert.equal(safeSessionStorage.getItem(waitingQueueClearedStorageKey), null);
+
+  clearWaitingQueue({ silent: true });
+  setWaitingQueue({ total: 5, byType: { text: 2, video: 2, consult: 1 } }, { silent: true, force: true });
+
+  assert.equal(isWaitingQueueManuallyCleared(), true);
+  assert.equal(waitingQueueState.total, 5);
+  assert.deepEqual(waitingQueueState.byType, { text: 2, video: 2, consult: 1 });
+});
+
+test("registerConsultationMachine skips invalid and duplicate records", () => {
+  initRuntimeState({
+    consultationRecords: [{ id: "r1", type: "text", state: "ongoing" }]
+  });
+  const beforeKeys = Object.keys(consultationMachines);
+
+  registerConsultationMachine(null);
+  registerConsultationMachine({ id: "r1", type: "text", state: "waiting" });
+  registerConsultationMachine({ id: "r2", type: "text", state: "waiting" });
+
+  assert.deepEqual(beforeKeys, ["r1"]);
+  assert.deepEqual(Object.keys(consultationMachines).sort(), ["r1", "r2"]);
+  assert.equal(sendConsultationEvent("r2", consultationEvents.ACCEPT), consultationStates.ONGOING);
 });
 
 test("runtime controller updates local state without API sync when requested", async () => {

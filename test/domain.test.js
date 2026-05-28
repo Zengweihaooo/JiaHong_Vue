@@ -16,6 +16,8 @@ import {
 } from "../src/domain/consultationQueue.js";
 import { normalizeArchivedConsultationRecord } from "../src/domain/archivedConsultation.js";
 import { getConsultationDurationTone } from "../src/domain/consultationRules.js";
+import { getQuickEntryFeature, maxQuickActionCards, scheduleQuickEntryTitle } from "../src/domain/quickEntries.js";
+import { compareByPinyin } from "../src/domain/prescriptionCatalog.js";
 
 test("state machine follows the allowed consultation flow and ignores invalid events", () => {
   const machine = createStateMachine();
@@ -185,4 +187,20 @@ test("archived consultation transcript prefers explicit transcript, then chat me
       { from: "doctor", time: "2026-05-28", text: "医生撤回了一条消息" }
     ]
   );
+});
+
+test("quick entry feature falls back to schedule only for the schedule title", () => {
+  assert.equal(maxQuickActionCards, 8);
+  assert.equal(scheduleQuickEntryTitle, "排班管理");
+  assert.equal(getQuickEntryFeature({ feature: "custom", title: "排班管理" }), "custom");
+  assert.equal(getQuickEntryFeature({ title: "排班管理" }), "schedule");
+  assert.equal(getQuickEntryFeature({ title: "处方记录" }), "");
+});
+
+test("pinyin comparator provides a stable Chinese sort order hook", () => {
+  assert.deepEqual(["咳嗽", "阿尔茨海默病", "便秘"].sort(compareByPinyin), [
+    "阿尔茨海默病",
+    "便秘",
+    "咳嗽"
+  ]);
 });

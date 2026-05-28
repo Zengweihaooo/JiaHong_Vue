@@ -17,6 +17,8 @@ import {
   addDiagnosisToActiveRecord,
   addMedicineToActiveRecord,
   clearDiagnosesFromActiveRecord,
+  getDiagnosisOptions,
+  getMedicineOptions,
   hasUnresolvedPrescriptionWarnings,
   removeDiagnosisFromActiveRecord,
   removeMedicineFromActiveRecord,
@@ -24,6 +26,7 @@ import {
 } from "../src/application/controllers/prescriptionController.js";
 import {
   appendDoctorChatMessage,
+  generatePatientReplyForChat,
   getOngoingChatMessage,
   recallOngoingChatMessage
 } from "../src/application/controllers/chatController.js";
@@ -208,6 +211,61 @@ test("medicine controller adds objects, blocks duplicates, removes rows, and rei
   );
 });
 
+test("diagnosis and medicine option controllers exclude active record selections", async () => {
+  resetAppData({
+    consultations: {
+      records: [
+        {
+          id: "r1",
+          type: "text",
+          targetView: "text",
+          state: "ongoing",
+          diagnosisTags: ["急性咽炎"],
+          prescriptionMedicines: [{ name: "阿莫西林胶囊" }]
+        }
+      ],
+      ongoingChats: {}
+    }
+  });
+
+  const diagnoses = await getDiagnosisOptions("咽炎", { sessionId: "r1" });
+  assert.equal(diagnoses.includes("急性咽炎"), false);
+  assert.equal(diagnoses.some((item) => item.includes("咽炎")), true);
+
+  const medicines = await getMedicineOptions("阿莫西林", { sessionId: "r1" });
+  assert.equal(medicines.some((medicine) => medicine.name === "阿莫西林胶囊"), false);
+});
+
+test("medicine controller can search by string input and handles invalid active-record cases", async () => {
+  resetAppData({
+    consultations: {
+      records: [{ id: "r1", type: "text", targetView: "text", state: "ongoing", prescriptionMedicines: [] }],
+      ongoingChats: {}
+    }
+  });
+
+  assert.deepEqual(await addMedicineToActiveRecord("", { sessionId: "r1" }), {
+    ok: false,
+    record: getOngoingConsultationRecordById("r1"),
+    message: "请输入药品名称"
+  });
+
+  const added = await addMedicineToActiveRecord("阿莫西林胶囊", { sessionId: "r1" });
+  assert.equal(added.ok, true);
+  assert.equal(added.record.prescriptionMedicines[0].name, "阿莫西林胶囊");
+
+  assert.deepEqual(await addMedicineToActiveRecord("不存在的药品", { sessionId: "r1" }), {
+    ok: false,
+    record: getOngoingConsultationRecordById("r1"),
+    message: "未找到匹配药品"
+  });
+
+  assert.deepEqual(await addMedicineToActiveRecord("阿莫西林胶囊", { sessionId: "missing" }), {
+    ok: false,
+    message: "当前会话不可编辑"
+  });
+});
+
 test("updating warning medicine fields clears field warnings and hides record warning after all are resolved", () => {
   resetAppData({
     consultations: {
@@ -270,4 +328,37 @@ test("chat controller appends timestamped doctor messages and recalls them once"
   assert.equal(recallOngoingChatMessage("r1", message.id).recalled, true);
   assert.equal(recallOngoingChatMessage("r1", message.id), null);
   assert.equal(appendDoctorChatMessage("missing", "无效消息"), null);
+});
+
+test("chat controller generates and appends patient replies when chat and doctor message exist", async (t) => {
+  t.mock.method(Math, "random", () => 0);
+  resetAppData({
+    consultations: {
+      records: [
+        {
+          id: "r1",
+          type: "text",
+          targetView: "text",
+          state: "ongoing",
+          diagnosis: "急性咽炎",
+          patientDetail: { allergies: "无" }
+        }
+      ],
+      ongoingChats: {
+        r1: {
+          sessionDate: "2026-05-28",
+          messages: []
+        }
+      }
+    }
+  });
+
+  assert.equal(await generatePatientReplyForChat("missing", { text: "是否发热？" }), null);
+  assert.equal(await generatePatientReplyForChat("r1", null), null);
+
+  const message = await generatePatientReplyForChat("r1", { id: "d1", text: "是否发热？" });
+
+  assert.equal(message.from, "patient");
+  assert.equal(message.mock, true);
+  assert.equal(getOngoingChatMessage("r1", message.id), message);
 });

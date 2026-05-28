@@ -6,6 +6,7 @@ import {
   getDefaultEndedRenderRecord,
   getDefaultOngoingRenderRecord
 } from "./renderRecordSelectors.js?v=20260528-06";
+import { escapeHtml } from "../ui/html.js";
 
 function renderRoomFilterButton({ text, type, state, active = false, wide = false }) {
   const dataAttr = type ? `data-filter-type="${type}"` : `data-filter-state="${state}"`;
@@ -91,7 +92,13 @@ function renderMessageGroupLabel(type) {
 }
 
 export function renderMessageItem(record, active, index = 0, activeVideoRecordId = "") {
+  const safeRecordId = escapeHtml(record.id);
+  const safeTargetView = escapeHtml(record.targetView || "");
+  const safeState = escapeHtml(record.state);
+  const safeTitle = escapeHtml(record.title);
+  const safePreview = escapeHtml(record.preview);
   const badgeKey = renderRuntime.getMessageBadgeKey(record.id);
+  const safeBadgeKey = escapeHtml(badgeKey);
   const unreadCount = Number(record.unreadCount ?? record.badge ?? 0);
   const showBadge = unreadCount > 0 && !renderRuntime.isMessageBadgeDismissed(record.id);
   const typeMeta = messageTypeMeta[record.type] || messageTypeMeta.consult;
@@ -103,14 +110,14 @@ export function renderMessageItem(record, active, index = 0, activeVideoRecordId
     ? ` aria-disabled="true" data-video-locked="true" title="当前视频问诊未结束，暂不可进入新的视频问诊"`
     : "";
   return `
-    <button class="message-item message-item--${record.type}${compact ? " message-item--compact" : ""}${active ? " is-active" : ""}${videoLocked ? " is-video-locked" : ""}" type="button" data-record-id="${record.id}" data-target-view="${record.targetView || ""}" data-record-state="${record.state}" data-badge-key="${badgeKey}"${lockedAttrs}>
+    <button class="message-item message-item--${record.type}${compact ? " message-item--compact" : ""}${active ? " is-active" : ""}${videoLocked ? " is-video-locked" : ""}" type="button" data-record-id="${safeRecordId}" data-target-view="${safeTargetView}" data-record-state="${safeState}" data-badge-key="${safeBadgeKey}"${lockedAttrs}>
       <span class="message-item__stripe" aria-hidden="true"></span>
       <span class="message-item__icon" aria-hidden="true">
         <img src="${assetUrl(typeMeta.icon)}" alt="" />
       </span>
       <span class="message-item__body">
-        <span class="message-item__title">${record.title}</span>
-        ${compact ? "" : `<span class="message-item__preview">${record.preview}</span>`}
+        <span class="message-item__title">${safeTitle}</span>
+        ${compact ? "" : `<span class="message-item__preview">${safePreview}</span>`}
         ${videoLocked && !compact ? `<span class="message-item__lock-hint">请先结束当前视频问诊</span>` : ""}
       </span>
       ${currentVideo ? `<span class="message-item__current" aria-label="当前视频问诊进行中"><img src="${assetUrl("assets/figma-room/current-video-indicator.svg")}" alt="" /></span>` : ""}
