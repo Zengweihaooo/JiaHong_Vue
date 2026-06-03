@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+const repoRootPath = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+
 function setupBrowserGlobals(pathname = "/room/", search = "") {
   globalThis.window = {
     JH_APP_VIEW: ""
@@ -12,7 +14,7 @@ function setupBrowserGlobals(pathname = "/room/", search = "") {
 }
 
 test("shared core infers app view, route path, query params, and app hrefs", async () => {
-  setupBrowserGlobals("/Users/zengweihao/Desktop/Repos/JiaHong/video/", "?sessionId=cs_1&record=legacy");
+  setupBrowserGlobals(`${repoRootPath}/video/`, "?sessionId=cs_1&record=legacy");
   const core = await import("../src/shared/core.js?presentation-core");
 
   assert.equal(core.getCurrentRoutePath(), "/video");
@@ -26,7 +28,7 @@ test("shared core infers app view, route path, query params, and app hrefs", asy
 });
 
 test("shared core falls back from sessionId to record for legacy links", async () => {
-  setupBrowserGlobals("/Users/zengweihao/Desktop/Repos/JiaHong/history/", "?record=old_1");
+  setupBrowserGlobals(`${repoRootPath}/history/`, "?record=old_1");
   const core = await import("../src/shared/core.js?presentation-core-legacy");
 
   assert.equal(core.inferAppView(), "history");
