@@ -71,7 +71,13 @@
       </div>
       <div v-if="consultation" class="diagnosis-row consultation-treatment-row">
         <label><span>*</span>处理意见</label>
-        <el-input v-model="treatmentAdvice" type="textarea" :disabled="readonly" placeholder="请输入治疗处理意见" />
+        <textarea
+          v-model="treatmentAdvice"
+          class="jh-input-field jh-input-field--lg consultation-treatment-input"
+          :disabled="readonly"
+          placeholder="请输入治疗处理意见"
+          aria-label="请输入治疗处理意见"
+        ></textarea>
       </div>
     </div>
 
