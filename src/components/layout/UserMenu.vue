@@ -22,6 +22,7 @@
           type="button"
           role="checkbox"
           :aria-checked="service.enabled"
+          :data-service-key="service.key"
           @click="store.toggleService(service.key)"
         >
           <span class="jh-checkbox user-menu-service__check">
@@ -34,14 +35,14 @@
       </div>
     </section>
     <div class="user-menu-actions">
-      <button class="user-menu__item user-menu__item--settings" type="button" role="menuitem" @click="runMenuAction('账号设置')">
+      <button class="user-menu__item user-menu__item--settings" type="button" role="menuitem" data-action="账号设置" @click="runMenuAction('账号设置')">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 7a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
         </svg>
         <span>账号设置</span>
       </button>
       <span class="user-menu-actions__divider" aria-hidden="true"></span>
-      <button class="user-menu__item user-menu__item--logout" type="button" role="menuitem" @click="runMenuAction('退出登录')">
+      <button class="user-menu__item user-menu__item--logout" type="button" role="menuitem" data-action="退出登录" @click="runMenuAction('退出登录')">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M10 7V5a2 2 0 0 1 2-2h7v18h-7a2 2 0 0 1-2-2v-2m-3-1 4-4-4-4m4 4H3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
         </svg>
