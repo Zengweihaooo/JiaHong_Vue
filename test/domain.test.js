@@ -16,7 +16,12 @@ import {
 } from "../src/domain/consultationQueue.js";
 import { normalizeArchivedConsultationRecord } from "../src/domain/archivedConsultation.js";
 import { getConsultationDurationTone } from "../src/domain/consultationRules.js";
-import { getQuickEntryFeature, maxQuickActionCards, scheduleQuickEntryTitle } from "../src/domain/quickEntries.js";
+import {
+  elementsQuickEntryTitle,
+  getQuickEntryFeature,
+  maxQuickActionCards,
+  scheduleQuickEntryTitle
+} from "../src/domain/quickEntries.js";
 import { compareByPinyin } from "../src/domain/prescriptionCatalog.js";
 
 test("state machine follows the allowed consultation flow and ignores invalid events", () => {
@@ -189,11 +194,13 @@ test("archived consultation transcript prefers explicit transcript, then chat me
   );
 });
 
-test("quick entry feature falls back to schedule only for the schedule title", () => {
+test("quick entry feature falls back for built-in route entries", () => {
   assert.equal(maxQuickActionCards, 8);
   assert.equal(scheduleQuickEntryTitle, "排班管理");
+  assert.equal(elementsQuickEntryTitle, "组件系统");
   assert.equal(getQuickEntryFeature({ feature: "custom", title: "排班管理" }), "custom");
   assert.equal(getQuickEntryFeature({ title: "排班管理" }), "schedule");
+  assert.equal(getQuickEntryFeature({ title: "组件系统" }), "elements");
   assert.equal(getQuickEntryFeature({ title: "处方记录" }), "");
 });
 

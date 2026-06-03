@@ -91,7 +91,14 @@
       {
         "title": "历史问诊",
         "desc": "历史病历查询",
-        "icon": "clock"
+        "icon": "clock",
+        "feature": "history"
+      },
+      {
+        "title": "组件系统",
+        "desc": "查看 Elements",
+        "icon": "document",
+        "feature": "elements"
       },
       {
         "title": "",
@@ -125,7 +132,14 @@
       {
         "title": "历史问诊",
         "desc": "历史病历查询",
-        "icon": "clock"
+        "icon": "clock",
+        "feature": "history"
+      },
+      {
+        "title": "组件系统",
+        "desc": "查看 Elements",
+        "icon": "document",
+        "feature": "elements"
       },
       {
         "title": "佣金明细",

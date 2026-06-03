@@ -141,12 +141,17 @@ function handleAction(action, index, event) {
     store.openQuickEntryDialog(index);
     return;
   }
-  if (getQuickEntryFeature(action) === "schedule") {
+  const feature = getQuickEntryFeature(action);
+  if (feature === "schedule") {
     openSchedulePanel();
     return;
   }
-  if (action.title?.includes("历史")) {
+  if (feature === "history" || action.title?.includes("历史")) {
     router.push("/history/");
+    return;
+  }
+  if (feature === "elements") {
+    router.push("/elements/");
     return;
   }
   store.showToast(action.title || action.desc);
