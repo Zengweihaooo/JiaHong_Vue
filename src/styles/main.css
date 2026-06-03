@@ -1,0 +1,88 @@
+@import "../../styles.css";
+
+:root {
+  --jh-color-primary: #1677ff;
+  --jh-color-success: #20b26b;
+  --jh-color-warning: #f59e0b;
+  --jh-color-danger: #e5484d;
+  --jh-color-text: #1f2a37;
+  --jh-color-muted: #6b7280;
+  --jh-radius-sm: 4px;
+  --jh-radius-md: 8px;
+  --jh-layout-sidebar: 208px;
+  --jh-layout-room-sidebar: 280px;
+}
+
+body {
+  margin: 0;
+}
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--jh-color-muted);
+  font-size: 14px;
+}
+
+.sidebar__brand img {
+  display: block;
+  max-width: 124px;
+  height: auto;
+}
+
+.menu-item .el-icon,
+.consult-card__icon .el-icon,
+.quick-card .el-icon {
+  font-size: 18px;
+}
+
+.topbar__actions .el-button,
+.room-topbar .el-button,
+.pharmacy-bar .el-button,
+.prescription-actions .el-button {
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.jh-switch.el-switch,
+.user-menu-status__switch.el-switch {
+  --el-switch-on-color: var(--jh-color-primary);
+}
+
+.el-dialog {
+  border-radius: 8px;
+}
+
+.el-dialog__body {
+  padding-top: 4px;
+}
+
+.diagnosis-select.el-select,
+.medicine-search-combobox.el-input {
+  width: 100%;
+}
+
+.diagnosis-input {
+  gap: 8px;
+}
+
+.medicine-table {
+  width: 100%;
+}
+
+.room-empty .el-button {
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .app-shell--responsive {
+    min-width: 0;
+  }
+
+  .consult-workspace {
+    grid-template-columns: 1fr;
+  }
+}
