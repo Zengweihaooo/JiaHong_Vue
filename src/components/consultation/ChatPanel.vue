@@ -72,7 +72,7 @@
             class="consult-attachment"
             type="button"
             :aria-label="`预览${attachment.title}`"
-            @click="store.selectedAttachment = attachment"
+            @click="openConsultAttachment(index)"
           >
             <span class="consult-attachment__thumb">
               <img :src="attachment.image" :alt="attachment.title" loading="lazy" />
@@ -82,7 +82,7 @@
       </div>
     </section>
 
-    <div :class="video ? 'video-chat-thread' : 'chat-thread'">
+    <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
       <p v-if="chat?.sessionDate" class="chat-date">{{ chat.sessionDate }}</p>
       <div
         v-for="(message, index) in chatMessages"
@@ -118,7 +118,7 @@
             <h3>智能推荐回复</h3>
           </div>
           <p class="ai-reply__hint">双击快捷回复展开或收起智能回复</p>
-          <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复">
+          <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
             <el-icon><Refresh /></el-icon>
             <span>换一批</span>
           </button>
@@ -129,7 +129,9 @@
             :key="option.text"
             class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill"
             type="button"
+            :data-reply-text="option.text"
             @click="draft = option.text"
+            @dblclick="sendAiOption(option.text, $event)"
           >
             <span class="jh-btn--ai-pill__text">{{ option.text }}</span>
             <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>
@@ -139,7 +141,7 @@
         <div class="jh-chat-input">
           <div class="jh-chat-input__top">
             <button class="jh-btn jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog" @dblclick="toggleAiReply">快捷回复</button>
-            <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..."></textarea>
+            <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
           </div>
           <div class="jh-chat-input__actions">
             <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">发送</button>
@@ -177,10 +179,12 @@ const store = useAppStore();
 const cameraOn = ref(true);
 const micOn = ref(true);
 const localVideo = ref(null);
+const chatThread = ref(null);
 const cameraLoading = ref(false);
 const cameraReady = ref(false);
 const cameraError = ref(false);
 const cameraStatusText = ref("正在连接摄像头");
+const aiRotation = ref(0);
 const draft = computed({
   get: () => store.chatDrafts[props.record?.id] || "",
   set: (value) => {
@@ -202,7 +206,7 @@ const consultAttachments = computed(() => {
     image: assetUrl(attachment.image || "assets/figma-consult/attachment-preview.png")
   }));
 });
-const aiOptions = computed(() => {
+const baseAiOptions = computed(() => {
   if (props.record?.type === "consult") {
     return [
       { text: "考虑颈部肌肉劳损，多休息少低头", tag: "休息姿势" },
@@ -222,6 +226,12 @@ const aiOptions = computed(() => {
     { text: "持续几天了？头痛具体位置在哪，程度如何？", tag: "位置程度" },
     { text: "这是一串智能回复的文字内容，并且这是一行的最长字符数", tag: "语义简介" }
   ];
+});
+const aiOptions = computed(() => {
+  const options = baseAiOptions.value;
+  if (options.length < 2) return options;
+  const rotation = aiRotation.value % options.length;
+  return options.map((_, index) => options[(index + rotation) % options.length]);
 });
 
 const defaultMessageIntervalSeconds = 58;
@@ -296,6 +306,23 @@ function toggleMicrophone() {
   setLocalMicrophoneEnabled(micOn.value);
 }
 
+function openConsultAttachment(index) {
+  const attachments = consultAttachments.value;
+  const attachment = attachments[index];
+  if (!attachment) return;
+  store.selectedAttachment = {
+    ...attachment,
+    index: index + 1,
+    total: attachments.length,
+    attachmentList: attachments
+  };
+}
+
+function refreshAiOptions() {
+  if (baseAiOptions.value.length < 2) return;
+  aiRotation.value = (aiRotation.value + 1) % baseAiOptions.value.length;
+}
+
 function openQuickReplyDialog(event) {
   if (event?.detail > 1) return;
   quickReplyClickTimer = window.setTimeout(() => {
@@ -337,6 +364,15 @@ watch(
   }
 );
 
+watch(
+  () => chatMessages.value.length,
+  (length, previousLength) => {
+    if (previousLength !== undefined && length > previousLength) {
+      scrollChatThreadToBottom();
+    }
+  }
+);
+
 function parseMessageDate(value = "") {
   if (!value) return null;
   const normalized = String(value).replace(" ", "T");
@@ -367,6 +403,22 @@ function doctorReadState(index, message) {
 
 async function send() {
   await store.sendDoctorMessage(draft.value);
+  scrollChatThreadToBottom();
+}
+
+async function sendAiOption(text, event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  draft.value = text;
+  await store.sendDoctorMessage(text);
+  scrollChatThreadToBottom();
+}
+
+async function scrollChatThreadToBottom() {
+  await nextTick();
+  if (chatThread.value) {
+    chatThread.value.scrollTop = chatThread.value.scrollHeight;
+  }
 }
 
 function openMessageMenu(message, event) {

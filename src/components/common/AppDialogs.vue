@@ -104,8 +104,9 @@
           <button
             v-for="(category, index) in store.quickReplyCategories"
             :key="category"
-            :class="['quick-reply-category', { 'is-active': index === 0 }]"
+            :class="['quick-reply-category', { 'is-active': index === activeQuickReplyCategoryIndex }]"
             type="button"
+            @click="activeQuickReplyCategoryIndex = index"
           >
             {{ category }}
           </button>
@@ -117,8 +118,8 @@
             class="quick-reply-message"
             type="button"
             role="listitem"
-            @click="fillQuickReply(message)"
-            @dblclick="sendQuickReply(message)"
+            @pointerdown="applyQuickReplyMessage(message, $event)"
+            @click.prevent.stop
           >
             <span>{{ message }}</span>
           </button>
@@ -203,6 +204,7 @@
             type="button"
             :data-copy-text="item.copyText"
             title="点击复制"
+            @click="copyRiskWarningMessage(item.copyText, $event)"
           >
             <span class="risk-warning-message-item__label">[{{ item.label }}]</span>
             <span class="risk-warning-message-item__content">{{ item.content }}</span>
@@ -227,9 +229,9 @@
         <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--prev" aria-hidden="true"></span>
         <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--next" aria-hidden="true"></span>
         <span class="consult-attachment-dialog__scrub consult-attachment-dialog__scrub--pager" aria-hidden="true"></span>
-        <span class="consult-attachment-dialog__pager">1/4</span>
-        <button class="consult-attachment-dialog__page consult-attachment-dialog__page--prev" type="button" aria-label="上一页"></button>
-        <button class="consult-attachment-dialog__page consult-attachment-dialog__page--next" type="button" aria-label="下一页"></button>
+        <span class="consult-attachment-dialog__pager">{{ attachmentPager }}</span>
+        <button class="consult-attachment-dialog__page consult-attachment-dialog__page--prev" type="button" aria-label="上一页" @click="switchConsultAttachment(-1, $event)"></button>
+        <button class="consult-attachment-dialog__page consult-attachment-dialog__page--next" type="button" aria-label="下一页" @click="switchConsultAttachment(1, $event)"></button>
       </div>
     </div>
   </div>
@@ -324,6 +326,8 @@ import { assetUrl } from "@/utils/assets";
 const store = useAppStore();
 const activeCancelReasonGroup = ref("medicine");
 const selectedCancelReason = ref("病情特殊存在用药禁忌");
+const activeQuickReplyCategoryIndex = ref(0);
+const lastQuickReplyPointerAt = new Map();
 const chatMessageMenuStyle = computed(() => ({
   left: `${Math.max(8, store.chatMessageMenu.x || 0)}px`,
   top: `${Math.max(8, store.chatMessageMenu.y || 0)}px`
@@ -343,6 +347,12 @@ const toastStyle = computed(() => {
     "--toast-home-left": `${store.toast.x}px`,
     "--toast-home-top": `${store.toast.y}px`
   };
+});
+const attachmentPager = computed(() => {
+  const attachment = store.selectedAttachment;
+  const index = Number(attachment?.index || 1);
+  const total = Number(attachment?.total || attachment?.attachmentList?.length || 4);
+  return `${index}/${total}`;
 });
 const cancelReasonGroups = [
   {
@@ -450,6 +460,49 @@ function fillQuickReply(message) {
 async function sendQuickReply(message) {
   store.quickReplyDialogVisible = false;
   await store.sendDoctorMessage(message);
+}
+
+function applyQuickReplyMessage(message, event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const now = Date.now();
+  const lastPointerAt = Number(lastQuickReplyPointerAt.get(message) || 0);
+  const shouldSend = now - lastPointerAt <= 320;
+  lastQuickReplyPointerAt.set(message, shouldSend ? 0 : now);
+  fillQuickReply(message);
+  if (shouldSend) {
+    store.sendDoctorMessage(message);
+    window.setTimeout(() => {
+      store.quickReplyDialogVisible = false;
+    }, 120);
+  }
+}
+
+async function copyRiskWarningMessage(text, event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  try {
+    await navigator.clipboard.writeText(text || "");
+    store.showToast("已复制警示信息");
+  } catch {
+    store.showToast("复制失败");
+  }
+}
+
+function switchConsultAttachment(direction, event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const attachment = store.selectedAttachment;
+  const list = attachment?.attachmentList || [];
+  if (!attachment || !list.length) return;
+  const currentIndex = Number(attachment.index || 1) - 1;
+  const nextIndex = (currentIndex + direction + list.length) % list.length;
+  store.selectedAttachment = {
+    ...list[nextIndex],
+    index: nextIndex + 1,
+    total: list.length,
+    attachmentList: list
+  };
 }
 
 async function confirmConsultAction(event) {
