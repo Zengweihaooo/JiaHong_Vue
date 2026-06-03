@@ -11,7 +11,13 @@
         <button class="jh-btn jh-btn--md jh-btn--outline-secondary" type="button">医生招聘</button>
       </div>
       <div class="user-chip">
-        <button class="user-chip__body user-menu-trigger" type="button" @click="store.userMenuVisible = !store.userMenuVisible">
+        <button
+          class="user-chip__body user-menu-trigger"
+          type="button"
+          :aria-expanded="String(store.userMenuVisible)"
+          aria-haspopup="menu"
+          @click="store.userMenuVisible = !store.userMenuVisible"
+        >
           <span class="avatar" aria-hidden="true">
             <img :src="assetUrl('assets/figma-home/avatar-source.png')" alt="" />
           </span>

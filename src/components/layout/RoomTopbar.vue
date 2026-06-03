@@ -11,7 +11,13 @@
           <span class="room-user__divider" aria-hidden="true">
             <img :src="assetUrl('assets/figma-consult/topbar-divider.svg')" alt="" />
           </span>
-          <button class="room-user__body user-menu-trigger" type="button" @click="store.userMenuVisible = !store.userMenuVisible">
+          <button
+            class="room-user__body user-menu-trigger"
+            type="button"
+            :aria-expanded="String(store.userMenuVisible)"
+            aria-haspopup="menu"
+            @click="store.userMenuVisible = !store.userMenuVisible"
+          >
             <span class="avatar" aria-hidden="true">
               <img :src="assetUrl('assets/figma-consult/avatar-source.png')" alt="" />
             </span>
