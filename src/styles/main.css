@@ -240,6 +240,14 @@ body {
   width: 100%;
 }
 
+.elements-voucher-demo {
+  width: min(360px, 100%);
+  margin-bottom: 14px;
+  padding: 1px 0 12px;
+  border-radius: 8px;
+  background: #f8f8f9;
+}
+
 .elements-form-grid label {
   display: grid;
   gap: 8px;

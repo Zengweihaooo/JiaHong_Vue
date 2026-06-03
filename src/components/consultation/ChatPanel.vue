@@ -82,6 +82,8 @@
       </div>
     </section>
 
+    <FollowUpVoucher :record="record" @preview-image="openFollowUpImage" />
+
     <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
       <p v-if="chat?.sessionDate" class="chat-date">{{ chat.sessionDate }}</p>
       <div
@@ -156,6 +158,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Refresh } from "@element-plus/icons-vue";
 import { useAppStore } from "@/stores/app";
+import FollowUpVoucher from "@/components/consultation/FollowUpVoucher.vue";
 import { assetUrl } from "@/utils/assets";
 import {
   attachLocalCamera,
@@ -315,6 +318,16 @@ function openConsultAttachment(index) {
     index: index + 1,
     total: attachments.length,
     attachmentList: attachments
+  };
+}
+
+function openFollowUpImage({ image, index = 0, images = [] } = {}) {
+  if (!image) return;
+  store.selectedAttachment = {
+    ...image,
+    index: index + 1,
+    total: images.length,
+    attachmentList: images
   };
 }
 

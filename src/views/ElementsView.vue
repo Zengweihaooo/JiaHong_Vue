@@ -95,6 +95,17 @@
         </div>
       </section>
 
+      <section id="vouchers" class="elements-section">
+        <div class="elements-section__head">
+          <p>Evidence</p>
+          <h2>复诊凭证 FollowUpVoucher</h2>
+        </div>
+        <div class="elements-voucher-demo">
+          <FollowUpVoucher :record="followUpVoucherRecord" />
+        </div>
+        <code class="elements-code">&lt;FollowUpVoucher :record="record" /&gt;</code>
+      </section>
+
       <section id="forms" class="elements-section">
         <div class="elements-section__head">
           <p>Inputs</p>
@@ -148,6 +159,7 @@ import DurationChip from "@/components/common/DurationChip.vue";
 import ReadTag from "@/components/common/ReadTag.vue";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import TypeIcon from "@/components/common/TypeIcon.vue";
+import FollowUpVoucher from "@/components/consultation/FollowUpVoucher.vue";
 import { assetUrl } from "@/utils/assets";
 
 const sections = [
@@ -155,6 +167,7 @@ const sections = [
   { id: "buttons", name: "按钮" },
   { id: "status", name: "状态" },
   { id: "consultation", name: "问诊组件" },
+  { id: "vouchers", name: "复诊凭证" },
   { id: "forms", name: "表单输入" },
   { id: "controls", name: "开关选择" }
 ];
@@ -173,4 +186,9 @@ const consultationTypes = [
   { type: "text", title: "武汉市好药师大药房光谷店", preview: "患者补充了症状描述", badge: 2 },
   { type: "consult", title: "武汉市好药师大药房", preview: "图文咨询处理意见待填写", badge: 0 }
 ];
+
+const followUpVoucherRecord = {
+  id: "cs_20260519_164213_001",
+  type: "text"
+};
 </script>
