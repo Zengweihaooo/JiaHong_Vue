@@ -9,7 +9,7 @@
             <p>开方历史</p>
             <h1>{{ archivedRecord.patient }}的处方留痕记录</h1>
           </div>
-          <el-button @click="returnToRoom">返回问诊室</el-button>
+          <button class="jh-btn jh-btn--md jh-btn--outline-secondary history-back" type="button" @click="returnToRoom">返回问诊室</button>
         </div>
         <div class="prescription-history__summary">
           <span><em>问诊类型</em><strong>{{ typeDisplay }}</strong></span>
