@@ -4,7 +4,7 @@
     <RoomSidebar />
     <main class="room-main">
       <section class="room-card" aria-label="候诊室">
-        <el-button class="room-refresh" @click="store.refreshRealtime()">刷新列表</el-button>
+        <el-button class="room-refresh" @click="openTextConsultation">刷新列表</el-button>
         <div class="room-empty">
           <img class="room-empty__icon" :src="assetUrl('assets/room-empty.svg')" alt="" aria-hidden="true" />
           <div class="room-empty__copy">
@@ -22,8 +22,12 @@
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import RoomSidebar from "@/components/consultation/RoomSidebar.vue";
 import RoomTopbar from "@/components/layout/RoomTopbar.vue";
-import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
+import { useRouter } from "vue-router";
 
-const store = useAppStore();
+const router = useRouter();
+
+function openTextConsultation() {
+  router.push("/text/");
+}
 </script>
