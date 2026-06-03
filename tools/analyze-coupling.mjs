@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const rootDir = path.resolve(new URL("..", import.meta.url).pathname);
-const sourceRoots = ["script.js", "src"];
+const sourceRoots = ["src"];
 const importPattern = /(?:import|export)\s+(?:[^"'()]*?\s+from\s+)?["']([^"']+)["']|import\(\s*["']([^"']+)["']\s*\)/g;
 
 function walk(entry) {
@@ -33,7 +33,7 @@ function resolveImport(fromFile, specifier) {
 }
 
 function getLayer(filePath) {
-  if (filePath === "script.js") return "entry";
+  if (filePath === "src/main.js") return "entry";
   if (filePath.startsWith("src/domain/")) return "domain";
   if (filePath.startsWith("src/application/")) return "application";
   if (filePath.startsWith("src/infrastructure/")) return "infrastructure";

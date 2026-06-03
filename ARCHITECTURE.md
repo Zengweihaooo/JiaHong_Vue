@@ -2,13 +2,15 @@
 
 ## 目标
 
-当前项目保持原生 HTML/CSS/JavaScript，不引入框架；架构上按生产前端的边界拆分，所有页面由 Mock API 数据驱动，避免业务数据散落在渲染代码里。
+当前项目以 Vue 3 + Vite + Pinia + Vue Router 为主工程入口；原生 H5 实现仅作为外部参考工程保留，不再作为本仓库运行入口。页面由 Mock API 数据驱动，避免业务数据散落在渲染代码里。
 
 ## 模块分层
 
 当前采用四层结构，目录名直接表达职责边界：
 
-- `script.js`：应用启动入口，负责串联初始化、渲染挂载和事件绑定。
+- `index.html` / `src/main.js`：Vite 应用启动入口，负责挂载 Vue、Pinia、Router 和 Element Plus。
+- `src/router/index.js`：统一路由入口，负责首页、问诊室、图文/视频问诊和历史页路由。
+- `src/stores/app.js`：Pinia 应用状态入口，负责启动数据、运行态、会话、聊天、弹窗和 toast 状态。
 - `src/shared/core.js`：跨层共享的轻量工具，包括路由识别、查询参数读取、页面跳转 URL、静态资源 URL。
 - `src/domain/consultationStateMachine.js`：问诊领域状态机，集中约束流程流转。
 - `src/domain/consultationQueue.js`：会话列表和待接诊队列的统一计算口径。
@@ -72,8 +74,11 @@
 模块依赖必须保持单向，避免环形和横向偷取状态：
 
 ```text
-script.js
-  -> application/store / presentation
+src/main.js
+  -> src/App.vue / src/router / src/stores
+
+src/views + src/components
+  -> src/stores / src/domain / src/services / src/utils
 
 presentation
   -> application/controllers / application/viewModels / domain / shared
