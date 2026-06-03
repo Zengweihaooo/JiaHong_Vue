@@ -7,8 +7,8 @@
         <span>2027-01-15</span>
       </div>
       <div class="topbar__actions">
-        <el-button type="primary">在线客服</el-button>
-        <el-button>医生招聘</el-button>
+        <button class="jh-btn jh-btn--md jh-btn--primary" type="button">在线客服</button>
+        <button class="jh-btn jh-btn--md jh-btn--outline-secondary" type="button">医生招聘</button>
       </div>
       <div class="user-chip">
         <button class="user-chip__body user-menu-trigger" type="button" @click="store.userMenuVisible = !store.userMenuVisible">

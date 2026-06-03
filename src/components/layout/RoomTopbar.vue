@@ -2,11 +2,11 @@
   <header class="room-topbar">
     <div class="room-topbar__inner">
       <RouterLink class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn" to="/" aria-label="返回首页">
-        <el-icon><ArrowLeft /></el-icon>
+        <img :src="assetUrl('assets/figma-consult/back.svg')" alt="" />
         <span>返回首页</span>
       </RouterLink>
       <div class="room-topbar__right">
-        <el-button class="room-service-btn" type="primary">在线客服</el-button>
+        <button class="jh-btn jh-btn--md jh-btn--primary room-service-btn" type="button">在线客服</button>
         <div class="room-user">
           <span class="room-user__divider" aria-hidden="true">
             <img :src="assetUrl('assets/figma-consult/topbar-divider.svg')" alt="" />
@@ -28,7 +28,6 @@
 </template>
 
 <script setup>
-import { ArrowLeft } from "@element-plus/icons-vue";
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
