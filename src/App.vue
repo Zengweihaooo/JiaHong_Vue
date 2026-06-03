@@ -26,10 +26,17 @@ import { useAppStore } from "@/stores/app";
 const store = useAppStore();
 let timer = null;
 
+function closeUserMenuOnOutsideClick(event) {
+  if (!store.userMenuVisible) return;
+  if (event.target?.closest?.(".user-menu, .user-menu-trigger")) return;
+  store.userMenuVisible = false;
+}
+
 onMounted(async () => {
   if (!store.ready) {
     await store.bootstrap();
   }
+  document.addEventListener("click", closeUserMenuOnOutsideClick);
   timer = window.setInterval(() => {
     if (store.doctorStatus === "online") {
       store.refreshRealtime();
@@ -38,6 +45,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  document.removeEventListener("click", closeUserMenuOnOutsideClick);
   if (timer) window.clearInterval(timer);
 });
 </script>
