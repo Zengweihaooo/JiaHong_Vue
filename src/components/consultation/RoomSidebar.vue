@@ -31,9 +31,12 @@
       <template v-for="(record, index) in groupedRecords" :key="record.id">
         <button
           v-if="record.showGroup"
-          class="message-group-label message-group-toggle"
+          :class="['message-group-label message-group-toggle', { 'is-collapsed': isGroupCollapsed(record.type) }]"
           type="button"
-          aria-expanded="true"
+          :data-message-group="record.type"
+          data-no-drag-scroll="true"
+          :aria-expanded="String(!isGroupCollapsed(record.type))"
+          @click.prevent.stop="toggleMessageGroup(record.type)"
         >
           <span>{{ consultationTypeLabel(record.type) }}</span>
           <img :src="assetUrl('assets/figma-room/group-chevron.svg')" alt="" aria-hidden="true" />
@@ -41,6 +44,7 @@
         <button
           :class="messageItemClass(record)"
           type="button"
+          :hidden="isGroupCollapsed(record.type)"
           :aria-disabled="isVideoLocked(record)"
           @click="openRecord(record)"
         >
@@ -65,13 +69,14 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import TypeIcon from "@/components/common/TypeIcon.vue";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
 import { consultationTypeLabel } from "@/utils/format";
 
 const store = useAppStore();
+const collapsedMessageGroups = ref(new Set());
 
 const groupedRecords = computed(() =>
   store.messageList.map((record, index, list) => ({
@@ -107,6 +112,20 @@ function messageItemClass(record) {
       "is-video-locked": isVideoLocked(record)
     }
   ];
+}
+
+function isGroupCollapsed(type) {
+  return collapsedMessageGroups.value.has(type);
+}
+
+function toggleMessageGroup(type) {
+  const nextGroups = new Set(collapsedMessageGroups.value);
+  if (nextGroups.has(type)) {
+    nextGroups.delete(type);
+  } else {
+    nextGroups.add(type);
+  }
+  collapsedMessageGroups.value = nextGroups;
 }
 
 function openRecord(record) {
