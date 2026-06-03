@@ -205,7 +205,7 @@
         </span>
       </label>
       <div class="prescription-actions__controls">
-        <button v-if="readonly" class="jh-btn jh-btn--md jh-btn--primary prescription-history-open" type="button">查看开方历史</button>
+        <button v-if="readonly" class="jh-btn jh-btn--md jh-btn--primary prescription-history-open" type="button" @click="emit('open-history')">查看开方历史</button>
         <button v-else-if="consultation" class="jh-btn jh-btn--md jh-btn--primary end-consult-trigger consultation-complete-trigger" type="button" @click="store.consultConfirmKind = 'end'">完成问诊</button>
         <template v-else>
           <button class="jh-btn jh-btn--md jh-btn--success end-consult-trigger" type="button" :disabled="!record?.prescriptionSubmitted" @click="store.consultConfirmKind = 'end'">结束问诊</button>
@@ -248,6 +248,7 @@ const props = defineProps({
     default: false
   }
 });
+const emit = defineEmits(["open-history"]);
 
 const store = useAppStore();
 const selectedDiagnosis = ref("");
