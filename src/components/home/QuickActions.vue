@@ -14,6 +14,7 @@
         :class="['quick-card', action.isAdd ? 'quick-card--add' : 'quick-card--custom']"
         :data-action="action.title || action.desc"
         :data-quick-feature="getQuickEntryFeature(action)"
+        :data-attention="needsScheduleAttention(action) ? 'unpunched-schedule' : undefined"
         role="button"
         tabindex="0"
         @click="handleAction(action, index, $event)"
@@ -26,6 +27,7 @@
           </svg>
         </button>
         <button v-if="!action.isAdd" class="quick-card__drag" type="button" :aria-label="`拖动排序：${action.title}`" draggable="true"></button>
+        <span v-if="needsScheduleAttention(action)" class="quick-card__attention-dot" aria-label="存在未打卡排班"></span>
         <span class="quick-card__body">
           <span class="icon-box">
             <template v-if="action.icon === 'quickCalendar'">
@@ -129,6 +131,10 @@ function closeSchedulePanel(event) {
   event?.preventDefault();
   event?.stopPropagation();
   scheduleOpen.value = false;
+}
+
+function needsScheduleAttention(action) {
+  return !action.isAdd && getQuickEntryFeature(action) === "schedule";
 }
 
 function handleAction(action, index, event) {

@@ -58,7 +58,7 @@
       </header>
       <div class="quick-entry-dialog__body">
         <button
-          v-for="(option, index) in store.quickEntryOptions"
+          v-for="(option, index) in store.availableQuickEntryOptions"
           :key="option.title"
           class="quick-entry-option"
           type="button"
@@ -87,6 +87,7 @@
             <span class="quick-entry-option__desc">{{ option.desc }}</span>
           </span>
         </button>
+        <p class="quick-entry-dialog__empty" :hidden="store.availableQuickEntryOptions.length > 0">暂无可添加的快捷入口</p>
       </div>
     </section>
   </div>

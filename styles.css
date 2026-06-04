@@ -1953,6 +1953,19 @@ button {
   box-shadow: 0 8px 20px -14px rgba(0, 110, 249, 0.55);
 }
 
+.quick-card__attention-dot {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #f53f3f;
+  box-shadow: 0 0 0 2px rgba(245, 63, 63, 0.12);
+}
+
 .quick-card--add {
   border-style: dashed;
 }
@@ -5452,6 +5465,16 @@ body.page-view-room {
   padding: 16px;
   overflow: auto;
   background: #ffffff;
+}
+
+.quick-entry-dialog__empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 32px 16px;
+  color: var(--jh-text-tertiary);
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
 }
 
 .announcement-list-item,

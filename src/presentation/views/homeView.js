@@ -181,6 +181,7 @@ export function renderQuickEntryDialog() {
                 </button>`
             )
             .join("")}
+          <p class="quick-entry-dialog__empty" hidden>暂无可添加的快捷入口</p>
         </div>
       </section>
     </div>`;

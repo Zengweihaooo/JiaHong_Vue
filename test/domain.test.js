@@ -19,6 +19,9 @@ import { getConsultationDurationTone } from "../src/domain/consultationRules.js"
 import {
   elementsQuickEntryTitle,
   getQuickEntryFeature,
+  getQuickEntryIdentity,
+  getUsedQuickEntryIdentities,
+  isQuickEntryAlreadyUsed,
   maxQuickActionCards,
   scheduleQuickEntryTitle
 } from "../src/domain/quickEntries.js";
@@ -241,6 +244,24 @@ test("quick entry feature falls back for built-in route entries", () => {
   assert.equal(getQuickEntryFeature({ title: "佣金明细" }), "commission");
   assert.equal(getQuickEntryFeature({ title: "组件系统" }), "elements");
   assert.equal(getQuickEntryFeature({ title: "处方记录" }), "");
+});
+
+test("quick entry identities prevent duplicate feature and title entries", () => {
+  const entries = [
+    { title: "排班管理", icon: "quickCalendar" },
+    { title: "组件系统", feature: "elements" },
+    { title: "自定义入口" },
+    { title: "", desc: "添加快捷入口", isAdd: true }
+  ];
+
+  assert.equal(getQuickEntryIdentity({ title: "排班管理" }), "feature:schedule");
+  assert.equal(getQuickEntryIdentity({ title: "组件系统" }), "feature:elements");
+  assert.equal(getQuickEntryIdentity({ title: "自定义入口" }), "title:自定义入口");
+  assert.deepEqual(getUsedQuickEntryIdentities(entries), new Set(["feature:schedule", "feature:elements", "title:自定义入口"]));
+  assert.equal(isQuickEntryAlreadyUsed(entries, { title: "排班管理", feature: "schedule" }), true);
+  assert.equal(isQuickEntryAlreadyUsed(entries, { title: "组件系统" }), true);
+  assert.equal(isQuickEntryAlreadyUsed(entries, { title: "自定义入口" }, 2), false);
+  assert.equal(isQuickEntryAlreadyUsed(entries, { title: "问诊记录" }), false);
 });
 
 test("pinyin comparator provides a stable Chinese sort order hook", () => {

@@ -5,6 +5,7 @@ import {
   getMessageListRecords,
   getNextOngoingVideoConsultationRecord
 } from "@/domain/consultationQueue";
+import { isQuickEntryAlreadyUsed, maxQuickActionCards } from "@/domain/quickEntries";
 import { appService } from "@/services/appService";
 
 function clone(value) {
@@ -117,6 +118,11 @@ export const useAppStore = defineStore("app", {
     },
     selectedAnnouncement(state) {
       return state.announcements.find((item) => item.id === state.selectedAnnouncementId) || state.announcements[0] || null;
+    },
+    availableQuickEntryOptions(state) {
+      return state.quickEntryOptions.filter(
+        (option) => !isQuickEntryAlreadyUsed(state.quickActions, option, state.quickEntryEditingIndex)
+      );
     },
     ongoingRecords(state) {
       return getMessageListRecords(state.consultationRecords, {
@@ -244,8 +250,11 @@ export const useAppStore = defineStore("app", {
     },
     selectQuickEntryOption(option) {
       if (!option) return;
-      const maxQuickActionCards = 8;
       const editingIndex = this.quickEntryEditingIndex;
+      if (isQuickEntryAlreadyUsed(this.quickActions, option, editingIndex)) {
+        this.showToast("该快捷入口已存在");
+        return;
+      }
       const action = clone(option);
       const actionCount = this.quickActions.filter((item) => !item.isAdd).length;
       const insertIndex = this.quickActions.findIndex((item) => item.isAdd);

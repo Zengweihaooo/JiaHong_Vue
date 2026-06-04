@@ -407,8 +407,16 @@ test("quick entry grid helpers count, insert, remove, replace, edit, and reorder
   const grid = new FakeNode({ classNames: ["quick-grid"] });
   const cardRoot = new FakeNode({ classNames: ["quick-entry-card", "is-editing"] });
   cardRoot.appendChild(grid);
-  const customOne = new FakeNode({ classNames: ["quick-card", "quick-card--custom"], rect: { left: 0, top: 0, width: 100, height: 40, bottom: 40 } });
-  const customTwo = new FakeNode({ classNames: ["quick-card", "quick-card--custom"], rect: { left: 120, top: 0, width: 100, height: 40, bottom: 40 } });
+  const customOne = new FakeNode({
+    classNames: ["quick-card", "quick-card--custom"],
+    dataset: { quickTitle: "排班管理", quickFeature: "schedule" },
+    rect: { left: 0, top: 0, width: 100, height: 40, bottom: 40 }
+  });
+  const customTwo = new FakeNode({
+    classNames: ["quick-card", "quick-card--custom"],
+    dataset: { quickTitle: "历史问诊", quickFeature: "history" },
+    rect: { left: 120, top: 0, width: 100, height: 40, bottom: 40 }
+  });
   const addCard = new FakeNode({ classNames: ["quick-card", "quick-card--add"] });
   const deleteControl = new FakeNode({ classNames: ["quick-card__delete"] });
   const dragControl = new FakeNode({ classNames: ["quick-card__drag"] });
@@ -432,6 +440,7 @@ test("quick entry grid helpers count, insert, remove, replace, edit, and reorder
     getQuickActionCount,
     getQuickGridCards,
     getQuickGridCustomCards,
+    isQuickEntryAlreadyUsed,
     moveDraggingQuickCard,
     removeCustomQuickCardWithMotion,
     replaceQuickCard,
@@ -450,9 +459,12 @@ test("quick entry grid helpers count, insert, remove, replace, edit, and reorder
   assert.equal(deleteControl.style.values.opacity, undefined);
 
   assert.deepEqual(addCustomQuickCardToGrid(null, {}), { ok: false, reason: "missing-grid" });
+  assert.equal(isQuickEntryAlreadyUsed(grid, { title: "排班管理", feature: "schedule" }), true);
+  assert.deepEqual(addCustomQuickCardToGrid(grid, { title: "排班管理", feature: "schedule" }), { ok: false, reason: "duplicate" });
   assert.deepEqual(addCustomQuickCardToGrid(grid, { title: "新入口", desc: "打开" }), { ok: true });
   assert.equal(getQuickActionCount(grid), 3);
 
+  assert.equal(replaceQuickCard(customTwo, { title: "排班管理", feature: "schedule" }), false);
   assert.equal(replaceQuickCard(customTwo, { title: "替换入口", desc: "打开" }), true);
   assert.match(customTwo.outerHTML, /替换入口/);
   assert.equal(replaceQuickCard(null, {}), false);

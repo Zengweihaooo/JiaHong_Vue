@@ -5,6 +5,7 @@ import {
   addCustomQuickCardToGrid,
   ensureQuickAddCard,
   getQuickGridCustomCards,
+  isQuickEntryAlreadyUsed,
   moveDraggingQuickCard,
   removeCustomQuickCardWithMotion,
   replaceQuickCard,
@@ -19,6 +20,7 @@ function openQuickEntryDialog(event, editingCard = null) {
   const overlay = openOverlay(".quick-entry-overlay", ".quick-entry-dialog__close", event);
   const title = overlay?.querySelector("#quick-entry-title");
   if (title) title.textContent = quickEntryEditingCard ? "编辑快捷入口" : "添加快捷入口";
+  updateQuickEntryDialogOptions(overlay);
 }
 
 export function closeQuickEntryDialog(event) {
@@ -29,10 +31,27 @@ export function closeQuickEntryDialog(event) {
 function addCustomQuickCard(option) {
   const grid = document.querySelector(".quick-grid");
   const result = addCustomQuickCardToGrid(grid, option);
+  if (result.reason === "duplicate") {
+    showToast("该快捷入口已存在");
+  }
   if (result.reason === "limit") {
     showToast(`最多添加${maxQuickActionCards}个快捷入口`);
   }
   return result.ok;
+}
+
+function updateQuickEntryDialogOptions(overlay) {
+  if (!overlay) return;
+  const grid = document.querySelector(".quick-grid");
+  const empty = overlay.querySelector(".quick-entry-dialog__empty");
+  let visibleCount = 0;
+  overlay.querySelectorAll(".quick-entry-option").forEach((optionButton) => {
+    const option = getQuickEntryOption(optionButton.dataset.optionIndex);
+    const alreadyUsed = grid && option ? isQuickEntryAlreadyUsed(grid, option, quickEntryEditingCard) : false;
+    optionButton.hidden = alreadyUsed;
+    if (!alreadyUsed) visibleCount += 1;
+  });
+  if (empty) empty.hidden = visibleCount > 0;
 }
 
 function beginQuickCardDrag(event, grid, card) {
@@ -115,6 +134,7 @@ function bindQuickEntryDialog() {
   });
   quickEntryOverlay.querySelectorAll(".quick-entry-option").forEach((optionButton) => {
     optionButton.addEventListener("click", (event) => {
+      if (optionButton.hidden) return;
       const option = getQuickEntryOption(optionButton.dataset.optionIndex);
       if (!option) return;
       const editingCard = quickEntryEditingCard;

@@ -97,7 +97,10 @@ test("quick entry cards escape user text and mark add/custom variants", async ()
   assert.match(custom, /常用入口&quot;&lt;&gt;/);
   assert.match(custom, /查看&amp;编辑/);
 
-  assert.match(renderQuickCardMarkup({ title: "排班管理" }), /data-quick-feature="schedule"/);
+  const schedule = renderQuickCardMarkup({ title: "排班管理" });
+  assert.match(schedule, /data-quick-feature="schedule"/);
+  assert.match(schedule, /data-attention="unpunched-schedule"/);
+  assert.match(schedule, /quick-card__attention-dot/);
 
   const add = renderQuickCardMarkup({ isAdd: true });
   assert.match(add, /quick-card--add/);
@@ -510,7 +513,9 @@ test("home view renders waiting counts, service switches, notices, quick entries
   assert.doesNotMatch(renderAnnouncementListDialog(), /announcement-list-item__tag|jh-read-tag--read|jh-read-tag--unread/);
   assert.match(renderQuickEntryDialog(), /data-option-index="0"/);
   assert.match(renderQuickEntryDialog(), /处方记录/);
+  assert.match(renderQuickEntryDialog(), /quick-entry-dialog__empty/);
   assert.match(renderQuickActions(), /data-quick-feature="schedule"/);
+  assert.match(renderQuickActions(), /quick-card__attention-dot/);
   assert.match(renderQuickActions(), /schedule-panel/);
   assert.match(renderMain(), /copyright © 2017-2026/);
 });
