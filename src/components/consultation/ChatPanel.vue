@@ -115,15 +115,25 @@
     <div :class="{ 'video-input-wrap': video }">
       <div :class="['ai-reply', store.aiCollapsed ? 'ai-reply--collapsed' : 'ai-reply--expanded']" :data-ai-reply-state="store.aiCollapsed ? 'collapsed' : 'expanded'">
         <div class="ai-reply__head">
-          <div class="ai-reply__title">
+          <button
+            class="ai-reply__title ai-reply__toggle"
+            type="button"
+            :aria-label="store.aiCollapsed ? '展开智能推荐回复' : '智能推荐回复已展开'"
+            :aria-expanded="!store.aiCollapsed"
+            @click="expandAiReply"
+          >
             <span class="ai-spark" aria-hidden="true"></span>
             <h3>智能推荐回复</h3>
-          </div>
-          <p class="ai-reply__hint">双击快捷回复展开或收起智能回复</p>
-          <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
-            <el-icon><Refresh /></el-icon>
-            <span>换一批</span>
           </button>
+          <div class="ai-reply__actions">
+            <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
+              <el-icon><Refresh /></el-icon>
+              <span>换一批</span>
+            </button>
+            <button class="ai-reply__close" type="button" aria-label="关闭智能推荐回复" @click="collapseAiReply">
+              <el-icon><Close /></el-icon>
+            </button>
+          </div>
         </div>
         <div class="ai-reply__options">
           <button
@@ -142,7 +152,7 @@
         <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
         <div class="jh-chat-input">
           <div class="jh-chat-input__top">
-            <button class="jh-btn jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog" @dblclick="toggleAiReply">快捷回复</button>
+            <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
             <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
           </div>
           <div class="jh-chat-input__actions">
@@ -156,7 +166,7 @@
 
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { Refresh } from "@element-plus/icons-vue";
+import { Close, Refresh } from "@element-plus/icons-vue";
 import { useAppStore } from "@/stores/app";
 import FollowUpVoucher from "@/components/consultation/FollowUpVoucher.vue";
 import { assetUrl } from "@/utils/assets";
@@ -243,7 +253,6 @@ const minimumRetryCameraErrorDelayMs = 900;
 let cameraSetupSerial = 0;
 let revealCameraErrorRequested = false;
 let revealCameraErrorNow = null;
-let quickReplyClickTimer = 0;
 
 function getCameraErrorText(reason = "") {
   return reason === "NotAllowedError" ? "摄像头权限未开启" : "无法连接摄像头";
@@ -337,21 +346,22 @@ function refreshAiOptions() {
 }
 
 function openQuickReplyDialog(event) {
-  if (event?.detail > 1) return;
-  quickReplyClickTimer = window.setTimeout(() => {
-    quickReplyClickTimer = 0;
-    store.quickReplyDialogVisible = true;
-  }, 260);
-}
-
-function toggleAiReply(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  if (quickReplyClickTimer) {
-    window.clearTimeout(quickReplyClickTimer);
-    quickReplyClickTimer = 0;
-  }
-  store.aiCollapsed = !store.aiCollapsed;
+  store.quickReplyDialogVisible = true;
+}
+
+function expandAiReply(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  if (!store.aiCollapsed) return;
+  store.aiCollapsed = false;
+}
+
+function collapseAiReply(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  store.aiCollapsed = true;
 }
 
 onMounted(async () => {

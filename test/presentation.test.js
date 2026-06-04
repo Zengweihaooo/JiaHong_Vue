@@ -339,6 +339,7 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
   } = await import("../src/presentation/views/chatView.js?presentation-chat");
 
   assert.match(renderChatInput({ className: "is-compact" }), /jh-chat-input is-compact/);
+  assert.match(renderChatInput(), /jh-btn--sm[^"]*quick-reply-trigger/);
   assert.match(renderAiReplyOptions([{ text: `体温"<>&多久`, tag: `追问"<>&` }]), /data-reply-text="体温&quot;&lt;&gt;&amp;多久"/);
   assert.match(renderAiReplyOptions([{ text: `体温"<>&多久`, tag: `追问"<>&` }]), /jh-btn--ai-pill__keyword">体温</);
   assert.equal(findOngoingChatMessage("text_1", "m2").text, `37.8"<>&`);
@@ -374,7 +375,14 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
   assert.match(consultInfo, /data-consult-attachment-title="检查单&quot;&lt;&gt;&amp;"/);
   assert.match(renderConsultAttachmentDialog(), /consult-attachment-overlay/);
   assert.match(renderChatMessageMenu(), /data-action="recall"/);
-  assert.match(renderChatPanel("text_1", { record: { type: "text" } }), /chat-panel/);
+  const chatPanelMarkup = renderChatPanel("text_1", { record: { type: "text" } });
+  assert.match(chatPanelMarkup, /chat-panel/);
+  assert.match(chatPanelMarkup, /ai-reply__title ai-reply__toggle/);
+  assert.match(chatPanelMarkup, /aria-label="展开智能推荐回复"/);
+  assert.match(chatPanelMarkup, /aria-expanded="false"/);
+  assert.match(chatPanelMarkup, /ai-reply__actions/);
+  assert.match(chatPanelMarkup, /ai-reply__close/);
+  assert.doesNotMatch(chatPanelMarkup, /ai-reply__hint|双击快捷回复展开或收起智能回复/);
 });
 
 test("render record selectors resolve active records, chat keys, ended records, and active video ids", async () => {

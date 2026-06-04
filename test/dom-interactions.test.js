@@ -357,6 +357,51 @@ test("interaction primitives manage overlays, toasts, and popup menus", async ()
   stopEvent(null);
 });
 
+test("consult workspace binds H5 AI reply title, close, and quick reply controls", async () => {
+  const root = new FakeNode();
+  const aiReply = new FakeNode({ classNames: ["ai-reply", "ai-reply--collapsed"], dataset: { aiReplyState: "collapsed" } });
+  const titleToggle = new FakeNode({ classNames: ["ai-reply__title", "ai-reply__toggle"] });
+  const refreshButton = new FakeNode({ classNames: ["ai-reply__refresh"] });
+  const closeButton = new FakeNode({ classNames: ["ai-reply__close"] });
+  const quickReplyTrigger = new FakeNode({ classNames: ["quick-reply-trigger"] });
+  const quickReplyOverlay = new FakeNode({ classNames: ["quick-reply-overlay"] });
+  const quickReplyClose = new FakeNode({ classNames: ["quick-reply-dialog__close"] });
+
+  aiReply.appendChild(titleToggle);
+  aiReply.appendChild(refreshButton);
+  aiReply.appendChild(closeButton);
+  aiReply.appendChild(quickReplyTrigger);
+  quickReplyOverlay.appendChild(quickReplyClose);
+  root.appendChild(aiReply);
+  root.appendChild(quickReplyOverlay);
+  setDocument(root);
+  setWindow();
+
+  const { bindConsultWorkspace } = await import("../src/presentation/interactions/consultWorkspaceBindings.js?ai-controls");
+
+  bindConsultWorkspace();
+  titleToggle.dispatch("click");
+
+  assert.equal(aiReply.dataset.aiReplyState, "expanded");
+  assert.equal(aiReply.classList.contains("ai-reply--expanded"), true);
+  assert.equal(aiReply.classList.contains("ai-reply--collapsed"), false);
+  assert.equal(titleToggle.getAttribute("aria-expanded"), "true");
+  assert.equal(titleToggle.getAttribute("aria-label"), "智能推荐回复已展开");
+
+  closeButton.dispatch("click");
+  assert.equal(aiReply.dataset.aiReplyState, "collapsed");
+  assert.equal(aiReply.classList.contains("ai-reply--collapsed"), true);
+  assert.equal(titleToggle.focused, true);
+  assert.equal(titleToggle.getAttribute("aria-expanded"), "false");
+  assert.equal(titleToggle.getAttribute("aria-label"), "展开智能推荐回复");
+
+  quickReplyTrigger.dispatch("click");
+  assert.equal(quickReplyOverlay.classList.contains("is-open"), true);
+  assert.equal(quickReplyClose.focused, true);
+  assert.equal(aiReply.dataset.aiReplyState, "collapsed");
+  assert.equal(quickReplyTrigger.listeners.dblclick, undefined);
+});
+
 test("quick entry grid helpers count, insert, remove, replace, edit, and reorder cards", async () => {
   setWindow();
   const grid = new FakeNode({ classNames: ["quick-grid"] });
