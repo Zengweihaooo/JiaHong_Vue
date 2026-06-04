@@ -122,7 +122,7 @@
           <div
             v-for="medicine in medicines"
             :key="medicine.index || medicine.name"
-            :class="['medicine-table__row', { 'medicine-table__row--warning-linked': warningFields(medicine).size }]"
+            :class="['medicine-table__row', { 'medicine-table__row--warning-linked': hasMedicineWarnings(medicine) }]"
             :data-medicine-index="medicine.index"
             :data-medicine-name="medicine.name"
           >
@@ -133,7 +133,7 @@
             <FieldCombobox :medicine="medicine" field="usage" label="用法" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="frequency" label="服用频次" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="dose" label="用量" :readonly="readonly" />
-            <span>{{ medicine.quantity }}</span>
+            <span :class="warningClass(medicine, 'quantity')">{{ medicine.quantity }}</span>
             <span v-if="readonly" :class="['table-input', warningClass(medicine, 'unit')]">{{ medicine.unit }}</span>
             <div v-else class="medicine-unit-control">
               <button
@@ -182,7 +182,7 @@
         <div v-for="row in inlineRiskRows" :key="row.name" class="inline-risk-warning__row" role="row">
           <div class="inline-risk-warning__medicine" role="cell">{{ row.name }}</div>
           <div v-for="(_, index) in inlineRiskWarningHeaders.slice(1)" :key="index" role="cell">
-            <span v-if="row.warningColumns?.[index + 1]" :class="['risk-warning-status', `risk-warning-status--${row.warningColumns[index + 1]}`]" aria-hidden="true"></span>
+            <span v-if="row.warnings?.[index + 1]" :class="['risk-warning-status', `risk-warning-status--${row.warnings[index + 1]}`]" aria-hidden="true"></span>
           </div>
         </div>
       </div>
@@ -232,6 +232,7 @@
 <script setup>
 import { computed, defineComponent, h, nextTick, ref, watch, watchEffect } from "vue";
 import { Clock } from "@element-plus/icons-vue";
+import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
@@ -272,19 +273,7 @@ const inlineRiskWarningRef = ref(null);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
-const inlineRiskWarningHeaders = [
-  "药品名称",
-  "患者条件",
-  "重复用药",
-  "用法用量",
-  "给药途径",
-  "相互作用",
-  "生化指标",
-  "配伍",
-  "过敏",
-  "孕产",
-  "其他"
-];
+const inlineRiskWarningHeaders = ["药品名称", ...prescriptionRiskCategories];
 const inlineRiskWarningLegendItems = [
   { status: "must", label: "必须处理" },
   { status: "severe", label: "严重警告" },
@@ -308,7 +297,14 @@ const diagnosisTags = computed(() => {
 });
 const medicines = computed(() => props.record?.prescriptionMedicines || []);
 const inlineRiskRows = computed(() =>
-  medicines.value.filter((medicine) => Array.isArray(medicine.warningFields) && medicine.warningFields.length > 0)
+  medicines.value
+    .map((medicine) => ({
+      ...medicine,
+      warnings: Object.fromEntries(
+        getMedicineRiskWarnings(medicine).map((warning) => [prescriptionRiskCategories.indexOf(warning.category) + 1, warning.level])
+      )
+    }))
+    .filter((medicine) => Object.keys(medicine.warnings).length > 0)
 );
 const showInlineRiskWarning = computed(() => Boolean(props.record?.inlineRiskWarningVisible && inlineRiskRows.value.length));
 
@@ -346,7 +342,12 @@ function warningFields(medicine = {}) {
   return new Set(Array.isArray(medicine.warningFields) ? medicine.warningFields : []);
 }
 
+function hasMedicineWarnings(medicine = {}) {
+  return getMedicineRiskWarnings(medicine).length > 0;
+}
+
 function warningClass(medicine, field) {
+  if (field === "name") return "";
   return warningFields(medicine).has(field) ? "medicine-warning-target" : "";
 }
 

@@ -320,6 +320,7 @@
 <script setup>
 import { computed, nextTick, ref } from "vue";
 import ReadTag from "@/components/common/ReadTag.vue";
+import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
 
@@ -387,19 +388,7 @@ const riskLegendItems = [
   { status: "severe", label: "严重警告" },
   { status: "general", label: "一般警告" }
 ];
-const riskHeaders = [
-  "药品名称",
-  "患者条件",
-  "重复用药",
-  "用法用量",
-  "给药途径",
-  "相互作用",
-  "生化指标",
-  "配伍",
-  "过敏",
-  "孕产",
-  "其他"
-];
+const riskHeaders = ["药品名称", ...prescriptionRiskCategories];
 const compactRiskHeaders = {
   患者条件: ["患者", "条件"],
   重复用药: ["重复", "用药"],
@@ -411,22 +400,24 @@ const compactRiskHeaders = {
 const riskRows = computed(() => {
   const medicines = store.activeRecord?.prescriptionMedicines || [];
   const linkedMedicine = medicines.find((medicine) => medicine.warningMessage);
-  const rows = medicines.map((medicine, index) => ({
+  const rows = medicines.map((medicine) => ({
     name: medicine.name,
     linked: medicine === linkedMedicine,
-    warnings: medicine.warningColumns || (index === 0 ? { 2: "must", 5: medicine.risk === "低" ? "general" : "severe" } : { 4: "general" })
+    warnings: Object.fromEntries(
+      getMedicineRiskWarnings(medicine).map((warning) => [prescriptionRiskCategories.indexOf(warning.category) + 1, warning.level])
+    )
   }));
   return rows.length ? rows : [{ name: "暂无用药数据", warnings: {} }];
 });
 const riskMessageItems = computed(() => {
   const medicines = store.activeRecord?.prescriptionMedicines || [];
   const fallbackName = riskRows.value[0]?.name || "当前药品";
-  const messages = medicines
+  const warningMessage = `[警示信息]${fallbackName}需完成风险核对`;
+  const warningSuggestion = "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。";
+  const messageItems = (medicines.length ? medicines : [{ warningMessage, warningSuggestion }])
     .flatMap((medicine) => [medicine.warningMessage, medicine.warningSuggestion])
     .filter(Boolean);
-  const source = messages.length
-    ? messages
-    : [`[警示信息]${fallbackName}需完成风险核对`, "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。"];
+  const source = messageItems.length ? messageItems : [warningMessage, warningSuggestion];
   return source.map((message) => {
     const match = String(message).match(/^\[([^\]]+)\](.*)$/);
     const label = match ? match[1] : "提示信息";
