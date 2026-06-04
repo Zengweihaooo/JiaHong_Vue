@@ -1,5 +1,5 @@
 <template>
-  <section class="card notice-card" aria-label="最新公告">
+  <section :class="['card notice-card', { 'notice-card--unread': announcement?.unread }]" aria-label="最新公告">
     <div v-if="announcement" class="notice-card__inner">
       <div class="notice-card__head">
         <div class="notice-card__title-row">
@@ -12,7 +12,7 @@
         <div class="announcement__top">
           <div class="announcement__title-row">
             <h3 class="announcement__title">{{ announcement.title }}</h3>
-            <ReadTag :status="announcement.unread ? 'unread' : 'read'" class="announcement-tag" />
+            <span v-if="announcement.unread" class="announcement__unread-dot" aria-label="有未读公告"></span>
           </div>
           <div class="announcement__body">
             {{ summary }}
@@ -22,7 +22,7 @@
         <p class="announcement__footer">{{ announcement.publisher }}</p>
       </article>
       <button class="jh-btn jh-btn--block-outline announcement-list-trigger" type="button" @click="store.announcementListVisible = true">
-        查看全部公告
+        查看历史公告
       </button>
     </div>
   </section>
@@ -30,7 +30,6 @@
 
 <script setup>
 import { computed } from "vue";
-import ReadTag from "@/components/common/ReadTag.vue";
 import { useAppStore } from "@/stores/app";
 
 const store = useAppStore();
@@ -39,6 +38,7 @@ const summary = computed(() => announcement.value?.content?.split("\n").slice(0,
 
 function openDetail(id) {
   store.selectedAnnouncementId = id;
+  store.markAnnouncementRead(id);
   store.announcementDialogVisible = true;
 }
 </script>

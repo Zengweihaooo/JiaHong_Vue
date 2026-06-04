@@ -21,8 +21,8 @@
   <div :class="['announcement-list-overlay', { 'is-open': store.announcementListVisible }]" :aria-hidden="!store.announcementListVisible" @click.self="store.announcementListVisible = false">
     <section class="announcement-list-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-list-title">
       <header class="announcement-dialog__header">
-        <h2 id="announcement-list-title">全部公告</h2>
-        <button class="announcement-list-dialog__close announcement-dialog__close" type="button" aria-label="关闭全部公告" @click="store.announcementListVisible = false">
+        <h2 id="announcement-list-title">历史公告</h2>
+        <button class="announcement-list-dialog__close announcement-dialog__close" type="button" aria-label="关闭历史公告" @click="store.announcementListVisible = false">
           <img :src="assetUrl('assets/quick-reply-close.svg')" alt="" aria-hidden="true" />
         </button>
       </header>
@@ -37,8 +37,8 @@
         >
           <span class="announcement-list-item__main">
             <span class="announcement-list-item__title">
-              {{ announcement.title }}
-              <ReadTag :status="announcement.unread ? 'unread' : 'read'" class="announcement-list-item__tag" />
+              <span class="announcement-list-item__title-text">{{ announcement.title }}</span>
+              <span v-if="announcement.unread" class="announcement-list-item__unread-dot" aria-label="未读公告"></span>
             </span>
             <span class="announcement-list-item__summary">{{ announcement.content.split("\n")[0] }}</span>
           </span>
@@ -319,7 +319,6 @@
 
 <script setup>
 import { computed, nextTick, ref } from "vue";
-import ReadTag from "@/components/common/ReadTag.vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
@@ -433,6 +432,7 @@ const riskMessageItems = computed(() => {
 function openAnnouncement(id) {
   store.selectedAnnouncementId = id;
   store.announcementListVisible = false;
+  store.markAnnouncementRead(id);
   store.announcementDialogVisible = true;
 }
 

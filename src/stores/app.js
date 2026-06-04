@@ -211,6 +211,12 @@ export const useAppStore = defineStore("app", {
       this.messageFilterState = state;
       this.ensureActiveRecord();
     },
+    markAnnouncementRead(announcementId = "") {
+      const announcement = this.announcements.find((item) => item.id === announcementId) || this.latestAnnouncement;
+      if (!announcement) return null;
+      announcement.unread = false;
+      return announcement;
+    },
     async toggleDoctorStatus() {
       const nextStatus = this.doctorStatus === "offline" ? "online" : "offline";
       await appService.updateDoctorStatus(nextStatus);

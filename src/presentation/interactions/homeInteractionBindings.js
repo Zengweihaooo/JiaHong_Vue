@@ -1,5 +1,5 @@
 import { appView, getRoomHref } from "../../shared/core.js";
-import { getAnnouncementById } from "../../application/controllers/contentController.js";
+import { getAnnouncementById, markAnnouncementRead } from "../../application/controllers/contentController.js";
 import { clearWaitingQueueState } from "../../application/controllers/runtimeController.js?v=20260528-06";
 import {
   bindOverlayDismiss,
@@ -12,6 +12,20 @@ import {
 import { applyRuntimeStateToDom } from "./runtimeUiBindings.js?v=20260528-06";
 import { bindQuickEntryInteractions, closeQuickEntryDialog, closeQuickSchedulePanel } from "./homeQuickEntryBindings.js?v=20260527-36";
 
+function syncAnnouncementReadState(announcementId) {
+  const latestTrigger = document.querySelector(".announcement__detail-trigger");
+  const isLatestAnnouncement = latestTrigger?.dataset.announcementId === announcementId;
+  if (isLatestAnnouncement) {
+    const noticeCard = document.querySelector(".notice-card");
+    noticeCard?.classList.remove("notice-card--unread");
+    noticeCard?.querySelector(".announcement__unread-dot")?.remove();
+  }
+
+  const listItem = Array.from(document.querySelectorAll(".announcement-list-item"))
+    .find((item) => item.dataset.announcementId === announcementId);
+  listItem?.querySelector(".announcement-list-item__unread-dot")?.remove();
+}
+
 function openAnnouncementDialog(event) {
   stopEvent(event);
   const overlay = document.querySelector(".announcement-overlay");
@@ -23,6 +37,8 @@ function openAnnouncementDialog(event) {
   overlay.querySelector(".announcement-dialog__meta span").textContent = announcement.date;
   overlay.querySelector(".announcement-dialog__body p").textContent = announcement.content;
   overlay.querySelector(".announcement-dialog__publisher").textContent = announcement.publisher;
+  markAnnouncementRead(announcement.id);
+  syncAnnouncementReadState(announcement.id);
   setOverlayOpen(overlay, true, { focusSelector: ".announcement-dialog__close" });
 }
 

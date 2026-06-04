@@ -497,8 +497,9 @@ test("home view renders waiting counts, service switches, notices, quick entries
   assert.match(serviceCard, /aria-checked="false"/);
 
   assert.match(renderAnnouncementDialog(), /系统维护通知/);
-  assert.match(renderAnnouncementListDialog(), /全部公告/);
-  assert.match(renderAnnouncementListDialog(), /已读/);
+  assert.match(renderAnnouncementListDialog(), /历史公告/);
+  assert.match(renderAnnouncementListDialog(), /announcement-list-item__unread-dot/);
+  assert.doesNotMatch(renderAnnouncementListDialog(), /announcement-list-item__tag|jh-read-tag--read|jh-read-tag--unread/);
   assert.match(renderQuickEntryDialog(), /data-option-index="0"/);
   assert.match(renderQuickEntryDialog(), /处方记录/);
   assert.match(renderQuickActions(), /data-quick-feature="schedule"/);

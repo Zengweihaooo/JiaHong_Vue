@@ -78,8 +78,9 @@ export function renderServiceCard() {
 }
 
 export function renderNoticeCard() {
+  const isUnread = Boolean(renderData.latestAnnouncement.unread);
   return `
-    <section class="card notice-card" aria-label="最新公告">
+    <section class="card notice-card${isUnread ? " notice-card--unread" : ""}" aria-label="最新公告">
       <div class="notice-card__inner">
         <div class="notice-card__head">
           <div class="notice-card__title-row">
@@ -92,14 +93,14 @@ export function renderNoticeCard() {
           <div class="announcement__top">
             <div class="announcement__title-row">
               <h3 class="announcement__title">${renderData.latestAnnouncement.title}</h3>
-              ${renderReadTag("unread", "announcement-tag")}
+              ${isUnread ? '<span class="announcement__unread-dot" aria-label="有未读公告"></span>' : ""}
             </div>
             <div class="announcement__body">${renderData.latestAnnouncement.content.split("\n").slice(0, 2).join("\n")}
 <button class="announcement__detail-trigger" type="button" data-announcement-id="${renderData.latestAnnouncement.id}">……展开详情</button></div>
           </div>
           <p class="announcement__footer">${renderData.latestAnnouncement.publisher}</p>
         </article>
-        ${renderButton({ text: "查看全部公告", tone: "block-outline", size: "", className: "announcement-list-trigger" })}
+        ${renderButton({ text: "查看历史公告", tone: "block-outline", size: "", className: "announcement-list-trigger" })}
       </div>
     </section>`;
 }
@@ -131,8 +132,8 @@ export function renderAnnouncementListDialog() {
     <div class="announcement-list-overlay" aria-hidden="true">
       <section class="announcement-list-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-list-title">
         <header class="announcement-dialog__header">
-          <h2 id="announcement-list-title">全部公告</h2>
-          <button class="announcement-list-dialog__close announcement-dialog__close" type="button" aria-label="关闭全部公告">
+          <h2 id="announcement-list-title">历史公告</h2>
+          <button class="announcement-list-dialog__close announcement-dialog__close" type="button" aria-label="关闭历史公告">
             <img src="${assetUrl("assets/quick-reply-close.svg")}" alt="" aria-hidden="true" />
           </button>
         </header>
@@ -143,8 +144,8 @@ export function renderAnnouncementListDialog() {
                 <button class="announcement-list-item" type="button" data-announcement-id="${announcement.id}">
                   <span class="announcement-list-item__main">
                     <span class="announcement-list-item__title">
-                      ${announcement.title}
-                      ${announcement.unread ? renderReadTag("unread", "announcement-list-item__tag") : renderReadTag("read", "announcement-list-item__tag")}
+                      <span class="announcement-list-item__title-text">${announcement.title}</span>
+                      ${announcement.unread ? '<span class="announcement-list-item__unread-dot" aria-label="未读公告"></span>' : ""}
                     </span>
                     <span class="announcement-list-item__summary">${announcement.content.split("\n")[0]}</span>
                   </span>

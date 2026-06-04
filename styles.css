@@ -1699,6 +1699,23 @@ button {
   color: var(--jh-text-primary);
 }
 
+.notice-card__title-row .card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.announcement__unread-dot,
+.announcement-list-item__unread-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f53f3f;
+  box-shadow: 0 0 0 3px rgba(245, 63, 63, 0.1);
+}
+
 .notice-card__date {
   flex: 0 0 auto;
   font-size: 14px;
@@ -5453,8 +5470,11 @@ body.page-view-room {
   line-height: 22px;
 }
 
-.announcement-list-item__tag {
-  flex: 0 0 auto;
+.announcement-list-item__title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .announcement-list-item__summary,
