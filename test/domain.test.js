@@ -200,6 +200,9 @@ test("quick entry feature falls back for built-in route entries", () => {
   assert.equal(elementsQuickEntryTitle, "组件系统");
   assert.equal(getQuickEntryFeature({ feature: "custom", title: "排班管理" }), "custom");
   assert.equal(getQuickEntryFeature({ title: "排班管理" }), "schedule");
+  assert.equal(getQuickEntryFeature({ title: "历史问诊" }), "history");
+  assert.equal(getQuickEntryFeature({ title: "医生佣金条" }), "commission");
+  assert.equal(getQuickEntryFeature({ title: "佣金明细" }), "commission");
   assert.equal(getQuickEntryFeature({ title: "组件系统" }), "elements");
   assert.equal(getQuickEntryFeature({ title: "处方记录" }), "");
 });
