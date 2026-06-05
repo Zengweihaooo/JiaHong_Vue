@@ -26,8 +26,12 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
 
   assert.match(uiExports, /MedicineRiskTip/);
   assert.match(uiStyles, /\.medicine-risk-tip\s*\{/);
+  assert.match(uiStyles, /\.medicine-table\s*\{[\s\S]*?min-width: var\(--jh-table-width\);/);
+  assert.match(uiStyles, /\.medicine-table__row\s*\{[\s\S]*?display: grid;[\s\S]*?grid-template-columns:/);
+  assert.match(uiStyles, /\.medicine-table__head\s*\{[\s\S]*?background: var\(--jh-table-head-bg\);/);
   assert.match(uiStyles, /\.medicine-table__row--warning-active/);
   assert.doesNotMatch(legacyStyles, /\.medicine-risk-tip\s*\{/);
+  assert.doesNotMatch(legacyStyles, /\.medicine-table__row\s*\{[\s\S]*?grid-template-columns:/);
   assert.doesNotMatch(legacyStyles, /\.inline-risk-warning\s*\{|has-inline-risk-warning/);
 
   assert.match(store, /async submitActivePrescription\(\)/);
