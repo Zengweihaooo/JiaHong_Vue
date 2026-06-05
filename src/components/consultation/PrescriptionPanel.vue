@@ -1,12 +1,10 @@
 <template>
   <section
-    ref="panelRef"
     :class="[
       'prescription-panel',
       {
         'prescription-panel--readonly': readonly,
-        'consultation-panel': consultation,
-        'has-inline-risk-warning': showInlineRiskWarning
+        'consultation-panel': consultation
       }
     ]"
     :aria-label="readonly ? '只读处方信息' : '处方信息'"
@@ -181,39 +179,6 @@
       @close="hideMedicineRiskTip"
     />
 
-    <section
-      v-if="inlineRiskRows.length"
-      ref="inlineRiskWarningRef"
-      :class="['inline-risk-warning', { 'is-visible': showInlineRiskWarning }]"
-      data-inline-risk-warning
-      :hidden="!showInlineRiskWarning"
-      aria-label="处方风险提醒"
-    >
-      <div class="inline-risk-warning__legend" aria-label="风险状态说明">
-        <span v-for="item in inlineRiskWarningLegendItems" :key="item.status" class="inline-risk-warning__legend-item">
-          <span :class="['risk-warning-status', `risk-warning-status--${item.status}`]" aria-hidden="true"></span>
-          <span>{{ item.label }}</span>
-        </span>
-      </div>
-      <div class="inline-risk-warning__table" role="table" aria-label="处方风险提醒">
-        <div class="inline-risk-warning__row inline-risk-warning__row--head" role="row">
-          <div v-for="header in inlineRiskWarningHeaders" :key="header" role="columnheader">{{ header }}</div>
-        </div>
-        <div v-for="row in inlineRiskRows" :key="row.name" class="inline-risk-warning__row" role="row">
-          <div class="inline-risk-warning__medicine" role="cell">{{ row.name }}</div>
-          <div v-for="(_, index) in inlineRiskWarningHeaders.slice(1)" :key="index" role="cell">
-            <span v-if="row.warnings?.[index + 1]" :class="['risk-warning-status', `risk-warning-status--${row.warnings[index + 1]}`]" aria-hidden="true"></span>
-          </div>
-        </div>
-      </div>
-      <div class="inline-risk-warning__messages">
-        <div v-for="row in inlineRiskRows" :key="`${row.name}-message`" class="inline-risk-warning__message">
-          <p>{{ row.warningMessage || `[警示信息]${row.name}需完成风险核对` }}</p>
-          <p>{{ row.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。" }}</p>
-        </div>
-      </div>
-    </section>
-
     <div :class="['prescription-actions', { 'consultation-actions': consultation, 'prescription-actions--readonly': readonly }]">
       <span v-if="readonly" class="prescription-actions__hint">已封存，仅支持查看</span>
       <label v-else-if="!consultation" class="prescription-remark-field">
@@ -242,7 +207,7 @@
             </span>
             <button class="jh-btn jh-btn--md jh-btn--primary jh-prescription-submit" type="button" disabled>提交处方</button>
           </span>
-          <button v-else class="jh-btn jh-btn--md jh-btn--primary jh-prescription-submit" type="button" :disabled="record?.prescriptionSubmitted" @click="store.openRiskWarningDialog({ revealInlineOnClose: true })">提交处方</button>
+          <button v-else class="jh-btn jh-btn--md jh-btn--primary jh-prescription-submit" type="button" :disabled="record?.prescriptionSubmitted" @click="requestPrescriptionSubmit">提交处方</button>
         </template>
       </div>
     </div>
@@ -250,9 +215,9 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, nextTick, ref, watch, watchEffect } from "vue";
+import { computed, defineComponent, h, ref, watch, watchEffect } from "vue";
 import { Clock } from "@element-plus/icons-vue";
-import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskCategories, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
+import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
 import { MedicineRiskTip, assetUrl } from "@jiahong/ui";
@@ -288,19 +253,11 @@ const medicineOptions = ref([]);
 const medicineOpen = ref(false);
 const openUnitIndex = ref("");
 const unitMenuStyle = ref({});
-const panelRef = ref(null);
-const inlineRiskWarningRef = ref(null);
 const activeRiskMedicineIndex = ref("");
 const medicineRiskTipDismissed = ref(false);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
-const inlineRiskWarningHeaders = ["药品名称", ...prescriptionRiskCategories];
-const inlineRiskWarningLegendItems = [
-  { status: "must", label: "必须处理" },
-  { status: "severe", label: "严重警告" },
-  { status: "general", label: "一般警告" }
-];
 const medicineFieldOptions = {
   usage: ["口服", "外用", "适量冲洗", "口腔吸入", "鼻吸入"],
   frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "必要时", "按需", "单次"],
@@ -318,17 +275,6 @@ const diagnosisTags = computed(() => {
   return props.consultation ? tags.filter((tag) => !tag.includes("咨询")) : tags;
 });
 const medicines = computed(() => props.record?.prescriptionMedicines || []);
-const inlineRiskRows = computed(() =>
-  medicines.value
-    .map((medicine) => ({
-      ...medicine,
-      warnings: Object.fromEntries(
-        getMedicineRiskWarnings(medicine).map((warning) => [prescriptionRiskCategories.indexOf(warning.category) + 1, warning.level])
-      )
-    }))
-    .filter((medicine) => Object.keys(medicine.warnings).length > 0)
-);
-const showInlineRiskWarning = computed(() => Boolean(props.record?.inlineRiskWarningVisible && inlineRiskRows.value.length));
 const riskMedicines = computed(() => medicines.value.filter((medicine) => hasMedicineWarnings(medicine)));
 const defaultRiskMedicine = computed(() => riskMedicines.value[0] || null);
 const activeRiskMedicine = computed(() => {
@@ -367,31 +313,6 @@ watch(riskMedicines, (rows) => {
   }
   if (!rows.some((medicine) => String(medicine.index || "") === String(activeRiskMedicineIndex.value || ""))) {
     activeRiskMedicineIndex.value = rows[0].index || "";
-  }
-});
-
-async function scrollInlineRiskWarningIntoView() {
-  await nextTick();
-  const panel = panelRef.value;
-  const warning = inlineRiskWarningRef.value;
-  if (!panel || !warning) return;
-  const scrollToWarning = () => {
-    panel.scrollTo({
-      top: panel.scrollHeight,
-      behavior: "smooth"
-    });
-    warning.scrollIntoView({
-      block: "end",
-      behavior: "smooth"
-    });
-  };
-  scrollToWarning();
-  window.requestAnimationFrame(scrollToWarning);
-}
-
-watch(showInlineRiskWarning, (visible) => {
-  if (visible) {
-    scrollInlineRiskWarningIntoView();
   }
 });
 
@@ -449,6 +370,14 @@ function selectRiskMedicine(medicine = {}, event) {
 
 function hideMedicineRiskTip() {
   medicineRiskTipDismissed.value = true;
+}
+
+async function requestPrescriptionSubmit() {
+  if (riskMedicines.value.length) {
+    store.showToast("存在用药风险，请点击高亮药品行查看具体提示并完成修改");
+    return;
+  }
+  await store.submitActivePrescription();
 }
 
 function warningClass(medicine, field) {

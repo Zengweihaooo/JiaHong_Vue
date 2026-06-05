@@ -1,4 +1,5 @@
 import { getActiveConsultationRecord } from "../../application/controllers/consultationController.js";
+import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "../../domain/prescriptionRisk.js";
 import {
   addDiagnosisToActiveRecord,
   addMedicineToActiveRecord,
@@ -22,10 +23,16 @@ import {
 let getPrescriptionContext = () => ({});
 let onPrescriptionPanelRendered = () => {};
 
+function syncMedicineRiskSelection(panel, medicineIndex = "") {
+  panel?.querySelectorAll(".medicine-table__row--warning-linked").forEach((row) => {
+    row.classList.toggle("medicine-table__row--warning-active", Boolean(medicineIndex) && row.dataset.medicineIndex === String(medicineIndex));
+  });
+}
+
 export function configurePrescriptionEditorBindings({ getContext, onPanelRendered } = {}) {
   getPrescriptionContext = typeof getContext === "function" ? getContext : () => ({});
   onPrescriptionPanelRendered = typeof onPanelRendered === "function" ? onPanelRendered : () => {};
-  configureMedicineUnitBindings({ getContext: getPrescriptionContext });
+  configureMedicineUnitBindings({ getContext: getPrescriptionContext, onFieldResult: handleMedicineFieldResult });
 }
 
 function refreshActivePrescriptionPanel(record = getActiveConsultationRecord(getPrescriptionContext())) {
@@ -48,12 +55,84 @@ function refreshActivePrescriptionPanel(record = getActiveConsultationRecord(get
   }
 }
 
-function hideResolvedInlineRiskWarning(panel) {
-  const warning = panel?.querySelector("[data-inline-risk-warning]");
-  if (!warning) return;
-  warning.hidden = true;
-  warning.classList.remove("is-visible");
-  panel?.classList.remove("has-inline-risk-warning");
+function hideMedicineRiskTip(panel) {
+  const tip = panel?.querySelector("[data-medicine-risk-tip]");
+  if (!tip) return;
+  tip.hidden = true;
+  delete tip.dataset.activeMedicineIndex;
+  syncMedicineRiskSelection(panel);
+}
+
+function showMedicineRiskTip(panel, row) {
+  const tip = panel?.querySelector("[data-medicine-risk-tip]");
+  if (!tip || !row?.dataset?.warningLevel) return;
+  const titleNode = tip.querySelector("[data-medicine-risk-title]");
+  const levelNode = tip.querySelector("[data-medicine-risk-level]");
+  const categoriesNode = tip.querySelector("[data-medicine-risk-categories]");
+  const messageNode = tip.querySelector("[data-medicine-risk-message]");
+  const suggestionNode = tip.querySelector("[data-medicine-risk-suggestion]");
+  if (titleNode) titleNode.textContent = `药品风险提示 · ${row.dataset.medicineName || "当前药品"}`;
+  if (levelNode) {
+    levelNode.className = `medicine-risk-tip__level medicine-risk-tip__level--${row.dataset.warningLevel || ""}`;
+    levelNode.textContent = row.dataset.warningLevelLabel || "";
+  }
+  if (categoriesNode) categoriesNode.textContent = row.dataset.warningCategories || "";
+  if (messageNode) messageNode.textContent = row.dataset.warningMessage || "";
+  if (suggestionNode) suggestionNode.textContent = row.dataset.warningSuggestion || "";
+  tip.dataset.activeMedicineIndex = row.dataset.medicineIndex || "";
+  tip.hidden = false;
+  syncMedicineRiskSelection(panel, tip.dataset.activeMedicineIndex);
+}
+
+function shouldIgnoreMedicineRiskRowTarget(target) {
+  return Boolean(target?.closest?.(".medicine-delete-btn, .medicine-usage-options, .medicine-unit-options"));
+}
+
+function handleMedicineFieldResult({ row, fieldNode, result } = {}) {
+  if (result?.fieldWarningCleared) {
+    fieldNode?.classList.remove("medicine-warning-target");
+  }
+  if (result?.medicineWarningsResolved) {
+    row?.classList.remove("medicine-table__row--warning-linked");
+  }
+  applyMedicineRowWarningState(row, result);
+}
+
+function applyMedicineRowWarningState(row, result) {
+  const rowIndex = Number(row?.dataset.medicineIndex || 0);
+  const medicine = result?.record?.prescriptionMedicines?.find((item) => Number(item.index) === rowIndex);
+  if (!row || !medicine) return;
+  const panel = row.closest(".prescription-panel");
+  const level = getHighestMedicineRiskLevel(medicine);
+  row.classList.remove(
+    "medicine-table__row--warning-linked",
+    "medicine-table__row--warning-active",
+    "medicine-table__row--warning-must",
+    "medicine-table__row--warning-severe",
+    "medicine-table__row--warning-general"
+  );
+  if (!level) {
+    delete row.dataset.warningLevel;
+    delete row.dataset.warningLevelLabel;
+    delete row.dataset.warningCategories;
+    delete row.dataset.warningMessage;
+    delete row.dataset.warningSuggestion;
+    const tip = panel?.querySelector("[data-medicine-risk-tip]");
+    if (tip?.dataset.activeMedicineIndex === String(row.dataset.medicineIndex || "")) {
+      hideMedicineRiskTip(panel);
+    }
+    return;
+  }
+  row.classList.add("medicine-table__row--warning-linked", `medicine-table__row--warning-${level}`);
+  row.dataset.warningLevel = level;
+  row.dataset.warningLevelLabel = prescriptionRiskLevels[level];
+  row.dataset.warningCategories = getMedicineRiskWarnings(medicine).map((warning) => warning.category).join("、");
+  row.dataset.warningMessage = medicine.warningMessage || `[警示信息]${medicine.name || "当前药品"}需完成风险核对`;
+  row.dataset.warningSuggestion = medicine.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。";
+  const tip = panel?.querySelector("[data-medicine-risk-tip]");
+  if (tip?.dataset.activeMedicineIndex === String(row.dataset.medicineIndex || "")) {
+    showMedicineRiskTip(panel, row);
+  }
 }
 
 async function renderDiagnosisDropdown(input) {
@@ -303,6 +382,23 @@ export function bindPrescriptionEditor() {
   });
   bindMedicineUsageControls(panel);
   bindMedicineUnitControls(panel);
+  const riskTip = panel.querySelector("[data-medicine-risk-tip]");
+  syncMedicineRiskSelection(panel, riskTip?.dataset.activeMedicineIndex);
+  riskTip?.querySelector(".medicine-risk-tip__close")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    hideMedicineRiskTip(panel);
+  });
+  panel.querySelectorAll(".medicine-table__row[data-warning-level]").forEach((row) => {
+    row.addEventListener("pointerdown", (event) => {
+      if (shouldIgnoreMedicineRiskRowTarget(event.target)) return;
+      showMedicineRiskTip(panel, row);
+    }, true);
+    row.addEventListener("click", (event) => {
+      if (shouldIgnoreMedicineRiskRowTarget(event.target)) return;
+      showMedicineRiskTip(panel, row);
+    });
+  });
   panel.querySelectorAll(".medicine-edit-field[data-medicine-field]").forEach((input) => {
     input.addEventListener("input", () => {
       const row = input.closest("[data-medicine-index]");
@@ -312,15 +408,7 @@ export function bindPrescriptionEditor() {
         input.value,
         getPrescriptionContext()
       );
-      if (result.fieldWarningCleared) {
-        input.classList.remove("medicine-warning-target");
-      }
-      if (result.medicineWarningsResolved) {
-        row?.classList.remove("medicine-table__row--warning-linked");
-      }
-      if (result.recordWarningsResolved) {
-        hideResolvedInlineRiskWarning(panel);
-      }
+      handleMedicineFieldResult({ row, fieldNode: input, result });
     });
     input.addEventListener("change", () => {
       const row = input.closest("[data-medicine-index]");
@@ -330,15 +418,7 @@ export function bindPrescriptionEditor() {
         input.value,
         getPrescriptionContext()
       );
-      if (result.fieldWarningCleared) {
-        input.classList.remove("medicine-warning-target");
-      }
-      if (result.medicineWarningsResolved) {
-        row?.classList.remove("medicine-table__row--warning-linked");
-      }
-      if (result.recordWarningsResolved) {
-        hideResolvedInlineRiskWarning(panel);
-      }
+      handleMedicineFieldResult({ row, fieldNode: input, result });
     });
   });
 }

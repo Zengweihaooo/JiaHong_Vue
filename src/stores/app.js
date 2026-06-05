@@ -82,7 +82,6 @@ export const useAppStore = defineStore("app", {
     quickEntryEditingIndex: -1,
     quickReplyDialogVisible: false,
     riskWarningDialogVisible: false,
-    riskWarningRevealInlineOnClose: false,
     consultConfirmKind: "",
     sidebarCollapsed: false,
     chatMessageMenu: {
@@ -428,17 +427,19 @@ export const useAppStore = defineStore("app", {
       }
       this.closeChatMessageMenu();
     },
-    openRiskWarningDialog({ revealInlineOnClose = false } = {}) {
-      this.riskWarningRevealInlineOnClose = revealInlineOnClose;
+    openRiskWarningDialog() {
       this.riskWarningDialogVisible = true;
     },
     closeRiskWarningDialog() {
-      const shouldRevealInline = this.riskWarningDialogVisible && this.riskWarningRevealInlineOnClose;
       this.riskWarningDialogVisible = false;
-      this.riskWarningRevealInlineOnClose = false;
-      if (shouldRevealInline && this.activeRecord) {
-        this.activeRecord.inlineRiskWarningVisible = true;
-      }
+    },
+    async submitActivePrescription() {
+      const record = this.activeRecord;
+      if (!record || record.prescriptionSubmitted) return;
+      record.prescriptionSubmitted = true;
+      record.inlineRiskWarningVisible = false;
+      await appService.updateConsultationStatus(record.id, "SUBMIT_PRESCRIPTION", record);
+      this.showToast("处方已提交");
     },
     showToast(message, { tone = "default", placement = "default", duration = 1500 } = {}) {
       window.clearTimeout(toastTimer);

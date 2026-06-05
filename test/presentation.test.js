@@ -155,7 +155,8 @@ test("medicine table renders empty, editable, readonly, escaped, and warning sta
   assert.match(editable, /0.25g\*&quot;24粒&quot;/);
   assert.match(editable, /data-medicine-field="dose"/);
   assert.match(editable, /medicine-delete-btn/);
-  assert.match(editable, /jh-risk-tag--medium/);
+  assert.match(editable, /data-warning-level="severe"/);
+  assert.match(editable, /data-warning-categories="用法用量"/);
 
   const readonly = renderMedicineTable([row], true);
   assert.match(readonly, /medicine-table--single/);
@@ -617,7 +618,7 @@ test("room shell renders menu, topbars, ordered user services, and empty room st
   assert.match(renderRoomMain(), /暂无待接诊订单/);
 });
 
-test("prescription panels render patient details, inline risk warnings, readonly history, and consultation advice", async () => {
+test("prescription panels render patient details, medicine risk tips, readonly history, and consultation advice", async () => {
   setupBrowserGlobals("/text/");
   const {
     renderConsultationPanel,
@@ -667,8 +668,10 @@ test("prescription panels render patient details, inline risk warnings, readonly
 
   const panel = renderPrescriptionPanel({ record, videoSubmitLock: true });
   assert.match(panel, /王女士&nbsp;&nbsp;女&nbsp;&nbsp;35岁&nbsp;&nbsp;55KG/);
-  assert.match(panel, /has-inline-risk-warning/);
-  assert.match(panel, /inline-risk-warning is-visible/);
+  assert.match(panel, /data-medicine-risk-tip/);
+  assert.match(panel, /药品风险提示 · 阿莫西林&quot;&lt;&gt;&amp;/);
+  assert.match(panel, /medicine-risk-tip__level--severe/);
+  assert.doesNotMatch(panel, /inline-risk-warning|has-inline-risk-warning/);
   assert.match(panel, /阿莫西林&quot;&lt;&gt;&amp;/);
   assert.match(panel, /剂量缺失&quot;&lt;&gt;&amp;/);
   assert.match(panel, /video-submit-countdown/);
@@ -690,6 +693,7 @@ test("prescription panels render patient details, inline risk warnings, readonly
   assert.doesNotMatch(consultation, /颈部咨询/);
   assert.match(consultation, /颈肩筋膜炎/);
   assert.match(consultation, /少低头&quot;&lt;&gt;&amp;/);
+  assert.match(consultation, /data-medicine-risk-tip[\s\S]*hidden/);
   assert.match(consultation, /完成问诊/);
 });
 

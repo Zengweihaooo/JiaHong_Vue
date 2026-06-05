@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue prescription panel uses shared UI medicine risk tip with H5 row selection", async () => {
-  const [prescriptionPanel, legacyStyles, uiStyles, uiExports] = await Promise.all([
+  const [prescriptionPanel, legacyStyles, uiStyles, uiExports, store, consultBindings] = await Promise.all([
     readFile(new URL("../src/components/consultation/PrescriptionPanel.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
-    readFile(new URL("../../JiaHong_UI/src/components/index.js", import.meta.url), "utf8")
+    readFile(new URL("../../JiaHong_UI/src/components/index.js", import.meta.url), "utf8"),
+    readFile(new URL("../src/stores/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../src/presentation/interactions/consultDialogBindings.js", import.meta.url), "utf8")
   ]);
 
   assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl \} from "@jiahong\/ui"/);
@@ -17,11 +19,23 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(prescriptionPanel, /medicine-table__row--warning-active/);
   assert.match(prescriptionPanel, /data-warning-level/);
   assert.match(prescriptionPanel, /getHighestMedicineRiskLevel/);
+  assert.match(prescriptionPanel, /function requestPrescriptionSubmit/);
+  assert.match(prescriptionPanel, /store\.showToast\("存在用药风险，请点击高亮药品行查看具体提示并完成修改"\)/);
+  assert.match(prescriptionPanel, /store\.submitActivePrescription\(\)/);
+  assert.doesNotMatch(prescriptionPanel, /inline-risk-warning|data-inline-risk-warning|has-inline-risk-warning/);
 
   assert.match(uiExports, /MedicineRiskTip/);
   assert.match(uiStyles, /\.medicine-risk-tip\s*\{/);
   assert.match(uiStyles, /\.medicine-table__row--warning-active/);
   assert.doesNotMatch(legacyStyles, /\.medicine-risk-tip\s*\{/);
+  assert.doesNotMatch(legacyStyles, /\.inline-risk-warning\s*\{|has-inline-risk-warning/);
+
+  assert.match(store, /async submitActivePrescription\(\)/);
+  assert.match(store, /updateConsultationStatus\(record\.id, "SUBMIT_PRESCRIPTION", record\)/);
+  assert.doesNotMatch(store, /riskWarningRevealInlineOnClose/);
+
+  assert.match(consultBindings, /存在用药风险，请点击高亮药品行查看具体提示并完成修改/);
+  assert.doesNotMatch(consultBindings, /revealInlineOnClose|data-inline-risk-warning/);
 });
 
 test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet", async () => {
