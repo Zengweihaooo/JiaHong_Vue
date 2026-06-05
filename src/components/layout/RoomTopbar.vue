@@ -18,9 +18,6 @@
             aria-haspopup="menu"
             @click="store.userMenuVisible = !store.userMenuVisible"
           >
-            <span class="avatar" aria-hidden="true">
-              <img :src="assetUrl('assets/figma-consult/avatar-source.png')" alt="" />
-            </span>
             <span>{{ store.doctor?.name || "张医生" }}</span>
             <span class="room-user__chevron" aria-hidden="true">
               <img :src="assetUrl('assets/figma-consult/chevron-down.svg')" alt="" />

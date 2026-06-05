@@ -33,7 +33,6 @@
           aria-label="进入问诊室"
           @click="$router.push('/room/')"
         >
-          <img class="consult-card__bg" :src="assetUrl('assets/figma-home/consult-bg.png')" alt="" aria-hidden="true" />
           <div class="consult-card__content">
             <div class="consult-card__icon">
               <img class="consult-card__icon-img" :src="assetUrl('assets/figma-home/consult-icon.svg')" alt="" aria-hidden="true" />

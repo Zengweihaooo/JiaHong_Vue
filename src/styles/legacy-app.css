@@ -758,35 +758,6 @@ button {
   transform: translateY(-1px) scale(0.997);
 }
 
-.consult-card__bg {
-  position: absolute;
-  left: -9px;
-  top: -5px;
-  z-index: 0;
-  width: calc(100% + 18px);
-  height: calc(100% + 10px);
-  max-width: none;
-  object-fit: cover;
-  opacity: 1;
-  pointer-events: none;
-  transition:
-    opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 360ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.18s ease;
-}
-
-.consult-card--has-queue .consult-card__bg {
-  opacity: 0.72;
-  filter: sepia(1) saturate(2.35) hue-rotate(350deg) brightness(1.08) contrast(0.94);
-  mix-blend-mode: soft-light;
-}
-
-.consult-card:hover .consult-card__bg,
-.consult-card:focus-visible .consult-card__bg,
-.consult-card.is-selected .consult-card__bg {
-  transform: scale(1.018);
-}
-
 .consult-card__content {
   position: relative;
   z-index: 2;

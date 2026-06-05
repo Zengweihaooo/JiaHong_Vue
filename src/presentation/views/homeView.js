@@ -43,7 +43,6 @@ export function renderConsultCard() {
   const hasWaitingQueue = Number(renderRuntime.waitingQueue?.total || 0) > 0;
   return `
     <button class="consult-card${hasWaitingQueue ? " consult-card--has-queue" : ""}" type="button" aria-label="进入问诊室">
-      <img class="consult-card__bg" src="${assetUrl("assets/figma-home/consult-bg.png")}" alt="" aria-hidden="true" />
       <div class="consult-card__content">
         <div class="consult-card__icon">${icons.stethoscope}</div>
         <h2>进入问诊室</h2>

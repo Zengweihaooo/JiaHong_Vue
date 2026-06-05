@@ -49,9 +49,6 @@ export function renderTopbar() {
         </div>
         <div class="user-chip">
           <button class="user-chip__body user-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
-            <span class="avatar" aria-hidden="true">
-              <img src="${assetUrl("assets/figma-home/avatar-source.png")}" alt="" />
-            </span>
             <span>张医生</span>
           </button>
           ${renderUserMenu()}
@@ -119,9 +116,6 @@ export function renderRoomTopbar() {
               <img src="${assetUrl("assets/figma-consult/topbar-divider.svg")}" alt="" />
             </span>
             <button class="room-user__body user-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
-              <span class="avatar" aria-hidden="true">
-                <img src="${assetUrl("assets/figma-consult/avatar-source.png")}" alt="" />
-              </span>
               <span>张医生</span>
               <span class="room-user__chevron" aria-hidden="true">
                 <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />

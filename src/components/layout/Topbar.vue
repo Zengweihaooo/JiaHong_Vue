@@ -18,9 +18,6 @@
           aria-haspopup="menu"
           @click="store.userMenuVisible = !store.userMenuVisible"
         >
-          <span class="avatar" aria-hidden="true">
-            <img :src="assetUrl('assets/figma-home/avatar-source.png')" alt="" />
-          </span>
           <span>{{ store.doctor?.name || "张医生" }}</span>
         </button>
         <UserMenu :visible="store.userMenuVisible" />
@@ -32,7 +29,6 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>
