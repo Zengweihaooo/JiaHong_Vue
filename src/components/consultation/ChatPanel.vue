@@ -175,8 +175,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Close, Refresh } from "@element-plus/icons-vue";
 import { useAppStore } from "@/stores/app";
-import { FollowUpVoucher } from "@jiahong/ui";
-import { assetUrl } from "@/utils/assets";
+import { FollowUpVoucher, assetUrl } from "@jiahong/ui";
 import {
   attachLocalCamera,
   getLocalMediaStatus,

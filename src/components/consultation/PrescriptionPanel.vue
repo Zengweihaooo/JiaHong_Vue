@@ -235,7 +235,7 @@ import { Clock } from "@element-plus/icons-vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 
 const props = defineProps({
   record: {

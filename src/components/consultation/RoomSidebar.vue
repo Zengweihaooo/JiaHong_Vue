@@ -70,9 +70,8 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { TypeIcon } from "@jiahong/ui";
+import { TypeIcon, assetUrl } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
 import { consultationTypeLabel } from "@/utils/format";
 
 const store = useAppStore();

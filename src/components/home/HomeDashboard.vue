@@ -89,11 +89,10 @@
 </template>
 
 <script setup>
-import { StatusBadge } from "@jiahong/ui";
+import { StatusBadge, assetUrl } from "@jiahong/ui";
 import NoticeCard from "@/components/home/NoticeCard.vue";
 import QuickActions from "@/components/home/QuickActions.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
 
 const store = useAppStore();
 </script>

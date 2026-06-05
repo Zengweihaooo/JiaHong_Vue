@@ -58,7 +58,7 @@ import PrescriptionPanel from "@/components/consultation/PrescriptionPanel.vue";
 import RoomSidebar from "@/components/consultation/RoomSidebar.vue";
 import RoomTopbar from "@/components/layout/RoomTopbar.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 import { useRouter } from "vue-router";
 
 const router = useRouter();

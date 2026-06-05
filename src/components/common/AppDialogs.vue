@@ -322,7 +322,7 @@
 import { computed, nextTick, ref } from "vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 const activeCancelReasonGroup = ref("medicine");

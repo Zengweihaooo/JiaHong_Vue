@@ -160,8 +160,7 @@
 </template>
 
 <script setup>
-import { DurationChip, FollowUpVoucher, ReadTag, StatusBadge, TypeIcon } from "@jiahong/ui";
-import { assetUrl } from "@/utils/assets";
+import { DurationChip, FollowUpVoucher, ReadTag, StatusBadge, TypeIcon, assetUrl } from "@jiahong/ui";
 
 const sections = [
   { id: "foundations", name: "基础变量" },

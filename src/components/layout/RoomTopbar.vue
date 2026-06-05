@@ -36,7 +36,7 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>

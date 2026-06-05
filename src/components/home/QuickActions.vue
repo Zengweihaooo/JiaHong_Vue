@@ -99,7 +99,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { getQuickEntryFeature } from "@/domain/quickEntries";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 
 const router = useRouter();
 const store = useAppStore();

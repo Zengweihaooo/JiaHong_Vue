@@ -33,7 +33,7 @@
 
 <script setup>
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 const iconMap = {
