@@ -21,8 +21,10 @@
           @add="store.openQuickEntryDialog()"
           @edit="editQuickAction"
           @remove="removeQuickAction"
+          @reorder="reorderQuickAction"
           @select="selectQuickAction"
           @schedule-detail="store.showToast('排班详情暂未开放')"
+          @schedule-punch="store.showToast('打卡成功')"
         />
       </div>
       <footer class="footer">嘉虹健康　copyright © 2017-2026　鄂ICP备2024037712号-1</footer>
@@ -55,6 +57,10 @@ function editQuickAction({ index }) {
 
 function removeQuickAction({ index }) {
   store.removeQuickAction(index);
+}
+
+function reorderQuickAction({ fromIndex, toIndex }) {
+  store.reorderQuickAction(fromIndex, toIndex);
 }
 
 function selectQuickAction({ action, feature }) {

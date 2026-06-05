@@ -122,9 +122,16 @@
           <div
             v-for="medicine in medicines"
             :key="medicine.index || medicine.name"
-            :class="['medicine-table__row', { 'medicine-table__row--warning-linked': hasMedicineWarnings(medicine) }]"
+            :class="['medicine-table__row', medicineWarningRowClass(medicine), { 'medicine-table__row--warning-active': isActiveRiskMedicine(medicine) }]"
             :data-medicine-index="medicine.index"
             :data-medicine-name="medicine.name"
+            :data-warning-level="medicineWarningLevel(medicine) || undefined"
+            :data-warning-level-label="medicineWarningLevelLabel(medicine) || undefined"
+            :data-warning-categories="medicineWarningCategories(medicine).join('、') || undefined"
+            :data-warning-message="medicineWarningMessage(medicine) || undefined"
+            :data-warning-suggestion="medicineWarningSuggestion(medicine) || undefined"
+            :title="hasMedicineWarnings(medicine) && !readonly ? '点击查看风险提示' : undefined"
+            @click="selectRiskMedicine(medicine, $event)"
           >
             <span>{{ medicine.index }}</span>
             <span :class="warningClass(medicine, 'name')">{{ medicine.name }}</span>
@@ -160,6 +167,19 @@
         <div v-else class="medicine-empty-state">暂无药品信息</div>
       </div>
     </div>
+
+    <MedicineRiskTip
+      v-if="medicineRiskTip"
+      :title="medicineRiskTip.title"
+      :level="medicineRiskTip.level"
+      :level-label="medicineRiskTip.levelLabel"
+      :categories="medicineRiskTip.categories"
+      :message="medicineRiskTip.message"
+      :suggestion="medicineRiskTip.suggestion"
+      :active-medicine-index="medicineRiskTip.activeMedicineIndex"
+      :hidden="!showMedicineRiskTip"
+      @close="hideMedicineRiskTip"
+    />
 
     <section
       v-if="inlineRiskRows.length"
@@ -232,10 +252,10 @@
 <script setup>
 import { computed, defineComponent, h, nextTick, ref, watch, watchEffect } from "vue";
 import { Clock } from "@element-plus/icons-vue";
-import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
+import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskCategories, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@jiahong/ui";
+import { MedicineRiskTip, assetUrl } from "@jiahong/ui";
 
 const props = defineProps({
   record: {
@@ -270,6 +290,8 @@ const openUnitIndex = ref("");
 const unitMenuStyle = ref({});
 const panelRef = ref(null);
 const inlineRiskWarningRef = ref(null);
+const activeRiskMedicineIndex = ref("");
+const medicineRiskTipDismissed = ref(false);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
@@ -307,6 +329,46 @@ const inlineRiskRows = computed(() =>
     .filter((medicine) => Object.keys(medicine.warnings).length > 0)
 );
 const showInlineRiskWarning = computed(() => Boolean(props.record?.inlineRiskWarningVisible && inlineRiskRows.value.length));
+const riskMedicines = computed(() => medicines.value.filter((medicine) => hasMedicineWarnings(medicine)));
+const defaultRiskMedicine = computed(() => riskMedicines.value[0] || null);
+const activeRiskMedicine = computed(() => {
+  const activeIndex = String(activeRiskMedicineIndex.value || "");
+  return riskMedicines.value.find((medicine) => String(medicine.index || "") === activeIndex) || defaultRiskMedicine.value;
+});
+const medicineRiskTip = computed(() => {
+  const medicine = activeRiskMedicine.value;
+  if (props.readonly || !medicine) return null;
+  const level = medicineWarningLevel(medicine);
+  return {
+    title: `药品风险提示 · ${medicine.name || "当前药品"}`,
+    level,
+    levelLabel: prescriptionRiskLevels[level] || "",
+    categories: medicineWarningCategories(medicine),
+    message: medicineWarningMessage(medicine),
+    suggestion: medicineWarningSuggestion(medicine),
+    activeMedicineIndex: medicine.index || ""
+  };
+});
+const showMedicineRiskTip = computed(() => Boolean(medicineRiskTip.value && !medicineRiskTipDismissed.value));
+
+watch(
+  () => props.record?.id,
+  () => {
+    medicineRiskTipDismissed.value = false;
+    activeRiskMedicineIndex.value = defaultRiskMedicine.value?.index || "";
+  },
+  { immediate: true }
+);
+
+watch(riskMedicines, (rows) => {
+  if (!rows.length) {
+    activeRiskMedicineIndex.value = "";
+    return;
+  }
+  if (!rows.some((medicine) => String(medicine.index || "") === String(activeRiskMedicineIndex.value || ""))) {
+    activeRiskMedicineIndex.value = rows[0].index || "";
+  }
+});
 
 async function scrollInlineRiskWarningIntoView() {
   await nextTick();
@@ -344,6 +406,49 @@ function warningFields(medicine = {}) {
 
 function hasMedicineWarnings(medicine = {}) {
   return getMedicineRiskWarnings(medicine).length > 0;
+}
+
+function medicineWarningLevel(medicine = {}) {
+  return getHighestMedicineRiskLevel(medicine);
+}
+
+function medicineWarningLevelLabel(medicine = {}) {
+  return prescriptionRiskLevels[medicineWarningLevel(medicine)] || "";
+}
+
+function medicineWarningCategories(medicine = {}) {
+  return getMedicineRiskWarnings(medicine).map((warning) => warning.category);
+}
+
+function medicineWarningMessage(medicine = {}) {
+  return hasMedicineWarnings(medicine) ? medicine.warningMessage || `[警示信息]${medicine.name || "当前药品"}需完成风险核对` : "";
+}
+
+function medicineWarningSuggestion(medicine = {}) {
+  return hasMedicineWarnings(medicine) ? medicine.warningSuggestion || "[建议信息]请结合患者基础信息、过敏史和用药风险完成处方确认。" : "";
+}
+
+function medicineWarningRowClass(medicine = {}) {
+  const level = medicineWarningLevel(medicine);
+  return level ? ["medicine-table__row--warning-linked", `medicine-table__row--warning-${level}`] : [];
+}
+
+function isActiveRiskMedicine(medicine = {}) {
+  return Boolean(showMedicineRiskTip.value && String(medicine.index || "") === String(activeRiskMedicine.value?.index || ""));
+}
+
+function shouldIgnoreMedicineRiskRowTarget(target) {
+  return Boolean(target?.closest?.(".medicine-delete-btn, .medicine-usage-control, .medicine-unit-control"));
+}
+
+function selectRiskMedicine(medicine = {}, event) {
+  if (props.readonly || !hasMedicineWarnings(medicine) || shouldIgnoreMedicineRiskRowTarget(event?.target)) return;
+  activeRiskMedicineIndex.value = medicine.index || "";
+  medicineRiskTipDismissed.value = false;
+}
+
+function hideMedicineRiskTip() {
+  medicineRiskTipDismissed.value = true;
 }
 
 function warningClass(medicine, field) {

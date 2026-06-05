@@ -13,8 +13,28 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
   assert.match(chatPanel, /@click="collapseAiReply"/);
   assert.match(chatPanel, /class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger"/);
   assert.match(chatPanel, /@click="openQuickReplyDialog"/);
+  assert.match(chatPanel, /ai-reply__options--long/);
+  assert.match(chatPanel, /data-layout-threshold/);
+  assert.match(chatPanel, /jh-btn--ai-pill__keyword/);
+  assert.match(chatPanel, /function aiReplyTextSegments/);
 
   assert.doesNotMatch(chatPanel, /ai-reply__hint/);
   assert.doesNotMatch(chatPanel, /@dblclick="toggleAiReply"/);
   assert.doesNotMatch(chatPanel, /quickReplyClickTimer|function toggleAiReply/);
+});
+
+test("Vue chat panel routes H5 consult info through the shared UI card", async () => {
+  const chatPanel = await readFile(new URL("../src/components/consultation/ChatPanel.vue", import.meta.url), "utf8");
+  const legacyStyles = await readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8");
+
+  assert.match(chatPanel, /import \{ ConsultInfoCard, VideoCallWindow \} from "@jiahong\/ui"/);
+  assert.match(chatPanel, /<ConsultInfoCard/);
+  assert.match(chatPanel, /function getConsultInfoCard/);
+  assert.match(chatPanel, /function getFollowUpVoucher/);
+  assert.match(chatPanel, /defaultConsultCaseVoices/);
+  assert.match(chatPanel, /record\?\.type !== "consult" && !hasConsultInfo && !voucher/);
+
+  assert.doesNotMatch(chatPanel, /<FollowUpVoucher/);
+  assert.doesNotMatch(legacyStyles, /\.consult-info-card\s*\{/);
+  assert.doesNotMatch(legacyStyles, /\.followup-voucher-card\s*\{/);
 });

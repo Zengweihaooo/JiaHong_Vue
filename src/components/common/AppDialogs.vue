@@ -126,7 +126,7 @@
           </button>
         </div>
       </div>
-      <footer class="quick-reply-dialog__footer">单击快捷用语填入输入框，双击即可发送</footer>
+      <footer class="quick-reply-dialog__footer">单击快捷用语填入输入框并关闭，双击即可发送</footer>
     </section>
   </div>
 
@@ -329,6 +329,7 @@ const activeCancelReasonGroup = ref("medicine");
 const selectedCancelReason = ref("病情特殊存在用药禁忌");
 const activeQuickReplyCategoryIndex = ref(0);
 const lastQuickReplyPointerAt = new Map();
+let closeQuickReplyTimer = 0;
 const chatMessageMenuStyle = computed(() => ({
   left: `${Math.max(8, store.chatMessageMenu.x || 0)}px`,
   top: `${Math.max(8, store.chatMessageMenu.y || 0)}px`
@@ -440,6 +441,8 @@ function openAnnouncement(id) {
 function fillQuickReply(message) {
   if (store.activeRecordId) {
     store.chatDrafts[store.activeRecordId] = message;
+  } else {
+    return false;
   }
   nextTick(() => {
     const input = document.querySelector(".jh-chat-input textarea");
@@ -447,6 +450,7 @@ function fillQuickReply(message) {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
   });
+  return true;
 }
 
 async function sendQuickReply(message) {
@@ -461,12 +465,19 @@ function applyQuickReplyMessage(message, event) {
   const lastPointerAt = Number(lastQuickReplyPointerAt.get(message) || 0);
   const shouldSend = now - lastPointerAt <= 320;
   lastQuickReplyPointerAt.set(message, shouldSend ? 0 : now);
-  fillQuickReply(message);
+  const didFill = fillQuickReply(message);
+  if (!didFill) return;
   if (shouldSend) {
+    window.clearTimeout(closeQuickReplyTimer);
     store.sendDoctorMessage(message);
     window.setTimeout(() => {
       store.quickReplyDialogVisible = false;
     }, 120);
+  } else {
+    window.clearTimeout(closeQuickReplyTimer);
+    closeQuickReplyTimer = window.setTimeout(() => {
+      store.quickReplyDialogVisible = false;
+    }, 360);
   }
 }
 

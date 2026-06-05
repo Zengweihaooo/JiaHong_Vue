@@ -18,6 +18,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: false
+    open: false,
+    fs: {
+      allow: [
+        fileURLToPath(new URL(".", import.meta.url)),
+        fileURLToPath(new URL("../JiaHong_UI", import.meta.url))
+      ]
+    }
   }
 });

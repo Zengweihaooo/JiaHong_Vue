@@ -1,5 +1,5 @@
 <template>
-  <div :class="['user-menu', { 'is-open': visible }]" role="menu" :aria-hidden="!visible">
+  <div ref="menuRoot" :class="['user-menu', { 'is-open': visible }]" role="menu" :aria-hidden="!visible">
     <section class="user-menu-status" aria-label="接诊状态与服务开关">
       <div class="user-menu-status__row">
         <div class="user-menu-status__left">
@@ -53,11 +53,11 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { StatusBadge, assetUrl } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
 
-defineProps({
+const props = defineProps({
   visible: {
     type: Boolean,
     default: false
@@ -65,6 +65,7 @@ defineProps({
 });
 
 const store = useAppStore();
+const menuRoot = ref(null);
 const serviceOrder = ["text", "video", "consult"];
 const orderedServices = computed(() =>
   store.services
@@ -73,8 +74,39 @@ const orderedServices = computed(() =>
     .sort((left, right) => serviceOrder.indexOf(left.key) - serviceOrder.indexOf(right.key))
 );
 
-function runMenuAction(action) {
+function closeMenu() {
   store.userMenuVisible = false;
+}
+
+function isMenuTrigger(target) {
+  return Boolean(target?.closest?.(".user-menu-trigger"));
+}
+
+function handleDocumentClick(event) {
+  if (!props.visible) return;
+  const target = event.target;
+  if (menuRoot.value?.contains(target) || isMenuTrigger(target)) return;
+  closeMenu();
+}
+
+function handleDocumentKeydown(event) {
+  if (props.visible && event.key === "Escape") {
+    closeMenu();
+  }
+}
+
+function runMenuAction(action) {
+  closeMenu();
   store.showToast(action);
 }
+
+onMounted(() => {
+  document.addEventListener("click", handleDocumentClick);
+  document.addEventListener("keydown", handleDocumentKeydown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleDocumentClick);
+  document.removeEventListener("keydown", handleDocumentKeydown);
+});
 </script>

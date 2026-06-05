@@ -144,7 +144,8 @@ export const useAppStore = defineStore("app", {
       return getMessageListRecords(state.consultationRecords, {
         type: state.messageFilterType,
         state: state.messageFilterState,
-        activeVideoRecordId: state.activeVideoRecordId
+        activeVideoRecordId: state.activeVideoRecordId,
+        collapseVideoQueue: true
       });
     }
   },
@@ -291,6 +292,26 @@ export const useAppStore = defineStore("app", {
       }
       this.showToast("已删除快捷入口");
     },
+    reorderQuickAction(fromIndex, toIndex) {
+      const sourceIndex = Number(fromIndex);
+      const targetIndex = Number(toIndex);
+      const source = this.quickActions[sourceIndex];
+      const target = this.quickActions[targetIndex];
+      if (
+        !Number.isInteger(sourceIndex) ||
+        !Number.isInteger(targetIndex) ||
+        sourceIndex === targetIndex ||
+        !source ||
+        !target ||
+        source.isAdd ||
+        target.isAdd
+      ) {
+        return;
+      }
+      const [action] = this.quickActions.splice(sourceIndex, 1);
+      this.quickActions.splice(targetIndex, 0, action);
+      this.showToast("已调整快捷入口顺序");
+    },
     async refreshRealtime() {
       const snapshot = await appService.getRealtimeSnapshot();
       if (snapshot.waitingQueue) this.waitingQueue = snapshot.waitingQueue;
@@ -312,7 +333,12 @@ export const useAppStore = defineStore("app", {
     async endActiveConsultation(event = "END") {
       const record = this.activeRecord;
       if (!record) return;
-      await appService.updateConsultationStatus(record.id, event, record);
+      const shouldAutoEnterNextVideo = event === "END" && record.type === "video" && this.activeVideoRecordId === record.id;
+      const nextVideoRecord = shouldAutoEnterNextVideo
+        ? getNextOngoingVideoConsultationRecord(this.consultationRecords, {
+            excludeRecordId: record.id
+          })
+        : null;
       record.state = event === "END" ? "ended" : "cancelled";
       record.badge = 0;
       record.unreadCount = 0;
@@ -320,15 +346,26 @@ export const useAppStore = defineStore("app", {
         record.endedAt = formatEndedAt();
       }
       if (record.type === "video" && this.activeVideoRecordId === record.id) {
-        this.activeVideoRecordId = getNextOngoingVideoConsultationRecord(this.consultationRecords, {
-          excludeRecordId: record.id
-        })?.id || "";
+        this.activeVideoRecordId = nextVideoRecord?.id || "";
         writeActiveVideoRecordId(this.activeVideoRecordId);
       }
       this.waitingQueue = buildWaitingQueueFromRecords(this.consultationRecords);
-      this.messageFilterState = "ended";
-      this.ensureActiveRecord(record.id);
-      this.showToast(event === "END" ? "问诊已结束并归档" : "问诊已取消");
+      await appService.updateConsultationStatus(record.id, event, record);
+      if (nextVideoRecord) {
+        this.messageFilterState = "ongoing";
+        this.messageFilterType = "all";
+        this.activeRecordId = nextVideoRecord.id;
+        this.showToast("问诊已结束，已自动接入下一位视频问诊");
+        return;
+      }
+      if (record.state === "ended") {
+        this.messageFilterState = "ended";
+        this.ensureActiveRecord(record.id);
+      } else {
+        this.messageFilterState = "ongoing";
+        this.ensureActiveRecord();
+      }
+      this.showToast(event === "END" ? "问诊已结束" : "问诊已取消");
     },
     async sendDoctorMessage(text) {
       const content = String(text || "").trim();

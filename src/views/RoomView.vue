@@ -36,6 +36,7 @@
           />
         </div>
       </section>
+      <RoomPendingWorkspace v-else-if="hasWaitingQueue" @refresh="openTextConsultation" />
       <section v-else class="room-card" aria-label="候诊室">
         <button class="jh-btn jh-btn--md jh-btn--outline-secondary room-refresh" type="button" @click="openTextConsultation">刷新列表</button>
         <div class="room-empty">
@@ -58,7 +59,7 @@ import PrescriptionPanel from "@/components/consultation/PrescriptionPanel.vue";
 import RoomSidebar from "@/components/consultation/RoomSidebar.vue";
 import RoomTopbar from "@/components/layout/RoomTopbar.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@jiahong/ui";
+import { RoomPendingWorkspace, assetUrl } from "@jiahong/ui";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -72,6 +73,7 @@ const archivedTypeDisplay = computed(() => {
   if (archivedRecord.value?.type === "consult") return "咨询";
   return `${archivedRecord.value?.typeLabel || "图文"}问诊`;
 });
+const hasWaitingQueue = computed(() => Number(store.waitingQueue?.total || 0) > 0);
 
 function openTextConsultation() {
   router.push("/text/");

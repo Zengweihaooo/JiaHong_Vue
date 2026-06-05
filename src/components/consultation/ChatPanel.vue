@@ -1,96 +1,24 @@
 <template>
   <section :class="['chat-panel', { 'video-chat-panel': video }]" aria-label="聊天区域">
-    <div v-if="video" class="video-window" data-video-controls>
-      <div class="video-window__main" role="img" aria-label="患者视频等待画面">
-        <span>等待患者进入</span>
-      </div>
-      <div
-        :class="[
-          'video-window__pip video-window__pip--local',
-          {
-            'is-camera-off': !cameraOn,
-            'is-camera-loading': cameraLoading,
-            'is-camera-ready': cameraReady,
-            'is-camera-error': cameraError
-          }
-        ]"
-      >
-        <video ref="localVideo" class="video-window__local-video" data-local-camera autoplay muted playsinline aria-label="医生摄像头画面"></video>
-        <div class="video-window__camera-status" data-camera-status>{{ cameraStatusText }}</div>
-        <div class="video-window__pip-off" :aria-hidden="cameraOn">摄像头已关闭</div>
-      </div>
-      <div class="video-toolbar">
-        <button
-          type="button"
-          :class="['video-toolbar__btn', { 'is-off': !cameraOn }]"
-          :aria-pressed="cameraOn"
-          :title="cameraOn ? '关闭摄像头' : '开启摄像头'"
-          :aria-label="cameraOn ? '关闭摄像头' : '开启摄像头'"
-          @click="toggleCamera"
-        >
-          <svg v-if="cameraOn" class="video-control-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-            <circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-          <svg v-else class="video-control-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-            <path d="m3 3 18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <button
-          type="button"
-          :class="['video-toolbar__btn', { 'is-off': !micOn }]"
-          :aria-pressed="micOn"
-          :title="micOn ? '关闭麦克风' : '开启麦克风'"
-          :aria-label="micOn ? '关闭麦克风' : '开启麦克风'"
-          @click="toggleMicrophone"
-        >
-          <svg v-if="micOn" class="video-control-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M6 11v1a6 6 0 0 0 12 0v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <svg v-else class="video-control-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M6 11v1a6 6 0 0 0 9.2 5.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="m4 4 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </div>
+    <VideoCallWindow
+      v-if="video"
+      ref="videoWindow"
+      :camera-on="cameraOn"
+      :mic-on="micOn"
+      :camera-loading="cameraLoading"
+      :camera-ready="cameraReady"
+      :camera-error="cameraError"
+      :camera-status-text="cameraStatusText"
+      @toggle-camera="toggleCamera"
+      @toggle-microphone="toggleMicrophone"
+    />
 
-    <section v-if="record?.type === 'consult'" class="consult-info-card" aria-label="咨询信息">
-      <h3>咨询信息</h3>
-      <div class="consult-info-card__row">
-        <span class="consult-info-card__label">病情描述：</span>
-        <p>{{ record.consultInfo?.description || "颈部酸痛僵硬，转头活动受限，久坐后痛感加重" }}</p>
-      </div>
-      <div class="consult-info-card__row">
-        <span class="consult-info-card__label">病例信息：</span>
-        <div class="consult-attachments">
-          <button
-            v-for="(attachment, index) in consultAttachments"
-            :key="attachment.title"
-            class="consult-attachment"
-            type="button"
-            :aria-label="`预览${attachment.title}`"
-            @click="openConsultAttachment(index)"
-          >
-            <span class="consult-attachment__thumb">
-              <img :src="attachment.image" :alt="attachment.title" loading="lazy" />
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <FollowUpVoucher
-      v-if="followUpVoucher"
-      title="复诊凭证"
-      :variant="followUpVoucher.variant"
-      :images="followUpVoucher.images"
-      :voices="followUpVoucher.voices"
-      @preview-image="openFollowUpImage"
+    <ConsultInfoCard
+      v-if="consultInfoCard"
+      :description="consultInfoCard.description"
+      :images="consultInfoCard.images"
+      :voices="consultInfoCard.voices"
+      @preview-image="openConsultAttachment"
     />
 
     <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
@@ -144,7 +72,10 @@
             </button>
           </div>
         </div>
-        <div class="ai-reply__options">
+        <div
+          :class="['ai-reply__options', { 'ai-reply__options--long': aiOptionsAreLong }]"
+          :data-layout-threshold="aiReplyLayoutTextThreshold"
+        >
           <button
             v-for="option in aiOptions"
             :key="option.text"
@@ -154,7 +85,12 @@
             @click="draft = option.text"
             @dblclick="sendAiOption(option.text, $event)"
           >
-            <span class="jh-btn--ai-pill__text">{{ option.text }}</span>
+            <span class="jh-btn--ai-pill__text">
+              <template v-for="segment in aiReplyTextSegments(option)" :key="`${option.text}-${segment.index}`">
+                <strong v-if="segment.highlight" class="jh-btn--ai-pill__keyword">{{ segment.text }}</strong>
+                <span v-else>{{ segment.text }}</span>
+              </template>
+            </span>
             <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>
           </button>
         </div>
@@ -177,7 +113,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Close, Refresh } from "@element-plus/icons-vue";
 import { useAppStore } from "@/stores/app";
-import { FollowUpVoucher, assetUrl } from "@jiahong/ui";
+import { ConsultInfoCard, VideoCallWindow } from "@jiahong/ui";
 import {
   attachLocalCamera,
   getLocalMediaStatus,
@@ -199,7 +135,7 @@ const props = defineProps({
 const store = useAppStore();
 const cameraOn = ref(true);
 const micOn = ref(true);
-const localVideo = ref(null);
+const videoWindow = ref(null);
 const chatThread = ref(null);
 const cameraLoading = ref(false);
 const cameraReady = ref(false);
@@ -214,49 +150,7 @@ const draft = computed({
 });
 const chat = computed(() => store.ongoingChats[props.record?.id] || null);
 const chatMessages = computed(() => chat.value?.messages || []);
-const consultAttachments = computed(() => {
-  const fallback = [
-    { title: "附件1", image: "assets/consult-materials/allergic-rhinitis.png" },
-    { title: "附件2", image: "assets/consult-materials/pediatric-fever.png" },
-    { title: "附件3", image: "assets/consult-materials/sore-throat.png" },
-    { title: "附件4", image: "assets/consult-materials/skin-rash.png" }
-  ];
-  const attachments = props.record?.consultInfo?.attachments?.length ? props.record.consultInfo.attachments : fallback;
-  return attachments.map((attachment, index) => ({
-    title: attachment.title || `附件${index + 1}`,
-    image: assetUrl(attachment.image || "assets/figma-consult/attachment-preview.png")
-  }));
-});
-const followUpVoucher = computed(() => {
-  if (props.record?.type !== "text" && props.record?.type !== "video") return null;
-
-  const variants = ["image", "voice", "mixed"];
-  const fallbackImages = [
-    { title: "图片凭证1", image: "assets/consult-materials/allergic-rhinitis.png" },
-    { title: "图片凭证2", image: "assets/consult-materials/pediatric-fever.png" },
-    { title: "图片凭证3", image: "assets/consult-materials/sore-throat.png" },
-    { title: "图片凭证4", image: "assets/consult-materials/skin-rash.png" }
-  ];
-  const fallbackVoices = [
-    { title: "语音凭证1", duration: 8 },
-    { title: "语音凭证2", duration: 7 }
-  ];
-  const explicitVariant = props.record.followUpVoucher?.type;
-  const stableIndex =
-    Array.from(String(props.record.id || props.record.title || props.record.type)).reduce(
-      (sum, char) => sum + char.charCodeAt(0),
-      0
-    ) % variants.length;
-  const variant = variants.includes(explicitVariant) ? explicitVariant : variants[stableIndex];
-  const images = props.record.followUpVoucher?.images?.length ? props.record.followUpVoucher.images : fallbackImages;
-  const voices = props.record.followUpVoucher?.voices?.length ? props.record.followUpVoucher.voices : fallbackVoices;
-
-  return {
-    variant,
-    images,
-    voices
-  };
-});
+const consultInfoCard = computed(() => getConsultInfoCard(props.record));
 const baseAiOptions = computed(() => {
   if (props.record?.type === "consult") {
     return [
@@ -280,14 +174,37 @@ const baseAiOptions = computed(() => {
 });
 const aiOptions = computed(() => {
   const options = baseAiOptions.value;
-  if (options.length < 2) return options;
+  if (options.length < 2) return options.map(normalizeAiOption);
   const rotation = aiRotation.value % options.length;
-  return options.map((_, index) => options[(index + rotation) % options.length]);
+  return options.map((_, index) => normalizeAiOption(options[(index + rotation) % options.length]));
 });
+const aiOptionsAreLong = computed(() =>
+  Math.max(0, ...aiOptions.value.map((option) => option.text.length)) >= aiReplyLayoutTextThreshold
+);
 
 const defaultMessageIntervalSeconds = 58;
 const minimumInitialCameraErrorDelayMs = 2200;
 const minimumRetryCameraErrorDelayMs = 900;
+const defaultAiReplyHighlights = ["多久", "体温", "几天", "位置", "程度", "痰色", "胸闷气促", "呼吸", "低头", "热敷", "活动颈部"];
+const aiReplyLayoutTextThreshold = "这是一串智能回复的文字内容，并且这是一行的最长字符数".length;
+const followUpVoucherVariants = ["image", "voice", "mixed"];
+const defaultConsultAttachments = [
+  { title: "附件1", image: "assets/consult-materials/allergic-rhinitis.png" },
+  { title: "附件2", image: "assets/consult-materials/pediatric-fever.png" },
+  { title: "附件3", image: "assets/consult-materials/sore-throat.png" },
+  { title: "附件4", image: "assets/consult-materials/skin-rash.png" }
+];
+const followUpVoucherImages = [
+  { title: "病例图片1", image: "assets/consult-materials/allergic-rhinitis.png" },
+  { title: "病例图片2", image: "assets/consult-materials/pediatric-fever.png" },
+  { title: "病例图片3", image: "assets/consult-materials/sore-throat.png" },
+  { title: "病例图片4", image: "assets/consult-materials/skin-rash.png" }
+];
+const followUpVoucherVoices = [
+  { title: "病例语音1", duration: 8 },
+  { title: "病例语音2", duration: 7 }
+];
+const defaultConsultCaseVoices = [{ title: "病例信息语音", duration: 7 }];
 let cameraSetupSerial = 0;
 let revealCameraErrorRequested = false;
 let revealCameraErrorNow = null;
@@ -302,7 +219,8 @@ function requestCameraErrorReveal() {
 }
 
 async function setupLocalCamera({ forceRetry = false } = {}) {
-  if (!props.video || !localVideo.value) return;
+  const localVideo = getLocalVideoElement();
+  if (!props.video || !localVideo) return;
   const setupId = ++cameraSetupSerial;
   const startedAt = window.performance.now();
   revealCameraErrorRequested = false;
@@ -316,7 +234,7 @@ async function setupLocalCamera({ forceRetry = false } = {}) {
       ? "正在连接摄像头"
       : getCameraErrorText(mediaStatus.reason);
 
-  const result = await attachLocalCamera(localVideo.value, {
+  const result = await attachLocalCamera(localVideo, {
     cameraOn: cameraOn.value,
     micOn: micOn.value,
     forceRetry
@@ -343,6 +261,134 @@ async function setupLocalCamera({ forceRetry = false } = {}) {
   cameraStatusText.value = result.ok ? "医生摄像头已连接" : getCameraErrorText(result.reason);
 }
 
+function getLocalVideoElement() {
+  const exposedLocalVideo = videoWindow.value?.localVideo;
+  return exposedLocalVideo?.value || exposedLocalVideo || null;
+}
+
+function normalizeAiOption(option) {
+  if (typeof option === "string") {
+    return {
+      text: option,
+      tag: "",
+      highlights: getAiReplyHighlights(option)
+    };
+  }
+  const text = option?.text || "";
+  return {
+    text,
+    tag: option?.tag || "",
+    highlights: option?.highlights || getAiReplyHighlights(text)
+  };
+}
+
+function getAiReplyHighlights(text = "") {
+  return defaultAiReplyHighlights.filter((keyword) => String(text).includes(keyword));
+}
+
+function aiReplyTextSegments(option) {
+  const source = String(option?.text || "");
+  const matches = (option?.highlights || [])
+    .map((keyword) => {
+      const value = String(keyword || "");
+      return value ? { keyword: value, index: source.indexOf(value) } : null;
+    })
+    .filter((match) => match && match.index >= 0)
+    .sort((left, right) => left.index - right.index || right.keyword.length - left.keyword.length)
+    .reduce((result, match) => {
+      const previous = result[result.length - 1];
+      if (previous && match.index < previous.index + previous.keyword.length) return result;
+      return [...result, match];
+    }, []);
+
+  if (!matches.length) {
+    return [{ text: source, highlight: false, index: 0 }];
+  }
+
+  const segments = [];
+  let cursor = 0;
+  matches.forEach((match) => {
+    if (match.index > cursor) {
+      segments.push({ text: source.slice(cursor, match.index), highlight: false, index: cursor });
+    }
+    segments.push({
+      text: source.slice(match.index, match.index + match.keyword.length),
+      highlight: true,
+      index: match.index
+    });
+    cursor = match.index + match.keyword.length;
+  });
+  if (cursor < source.length) {
+    segments.push({ text: source.slice(cursor), highlight: false, index: cursor });
+  }
+  return segments;
+}
+
+function normalizeVoices(voices = [], fallback = []) {
+  const source = Array.isArray(voices) && voices.length ? voices : fallback;
+  return source.map((voice, index) =>
+    typeof voice === "string"
+      ? { title: voice, duration: index === 0 ? 8 : 7 }
+      : { title: voice.title || `语音${index + 1}`, duration: Number(voice.duration || 0) || (index === 0 ? 8 : 7) }
+  );
+}
+
+function getFollowUpVoucher(record = {}) {
+  const source = record?.followUpVoucher;
+  if (!source) return null;
+
+  const hasImages = Array.isArray(source.images) && source.images.length > 0;
+  const hasVoices = Array.isArray(source.voices) && source.voices.length > 0;
+  const inferredType = hasImages && hasVoices ? "mixed" : hasImages ? "image" : hasVoices ? "voice" : "";
+  const type = followUpVoucherVariants.includes(source.type) ? source.type : inferredType;
+  if (!type) return null;
+
+  const images = hasImages ? source.images : followUpVoucherImages;
+  const voices = hasVoices ? source.voices : followUpVoucherVoices;
+  return {
+    type,
+    images: type === "voice" ? [] : images.slice(0, 4),
+    voices: type === "image" ? [] : voices.slice(0, 2)
+  };
+}
+
+function normalizeConsultImage(image, index) {
+  if (typeof image === "string") {
+    return {
+      title: image || `附件${index + 1}`,
+      image: "assets/figma-consult/attachment-preview.png"
+    };
+  }
+  return {
+    title: image.title || `附件${index + 1}`,
+    image: image.image || image.src || "assets/figma-consult/attachment-preview.png"
+  };
+}
+
+function getConsultInfoCard(record = {}) {
+  const voucher = getFollowUpVoucher(record);
+  const hasConsultInfo = Boolean(record?.consultInfo);
+  const hasConsultAttachments = Array.isArray(record?.consultInfo?.attachments) && record.consultInfo.attachments.length > 0;
+  if (record?.type !== "consult" && !hasConsultInfo && !voucher) return null;
+
+  const images = [
+    ...(hasConsultAttachments ? record.consultInfo.attachments : record?.type === "consult" ? defaultConsultAttachments : []),
+    ...(voucher?.images || [])
+  ].map(normalizeConsultImage);
+  const voices = [
+    ...normalizeVoices(record?.consultInfo?.caseVoices, record?.type === "consult" || hasConsultInfo ? defaultConsultCaseVoices : []),
+    ...normalizeVoices(voucher?.voices || [])
+  ];
+  const description = record?.consultInfo?.description || (record?.type === "consult" ? "颈部酸痛僵硬，转头活动受限，久坐后痛感加重" : "");
+
+  if (!description && !images.length && !voices.length) return null;
+  return {
+    description,
+    images,
+    voices
+  };
+}
+
 async function toggleCamera() {
   cameraOn.value = !cameraOn.value;
   setLocalCameraEnabled(cameraOn.value);
@@ -356,19 +402,7 @@ function toggleMicrophone() {
   setLocalMicrophoneEnabled(micOn.value);
 }
 
-function openConsultAttachment(index) {
-  const attachments = consultAttachments.value;
-  const attachment = attachments[index];
-  if (!attachment) return;
-  store.selectedAttachment = {
-    ...attachment,
-    index: index + 1,
-    total: attachments.length,
-    attachmentList: attachments
-  };
-}
-
-function openFollowUpImage({ image, index = 0, images = [] } = {}) {
+function openConsultAttachment({ image, index = 0, images = [] } = {}) {
   if (!image) return;
   store.selectedAttachment = {
     ...image,

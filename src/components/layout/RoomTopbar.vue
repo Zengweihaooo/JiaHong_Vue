@@ -18,6 +18,7 @@
             aria-haspopup="menu"
             @click="store.userMenuVisible = !store.userMenuVisible"
           >
+            <Avatar :src="assetUrl('assets/figma-consult/avatar-source.png')" :name="store.doctor?.name || '张医生'" size="sm" />
             <span>{{ store.doctor?.name || "张医生" }}</span>
             <span class="room-user__chevron" aria-hidden="true">
               <img :src="assetUrl('assets/figma-consult/chevron-down.svg')" alt="" />
@@ -33,7 +34,7 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@jiahong/ui";
+import { Avatar, assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>

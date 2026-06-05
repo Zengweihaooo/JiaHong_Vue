@@ -129,6 +129,30 @@ test("message list filters by type/state and limits visible ongoing consultation
   );
 });
 
+test("message list can collapse ongoing video queue to the preferred video", () => {
+  const records = [
+    { id: "video_old", type: "video", state: "ongoing", time: "09:00" },
+    { id: "video_active", type: "video", state: "ongoing", time: "08:00" },
+    { id: "text_1", type: "text", state: "ongoing", time: "10:00" },
+    { id: "consult_1", type: "consult", state: "ongoing", time: "10:30" }
+  ];
+
+  assert.deepEqual(
+    getMessageListRecords(records, {
+      activeVideoRecordId: "video_active",
+      collapseVideoQueue: true
+    }).map((record) => record.id),
+    ["video_active", "text_1", "consult_1"]
+  );
+
+  assert.deepEqual(
+    getMessageListRecords(records, {
+      activeVideoRecordId: "video_active"
+    }).map((record) => record.id),
+    ["video_active", "video_old", "text_1", "consult_1"]
+  );
+});
+
 test("next ongoing video excludes the current record and honors a preferred video when available", () => {
   const records = [
     { id: "video_current", type: "video", state: "ongoing", time: "11:00" },

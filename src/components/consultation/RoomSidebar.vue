@@ -5,7 +5,7 @@
         <h1>问诊室</h1>
         <div class="room-waiting">
           <span>待接诊</span>
-          <strong>{{ store.waitingQueue.total }}</strong>
+          <strong data-waiting-total>{{ store.waitingQueue.total }}</strong>
         </div>
       </div>
     </div>
@@ -14,6 +14,7 @@
         <button
           :class="['jh-btn jh-btn--md jh-btn--outline-secondary room-tag room-tag--wide', { 'is-active': store.messageFilterState === 'ongoing' }]"
           type="button"
+          data-filter-state="ongoing"
           @click="store.setMessageFilter({ state: 'ongoing' })"
         >
           进行中
@@ -21,13 +22,14 @@
         <button
           :class="['jh-btn jh-btn--md jh-btn--outline-secondary room-tag room-tag--wide', { 'is-active': store.messageFilterState === 'ended' }]"
           type="button"
+          data-filter-state="ended"
           @click="store.setMessageFilter({ state: 'ended' })"
         >
           已结束
         </button>
       </div>
     </div>
-    <div class="message-list" aria-label="会话列表">
+    <div class="message-list" aria-label="会话列表" data-filter-type="all" :data-filter-state="store.messageFilterState">
       <template v-for="(record, index) in groupedRecords" :key="record.id">
         <button
           v-if="record.showGroup"
@@ -46,6 +48,12 @@
           type="button"
           :hidden="isGroupCollapsed(record.type)"
           :aria-disabled="isVideoLocked(record)"
+          :data-record-id="record.id"
+          :data-target-view="record.targetView || ''"
+          :data-record-state="record.state"
+          :data-badge-key="messageBadgeKey(record)"
+          :data-video-locked="isVideoLocked(record) ? 'true' : undefined"
+          :title="isVideoLocked(record) ? '当前视频问诊未结束，暂不可进入新的视频问诊' : undefined"
           @click="openRecord(record)"
         >
           <span class="message-item__stripe" aria-hidden="true"></span>
@@ -85,11 +93,11 @@ const groupedRecords = computed(() =>
 );
 
 function isCurrentVideo(record) {
-  return record.type === "video" && store.activeRecordId === record.id;
+  return record.type === "video" && record.state === "ongoing" && (store.activeVideoRecordId === record.id || (!store.activeVideoRecordId && store.activeRecordId === record.id));
 }
 
 function isCompact(record) {
-  return record.type === "video" && store.activeRecordId !== record.id;
+  return record.type === "video" && store.activeRecordId !== record.id && !isCurrentVideo(record);
 }
 
 function isVideoLocked(record) {
@@ -108,9 +116,14 @@ function messageItemClass(record) {
     {
       "message-item--compact": isCompact(record),
       "is-active": store.activeRecordId === record.id,
+      "is-current-video": isCurrentVideo(record),
       "is-video-locked": isVideoLocked(record)
     }
   ];
+}
+
+function messageBadgeKey(record) {
+  return record?.id ? `message:${record.id}` : "";
 }
 
 function isGroupCollapsed(type) {
