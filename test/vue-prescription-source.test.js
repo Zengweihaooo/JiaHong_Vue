@@ -3,17 +3,22 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue prescription panel uses shared UI medicine risk tip with H5 row selection", async () => {
-  const [prescriptionPanel, legacyStyles, uiStyles, uiExports, store, consultBindings] = await Promise.all([
+  const [prescriptionPanel, legacyStyles, uiStyles, uiExports, uiRootExports, uiUtils, uiMedicineRisk, store, consultBindings] = await Promise.all([
     readFile(new URL("../src/components/consultation/PrescriptionPanel.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/src/components/index.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/index.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/utils/index.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/utils/medicineRisk.js", import.meta.url), "utf8"),
     readFile(new URL("../src/stores/app.js", import.meta.url), "utf8"),
     readFile(new URL("../src/presentation/interactions/consultDialogBindings.js", import.meta.url), "utf8")
   ]);
 
-  assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl \} from "@jiahong\/ui"/);
+  assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl, shouldShowMedicineRiskTag \} from "@jiahong\/ui"/);
   assert.match(prescriptionPanel, /<MedicineRiskTip/);
+  assert.match(prescriptionPanel, /class="medicine-risk-cell"/);
+  assert.match(prescriptionPanel, /v-if="shouldShowMedicineRiskTag\(medicine\.risk\)"/);
   assert.match(prescriptionPanel, /function selectRiskMedicine/);
   assert.match(prescriptionPanel, /function hideMedicineRiskTip/);
   assert.match(prescriptionPanel, /medicine-table__row--warning-active/);
@@ -22,10 +27,15 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(prescriptionPanel, /function requestPrescriptionSubmit/);
   assert.match(prescriptionPanel, /store\.showToast\("存在用药风险，请点击高亮药品行查看具体提示并完成修改"\)/);
   assert.match(prescriptionPanel, /store\.submitActivePrescription\(\)/);
+  assert.doesNotMatch(prescriptionPanel, /中:\s*"jh-risk-tag--medium"/);
   assert.doesNotMatch(prescriptionPanel, /inline-risk-warning|data-inline-risk-warning|has-inline-risk-warning/);
 
   assert.match(uiExports, /MedicineRiskTip/);
+  assert.match(uiRootExports, /shouldShowMedicineRiskTag/);
+  assert.match(uiUtils, /shouldShowMedicineRiskTag/);
+  assert.match(uiMedicineRisk, /visibleMedicineRiskTags = new Set\(\['高', '低'\]\)/);
   assert.match(uiStyles, /\.medicine-risk-tip\s*\{/);
+  assert.match(uiStyles, /\.medicine-risk-cell\s*\{/);
   assert.match(uiStyles, /\.medicine-table\s*\{[\s\S]*?min-width: var\(--jh-table-width\);/);
   assert.match(uiStyles, /\.medicine-table__row\s*\{[\s\S]*?display: grid;[\s\S]*?grid-template-columns:/);
   assert.match(uiStyles, /\.medicine-table__head\s*\{[\s\S]*?background: var\(--jh-table-head-bg\);/);

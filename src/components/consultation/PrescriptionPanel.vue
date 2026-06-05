@@ -158,7 +158,9 @@
                 </button>
               </div>
             </div>
-            <span :class="['jh-risk-tag jh-risk-tag--sm risk-small', riskClass(medicine.risk)]">{{ medicine.risk }}</span>
+            <span class="medicine-risk-cell">
+              <span v-if="shouldShowMedicineRiskTag(medicine.risk)" :class="['jh-risk-tag jh-risk-tag--sm risk-small', riskClass(medicine.risk)]">{{ medicine.risk }}</span>
+            </span>
             <button v-if="!readonly" class="jh-btn jh-btn--text medicine-delete-btn" type="button">删除</button>
           </div>
         </div>
@@ -220,7 +222,7 @@ import { Clock } from "@element-plus/icons-vue";
 import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
-import { MedicineRiskTip, assetUrl } from "@jiahong/ui";
+import { MedicineRiskTip, assetUrl, shouldShowMedicineRiskTag } from "@jiahong/ui";
 
 const props = defineProps({
   record: {
@@ -388,7 +390,6 @@ function warningClass(medicine, field) {
 function riskClass(risk) {
   return {
     高: "jh-risk-tag--high",
-    中: "jh-risk-tag--medium",
     低: "jh-risk-tag--low"
   }[risk] || "";
 }
