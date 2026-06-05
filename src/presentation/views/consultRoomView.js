@@ -77,7 +77,9 @@ export function renderVideoChatPanel() {
   return `
     <section class="chat-panel video-chat-panel" aria-label="视频聊天区域">
       <div class="video-window" data-video-controls="true">
-        <img class="video-window__main" src="${assetUrl("assets/video-main.png")}" alt="患者视频画面" />
+        <div class="video-window__main" role="img" aria-label="患者视频等待画面">
+          <span>等待患者进入</span>
+        </div>
         <div class="video-window__pip video-window__pip--local${cameraOn ? "" : " is-camera-off"}">
           <video class="video-window__local-video" data-local-camera autoplay muted playsinline aria-label="医生摄像头画面"></video>
           <div class="video-window__camera-status" data-camera-status>正在连接摄像头</div>

@@ -1,7 +1,9 @@
 <template>
   <section :class="['chat-panel', { 'video-chat-panel': video }]" aria-label="聊天区域">
     <div v-if="video" class="video-window" data-video-controls>
-      <img class="video-window__main" :src="assetUrl('assets/video-main.png')" alt="患者视频画面" />
+      <div class="video-window__main" role="img" aria-label="患者视频等待画面">
+        <span>等待患者进入</span>
+      </div>
       <div
         :class="[
           'video-window__pip video-window__pip--local',
