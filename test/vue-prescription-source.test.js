@@ -23,3 +23,25 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(uiStyles, /\.medicine-table__row--warning-active/);
   assert.doesNotMatch(legacyStyles, /\.medicine-risk-tip\s*\{/);
 });
+
+test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet", async () => {
+  const [legacyStyles, uiStyles] = await Promise.all([
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
+  ]);
+
+  for (const styles of [legacyStyles, uiStyles]) {
+    assert.match(styles, /\.prescription-panel\s*\{/);
+    assert.match(styles, /\.patient-info\s*\{[\s\S]*?gap: 16px;[\s\S]*?margin: 10px 24px;[\s\S]*?padding: 16px 0;/);
+    assert.match(styles, /\.patient-info__meta\s*\{[\s\S]*?line-height: 20px;/);
+    assert.match(styles, /\.patient-info__grid\s*\{[\s\S]*?gap: 12px clamp\(32px, 7%, 72px\);[\s\S]*?line-height: 20px;/);
+    assert.match(styles, /\.patient-info__field\s*\{[\s\S]*?gap: 12px;/);
+    assert.match(styles, /\.patient-info__field-value\s*\{[\s\S]*?height: 34px;[\s\S]*?padding: 6px 12px;/);
+    assert.match(styles, /\.medicine-search-combobox\s*\{[\s\S]*?width: max\(100%, var\(--jh-table-width\)\);[\s\S]*?min-width: var\(--jh-table-width\);/);
+  }
+
+  assert.match(legacyStyles, /\.medicine-table__row > span\.medicine-warning-target\s*\{/);
+  assert.match(legacyStyles, /\.medicine-table__row > span:nth-child\(8\),\s*\.medicine-table__row > input\[data-medicine-field="quantity"\]\s*\{[\s\S]*?text-align: center;/);
+  assert.match(legacyStyles, /\.medicine-delete-btn\s*\{[\s\S]*?color: var\(--jh-text-tertiary\);[\s\S]*?transition: color 160ms ease;/);
+  assert.match(legacyStyles, /\.medicine-delete-btn:hover,\s*\.medicine-delete-btn:focus-visible\s*\{[\s\S]*?color: var\(--jh-table-action\);/);
+});

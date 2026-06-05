@@ -4460,9 +4460,9 @@ body.page-view-room {
 .patient-info {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin: 16px 24px;
-  padding: 24px 0;
+  gap: 16px;
+  margin: 10px 24px;
+  padding: 16px 0;
   background: #ffffff;
 }
 
@@ -4490,7 +4490,7 @@ body.page-view-room {
   min-width: 0;
   color: var(--jh-text-secondary);
   font-size: 14px;
-  line-height: 22px;
+  line-height: 20px;
 }
 
 .patient-info__meta span {
@@ -4503,17 +4503,17 @@ body.page-view-room {
 .patient-info__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px clamp(40px, 8%, 80px);
+  gap: 12px clamp(32px, 7%, 72px);
   color: var(--jh-text-secondary);
   font-size: 14px;
-  line-height: 22px;
+  line-height: 20px;
 }
 
 .patient-info__field {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -4533,8 +4533,8 @@ body.page-view-room {
   align-items: center;
   width: 100%;
   min-width: 0;
-  height: 38px;
-  padding: 8px 16px;
+  height: 34px;
+  padding: 6px 12px;
   overflow: hidden;
   border-radius: 4px;
   background: #f8f8f9;
@@ -4884,6 +4884,15 @@ body.page-view-room {
   box-shadow: 0 0 0 1px rgba(255, 59, 48, 0.72);
 }
 
+.medicine-table__row > span.medicine-warning-target {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 9px 8px;
+  border: 1px solid #ff3b30;
+  border-radius: 6px;
+}
+
 .medicine-usage-control,
 .medicine-unit-control {
   position: relative;
@@ -5025,12 +5034,29 @@ body.page-view-room {
   justify-self: center;
 }
 
+.medicine-table__row > span:nth-child(8),
+.medicine-table__row > input[data-medicine-field="quantity"] {
+  color: var(--jh-table-strong-text);
+  text-align: center;
+}
+
 .medicine-delete-btn {
   justify-self: end;
   min-width: 0;
   padding-right: 0;
   padding-left: 0;
+  color: var(--jh-text-tertiary);
+  transition: color 160ms ease;
+}
+
+.medicine-delete-btn:hover,
+.medicine-delete-btn:focus-visible {
   color: var(--jh-table-action);
+}
+
+.medicine-table__row > :last-child {
+  justify-self: end;
+  text-align: right;
 }
 
 .consultation-panel .diagnosis-section {
