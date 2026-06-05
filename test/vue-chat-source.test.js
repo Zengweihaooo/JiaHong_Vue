@@ -52,8 +52,15 @@ test("shared consult info card keeps H5 attachment viewed states", async () => {
 
   assert.match(consultInfoCard, /viewedVoiceKeys/);
   assert.match(consultInfoCard, /activeVoiceKey/);
+  assert.match(consultInfoCard, /activeVoiceRemaining/);
+  assert.match(consultInfoCard, /activeVoiceWaveStep/);
   assert.match(consultInfoCard, /function isVoiceActive/);
+  assert.match(consultInfoCard, /function getVoiceCurrentDuration/);
+  assert.match(consultInfoCard, /function stopFollowUpVoicePlayback/);
   assert.match(consultInfoCard, /function openVoice/);
   assert.match(consultInfoCard, /followup-voucher-item--viewed/);
   assert.match(consultInfoCard, /data-followup-voucher-status/);
+  assert.match(consultInfoCard, /data-followup-voice-current/);
+  assert.match(consultInfoCard, /data-followup-voice-step/);
+  assert.match(consultInfoCard, /is-playing/);
 });
