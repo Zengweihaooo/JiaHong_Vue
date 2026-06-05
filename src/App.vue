@@ -39,7 +39,7 @@ onMounted(async () => {
   document.addEventListener("click", closeUserMenuOnOutsideClick);
   timer = window.setInterval(() => {
     if (store.doctorStatus === "online") {
-      store.refreshRealtime();
+      store.refreshRealtime().catch(() => {});
     }
   }, 3000);
 });

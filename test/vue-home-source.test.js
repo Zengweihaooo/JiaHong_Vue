@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue home consult entry card keeps latest H5 background in shared UI", async () => {
-  const [homeDashboard, legacyStyles, consultEntryCard, serviceStatusCard] = await Promise.all([
+  const [app, homeDashboard, legacyStyles, consultEntryCard, serviceStatusCard] = await Promise.all([
+    readFile(new URL("../src/App.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/src/components/ConsultEntryCard/ConsultEntryCard.vue", import.meta.url), "utf8"),
@@ -22,4 +23,5 @@ test("Vue home consult entry card keeps latest H5 background in shared UI", asyn
   assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
   assert.match(serviceStatusCard, /word-break: keep-all/);
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
+  assert.match(app, /store\.refreshRealtime\(\)\.catch\(\(\) => \{\}\)/);
 });

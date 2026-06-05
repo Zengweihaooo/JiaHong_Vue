@@ -39,3 +39,27 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.match(store, /showToast\("已调整快捷入口顺序"\)/);
   assert.doesNotMatch(store, /const maxQuickActionCards = 8/);
 });
+
+test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", async () => {
+  const [homeDashboard, legacyStyles, quickActionsPanel, uiStyles] = await Promise.all([
+    readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/components/QuickActionsPanel/QuickActionsPanel.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
+  ]);
+
+  assert.match(homeDashboard, /@schedule-detail="store\.showToast\('排班详情暂未开放'\)"/);
+  assert.match(quickActionsPanel, /data-schedule-active-status/);
+  assert.match(quickActionsPanel, /schedule-day-block__status--done/);
+
+  for (const styles of [legacyStyles, quickActionsPanel, uiStyles]) {
+    assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\(100vh - 48px\)\);/);
+    assert.match(styles, /\.schedule-panel__header\s*\{[\s\S]*?flex: 0 0 48px;[\s\S]*?padding: 12px 16px;/);
+    assert.match(styles, /\.schedule-panel__summary\s*\{[\s\S]*?flex: 0 0 52px;[\s\S]*?padding: 20px 24px 0;/);
+    assert.match(styles, /\.schedule-day-grid\s*\{[\s\S]*?width: 658px;[\s\S]*?height: 579px;/);
+    assert.match(styles, /\.schedule-day-grid__hours\s*\{[\s\S]*?grid-template-rows: repeat\(12, 44px\);/);
+    assert.match(styles, /\.schedule-day-block\s*\{[\s\S]*?top: calc\(var\(--start-hour\) \* 44px\);[\s\S]*?height: calc\(var\(--duration-hours\) \* 44px\);/);
+    assert.match(styles, /\.schedule-day-grid__missed-callout\s*\{[\s\S]*?top: 300px;/);
+    assert.match(styles, /\.schedule-day-grid__current-line\s*\{[\s\S]*?top: 352px;[\s\S]*?background: #e12727;/);
+  }
+});
