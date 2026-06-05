@@ -454,7 +454,7 @@ test("render record selectors resolve active records, chat keys, ended records, 
   assert.equal(selectors.getActiveVideoConsultationRecordId("text_1"), "video_1");
 });
 
-test("home view renders waiting counts, service switches, notices, quick entries, and schedule panel", async () => {
+test("home view renders waiting counts, service switches, notices, quick entries, and schedule dialog", async () => {
   setupBrowserGlobals("/");
   const { hydrateAppData } = await import("../src/application/state/dataStore.js");
   const { initRuntimeState } = await import("../src/application/state/runtimeState.js?v=20260528-06");
@@ -513,15 +513,18 @@ test("home view renders waiting counts, service switches, notices, quick entries
     renderAnnouncementListDialog,
     renderConsultCard,
     renderMain,
+    renderScheduleDialog,
     renderQuickActions,
     renderQuickEntryDialog,
     renderServiceCard,
-    renderWaitingCard
+    renderWaitingCard,
+    normalizeQuickActions
   } = await import("../src/presentation/views/homeView.js?presentation-home");
 
   assert.match(renderWaitingCard(), /data-waiting-total>3</);
   assert.match(renderWaitingCard(), /data-waiting-type="video">1</);
   assert.match(renderConsultCard(), /consult-card--has-queue/);
+  assert.match(renderConsultCard(), /consult-card__bg/);
 
   const serviceCard = renderServiceCard();
   assert.match(serviceCard, /jh-status-badge--online/);
@@ -539,7 +542,15 @@ test("home view renders waiting counts, service switches, notices, quick entries
   assert.match(renderQuickEntryDialog(), /quick-entry-dialog__empty/);
   assert.match(renderQuickActions(), /data-quick-feature="schedule"/);
   assert.match(renderQuickActions(), /quick-card__attention-dot/);
-  assert.match(renderQuickActions(), /schedule-panel/);
+  assert.doesNotMatch(renderQuickActions(), /schedule-panel/);
+  assert.match(renderScheduleDialog(), /schedule-overlay/);
+  assert.match(renderScheduleDialog(), /schedule-day-grid/);
+  assert.deepEqual(normalizeQuickActions([{ title: "排班管理", desc: "查看排班", icon: "calendar" }]).at(-1), {
+    title: "",
+    desc: "添加快捷入口",
+    icon: "plus",
+    isAdd: true
+  });
   assert.match(renderMain(), /copyright © 2017-2026/);
 });
 

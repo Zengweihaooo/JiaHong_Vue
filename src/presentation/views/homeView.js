@@ -9,7 +9,8 @@ import {
 } from "../components/primitives.js";
 import { icons, renderQuickEntryIcon } from "../ui/icons.js";
 import { renderQuickCardMarkup } from "../components/quickEntryCards.js";
-import { renderSchedulePanel } from "./homeSchedulePanel.js";
+export { renderScheduleDialog } from "./homeSchedulePanel.js";
+import { maxQuickActionCards } from "../../domain/quickEntries.js";
 
 export function renderWaitingCard() {
   return `
@@ -43,6 +44,7 @@ export function renderConsultCard() {
   const hasWaitingQueue = Number(renderRuntime.waitingQueue?.total || 0) > 0;
   return `
     <button class="consult-card${hasWaitingQueue ? " consult-card--has-queue" : ""}" type="button" aria-label="进入问诊室">
+      <img class="consult-card__bg" src="${assetUrl("assets/figma-home/consult-bg.png")}" alt="" aria-hidden="true" />
       <div class="consult-card__content">
         <div class="consult-card__icon">${icons.stethoscope}</div>
         <h2>进入问诊室</h2>
@@ -195,6 +197,7 @@ function renderQuickEntryCardEditButton() {
 }
 
 export function renderQuickActions() {
+  const quickActions = normalizeQuickActions(renderData.quickActions);
   return `
     <section class="card quick-entry-card" aria-label="高频操作入口">
       <div class="quick-entry-card__header">
@@ -202,12 +205,25 @@ export function renderQuickActions() {
         ${renderQuickEntryCardEditButton()}
       </div>
       <div class="quick-grid">
-        ${renderData.quickActions
+        ${quickActions
           .map((action) => renderQuickCardMarkup(action))
           .join("")}
       </div>
-      ${renderSchedulePanel()}
     </section>`;
+}
+
+export function normalizeQuickActions(actions = []) {
+  const customActions = actions.filter((action) => !action?.isAdd);
+  if (customActions.length >= maxQuickActionCards) return customActions.slice(0, maxQuickActionCards);
+  return [
+    ...customActions.slice(0, maxQuickActionCards),
+    {
+      title: "",
+      desc: "添加快捷入口",
+      icon: "plus",
+      isAdd: true
+    }
+  ];
 }
 
 export function renderMain() {

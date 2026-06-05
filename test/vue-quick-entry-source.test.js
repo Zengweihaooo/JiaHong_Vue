@@ -64,3 +64,25 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
     assert.match(styles, /\.schedule-day-grid__current-line\s*\{[\s\S]*?top: 352px;[\s\S]*?background: #e12727;/);
   }
 });
+
+test("legacy quick entry bindings open the H5 schedule dialog and update punch state", async () => {
+  const bindings = await readFile(
+    new URL("../src/presentation/interactions/homeQuickEntryBindings.js", import.meta.url),
+    "utf8"
+  );
+  const render = await readFile(new URL("../src/presentation/render.js", import.meta.url), "utf8");
+  const homeView = await readFile(new URL("../src/presentation/views/homeView.js", import.meta.url), "utf8");
+
+  assert.match(render, /renderScheduleDialog/);
+  assert.match(render, /\$\{renderScheduleDialog\(\)\}/);
+  assert.match(homeView, /export \{ renderScheduleDialog \}/);
+  assert.doesNotMatch(homeView, /renderSchedulePanel\(\)/);
+
+  assert.match(bindings, /openOverlay\("\.schedule-overlay", "\.schedule-panel__back", event\)/);
+  assert.match(bindings, /bindOverlayDismiss\(scheduleOverlay/);
+  assert.match(bindings, /button\.classList\.add\("schedule-panel__punch--done"\)/);
+  assert.match(bindings, /data-schedule-punched-count/);
+  assert.match(bindings, /quick-card\[data-attention="unpunched-schedule"\]/);
+  assert.match(bindings, /showToast\("打卡成功"\)/);
+  assert.match(bindings, /quickCardControlEventUntil/);
+});

@@ -14,6 +14,18 @@ import {
 
 let quickEntryEditingCard = null;
 let activeQuickCardDrag = null;
+let quickCardControlEventUntil = 0;
+
+function isQuickCardControlTarget(target) {
+  return Boolean(target?.closest?.(".quick-card__delete, .quick-card__drag"));
+}
+
+function guardQuickCardControlEvent(event) {
+  if (!isQuickCardControlTarget(event.target)) return false;
+  quickCardControlEventUntil = Date.now() + 350;
+  event.stopPropagation();
+  return true;
+}
 
 function openQuickEntryDialog(event, editingCard = null) {
   quickEntryEditingCard = editingCard;
@@ -81,34 +93,23 @@ function endMouseQuickCardDrag() {
 }
 
 function openQuickSchedulePanel(card, event) {
-  event?.preventDefault();
-  event?.stopPropagation();
   const quickEntryCard = card.closest(".quick-entry-card");
-  const panel = quickEntryCard?.querySelector(".schedule-panel");
-  if (!quickEntryCard || !panel) return false;
-  quickEntryCard.classList.remove("is-editing");
-  quickEntryCard.querySelector(".quick-entry-card__edit")?.setAttribute("aria-pressed", "false");
-  const editText = quickEntryCard.querySelector(".quick-entry-card__edit-text");
-  if (editText) editText.textContent = "编辑";
-  setQuickCardEditControlsState(quickEntryCard, false);
-  quickEntryCard.classList.add("is-schedule-open");
-  panel.hidden = false;
-  panel.querySelector(".schedule-panel__back")?.focus();
-  return true;
+  if (quickEntryCard) {
+    quickEntryCard.classList.remove("is-editing");
+    quickEntryCard.querySelector(".quick-entry-card__edit")?.setAttribute("aria-pressed", "false");
+    const editText = quickEntryCard.querySelector(".quick-entry-card__edit-text");
+    if (editText) editText.textContent = "编辑";
+    setQuickCardEditControlsState(quickEntryCard, false);
+  }
+  return Boolean(openOverlay(".schedule-overlay", ".schedule-panel__back", event));
 }
 
 export function closeQuickSchedulePanel(event) {
-  document.querySelectorAll(".quick-entry-card.is-schedule-open").forEach((quickEntryCard) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    quickEntryCard.classList.remove("is-schedule-open");
-    const panel = quickEntryCard.querySelector(".schedule-panel");
-    if (panel) panel.hidden = true;
-  });
+  closeOverlay(".schedule-overlay", event);
 }
 
 function activateQuickCard(card, event) {
-  if (event?.target.closest(".quick-card__delete, .quick-card__drag")) return;
+  if (isQuickCardControlTarget(event?.target) || Date.now() < quickCardControlEventUntil) return;
   if (card.classList.contains("quick-card--add")) {
     openQuickEntryDialog(event);
     return;
@@ -163,16 +164,46 @@ function bindQuickEntryEditButtons() {
 }
 
 function bindQuickSchedulePanel() {
-  document.querySelectorAll(".schedule-panel__back").forEach((button) => {
-    if (button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("click", closeQuickSchedulePanel);
+  const scheduleOverlay = document.querySelector(".schedule-overlay");
+  if (!scheduleOverlay) return;
+  bindOverlayDismiss(scheduleOverlay, {
+    close: closeQuickSchedulePanel,
+    closeSelector: ".schedule-panel__back",
+    dialogSelector: ".schedule-dialog"
   });
-  document.querySelectorAll(".schedule-panel__detail").forEach((button) => {
+  scheduleOverlay.querySelectorAll(".schedule-panel__detail").forEach((button) => {
     if (button.dataset.bound === "true") return;
     button.dataset.bound = "true";
     button.addEventListener("click", () => {
       showToast("排班详情暂未开放");
+    });
+  });
+  scheduleOverlay.querySelectorAll(".schedule-panel__punch").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", () => {
+      if (button.dataset.punchState === "done") return;
+      button.dataset.punchState = "done";
+      button.classList.remove("schedule-panel__punch--primary", "schedule-panel__punch--warning");
+      button.classList.add("schedule-panel__punch--done");
+      button.textContent = "已打卡";
+      const panel = button.closest(".schedule-panel");
+      const punchedCount = panel?.querySelector("[data-schedule-punched-count]");
+      const unpunchedCount = panel?.querySelector("[data-schedule-unpunched-count]");
+      if (punchedCount) punchedCount.textContent = String(Number(punchedCount.textContent || 0) + 1);
+      if (unpunchedCount) unpunchedCount.textContent = String(Math.max(0, Number(unpunchedCount.textContent || 0) - 1));
+      panel?.querySelectorAll('[data-schedule-active-status="true"]').forEach((status) => {
+        status.textContent = "✓";
+        status.setAttribute("aria-label", "已打卡");
+        status.classList.remove("schedule-day-block__status--warning");
+        status.classList.add("schedule-day-block__status--done");
+      });
+      panel?.querySelector(".schedule-day-grid__missed-callout")?.remove();
+      document.querySelectorAll('.quick-card[data-attention="unpunched-schedule"]').forEach((card) => {
+        delete card.dataset.attention;
+        card.querySelector(".quick-card__attention-dot")?.remove();
+      });
+      showToast("打卡成功");
     });
   });
 }
@@ -181,6 +212,9 @@ function bindQuickGrid() {
   document.querySelectorAll(".quick-grid").forEach((grid) => {
     if (grid.dataset.bound === "true") return;
     grid.dataset.bound = "true";
+    grid.addEventListener("pointerdown", guardQuickCardControlEvent, true);
+    grid.addEventListener("pointerup", guardQuickCardControlEvent, true);
+    grid.addEventListener("mousedown", guardQuickCardControlEvent, true);
     grid.addEventListener("click", (event) => {
       const deleteButton = event.target.closest(".quick-card__delete");
       if (deleteButton) {
@@ -217,7 +251,7 @@ function bindQuickGrid() {
       grid.querySelector(".quick-card.is-dragging")?.classList.remove("is-dragging");
     });
     grid.addEventListener("pointerdown", (event) => {
-      if (event.target.closest(".quick-card__delete")) return;
+      if (isQuickCardControlTarget(event.target)) return;
       const handle = event.target.closest(".quick-card__drag");
       const card = event.target.closest(".quick-card--custom");
       if (!card || !grid.closest(".quick-entry-card")?.classList.contains("is-editing")) return;
@@ -233,7 +267,7 @@ function bindQuickGrid() {
     grid.addEventListener("pointercancel", endPointerQuickCardDrag);
     grid.addEventListener("mousedown", (event) => {
       if (typeof PointerEvent === "function") return;
-      if (event.target.closest(".quick-card__delete")) return;
+      if (isQuickCardControlTarget(event.target)) return;
       const card = event.target.closest(".quick-card--custom");
       if (!card || !grid.closest(".quick-entry-card")?.classList.contains("is-editing")) return;
       event.preventDefault();
@@ -243,6 +277,7 @@ function bindQuickGrid() {
     });
     grid.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
+      if (guardQuickCardControlEvent(event)) return;
       const card = event.target.closest(".quick-card");
       if (!card || !grid.contains(card)) return;
       event.preventDefault();
