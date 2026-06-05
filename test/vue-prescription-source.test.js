@@ -65,7 +65,7 @@ test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet",
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
   ]);
 
-  for (const styles of [legacyStyles, uiStyles]) {
+  for (const styles of [uiStyles]) {
     assert.match(styles, /\.prescription-panel\s*\{/);
     assert.match(styles, /\.patient-info\s*\{[\s\S]*?gap: 16px;[\s\S]*?margin: 10px 24px;[\s\S]*?padding: 16px 0;/);
     assert.match(styles, /\.patient-info__meta\s*\{[\s\S]*?line-height: 20px;/);
@@ -78,6 +78,18 @@ test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet",
   assert.match(uiStyles, /\.medicine-table__row > span\.medicine-warning-target\s*\{/);
   assert.match(uiStyles, /\.medicine-table__row > span:nth-child\(8\),\s*\.medicine-table__row > input\[data-medicine-field="quantity"\]\s*\{[\s\S]*?text-align: center;/);
   assert.match(uiStyles, /\.medicine-delete-btn:hover,\s*\.medicine-delete-btn:focus-visible\s*\{[\s\S]*?color: var\(--jh-table-action\);/);
+  assert.match(uiStyles, /\.consultation-panel \.diagnosis-section\s*\{[\s\S]*?gap: 16px;/);
+  assert.match(uiStyles, /\.consultation-treatment-input\s*\{[\s\S]*?height: var\(--jh-input-field-height-lg\);[\s\S]*?white-space: nowrap;/);
+  assert.match(uiStyles, /\.medicine-empty-state\s*\{[\s\S]*?height: 64px;[\s\S]*?border: 1px solid var\(--jh-table-border\);/);
+  assert.match(uiStyles, /\.prescription-actions\s*\{[\s\S]*?padding: 16px 24px 24px;[\s\S]*?border-top: 1px solid #e5e8eb;/);
+  assert.match(uiStyles, /\.jh-prescription-submit\s*\{[\s\S]*?width: 88px;[\s\S]*?font-weight: 700;/);
+  assert.doesNotMatch(legacyStyles, /^\.prescription-panel\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.patient-info\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.diagnosis-section,\s*\n\.medicine-section\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.medicine-scroll-area\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.consultation-panel \.diagnosis-section\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.prescription-actions\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.jh-prescription-submit\s*\{/m);
   assert.doesNotMatch(legacyStyles, /\.medicine-table__row > span\.medicine-warning-target\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.medicine-delete-btn\s*\{/);
 });

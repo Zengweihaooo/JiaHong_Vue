@@ -53,7 +53,7 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
   assert.match(quickActionsPanel, /schedule-day-block__status--done/);
   assert.doesNotMatch(legacyStyles, /schedule-board|schedule-panel__tabs/);
 
-  for (const styles of [legacyStyles, quickActionsPanel, uiStyles]) {
+  for (const styles of [quickActionsPanel, uiStyles]) {
     assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\(100vh - 48px\)\);/);
     assert.match(styles, /\.schedule-panel__header\s*\{[\s\S]*?flex: 0 0 48px;[\s\S]*?padding: 12px 16px;/);
     assert.match(styles, /\.schedule-panel__summary\s*\{[\s\S]*?flex: 0 0 52px;[\s\S]*?padding: 20px 24px 0;/);
@@ -63,6 +63,11 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
     assert.match(styles, /\.schedule-day-grid__missed-callout\s*\{[\s\S]*?top: 300px;/);
     assert.match(styles, /\.schedule-day-grid__current-line\s*\{[\s\S]*?top: 352px;[\s\S]*?background: #e12727;/);
   }
+
+  assert.doesNotMatch(legacyStyles, /^\.schedule-dialog\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.schedule-panel\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.schedule-day-grid\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.schedule-day-block\s*\{/m);
 });
 
 test("legacy quick entry bindings open the H5 schedule dialog and update punch state", async () => {
