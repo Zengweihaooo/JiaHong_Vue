@@ -1,23 +1,31 @@
 <template>
-  <div
-    :class="[
-      'app-shell app-shell--responsive',
-      store.sidebarCollapsed ? 'is-sidebar-collapsed' : store.sidebarInteractionStarted ? 'is-sidebar-expanded' : ''
-    ]"
+  <WorkspaceShell
+    :collapsed="store.sidebarCollapsed"
+    :expanded="!store.sidebarCollapsed && store.sidebarInteractionStarted"
   >
-    <Topbar />
-    <Sidebar />
+    <template #topbar>
+      <Topbar />
+    </template>
+    <template #sidebar>
+      <WorkspaceSidebar
+        :menu-groups="store.menuGroups"
+        :collapsed="store.sidebarCollapsed"
+        @toggle="store.toggleSidebarCollapsed()"
+      />
+    </template>
     <HomeDashboard />
-    <AppDialogs />
-  </div>
+    <template #dialogs>
+      <AppDialogs />
+    </template>
+  </WorkspaceShell>
 </template>
 
 <script setup>
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import HomeDashboard from "@/components/home/HomeDashboard.vue";
-import Sidebar from "@/components/layout/Sidebar.vue";
 import Topbar from "@/components/layout/Topbar.vue";
 import { useAppStore } from "@/stores/app";
+import { WorkspaceShell, WorkspaceSidebar } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>
