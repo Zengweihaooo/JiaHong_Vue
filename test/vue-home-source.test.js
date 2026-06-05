@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue home consult entry card keeps latest H5 background in shared UI", async () => {
-  const [homeDashboard, legacyStyles, consultEntryCard] = await Promise.all([
+  const [homeDashboard, legacyStyles, consultEntryCard, serviceStatusCard] = await Promise.all([
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
-    readFile(new URL("../../JiaHong_UI/src/components/ConsultEntryCard/ConsultEntryCard.vue", import.meta.url), "utf8")
+    readFile(new URL("../../JiaHong_UI/src/components/ConsultEntryCard/ConsultEntryCard.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/components/ServiceStatusCard/ServiceStatusCard.vue", import.meta.url), "utf8")
   ]);
 
   assert.match(homeDashboard, /ConsultEntryCard/);
@@ -17,4 +18,8 @@ test("Vue home consult entry card keeps latest H5 background in shared UI", asyn
   assert.doesNotMatch(legacyStyles, /\.consult-card\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.consult-card__content\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.consult-card__bg\s*\{/);
+
+  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
+  assert.match(serviceStatusCard, /word-break: keep-all/);
+  assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
 });
