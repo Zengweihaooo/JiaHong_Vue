@@ -38,3 +38,22 @@ test("Vue chat panel routes H5 consult info through the shared UI card", async (
   assert.doesNotMatch(legacyStyles, /\.consult-info-card\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.followup-voucher-card\s*\{/);
 });
+
+test("shared consult info card keeps H5 attachment viewed states", async () => {
+  const consultInfoCard = await readFile(
+    new URL("../../JiaHong_UI/src/components/ConsultInfoCard/ConsultInfoCard.vue", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(consultInfoCard, /viewedImageKeys/);
+  assert.match(consultInfoCard, /function previewImage/);
+  assert.match(consultInfoCard, /consult-attachment--read/);
+  assert.match(consultInfoCard, /data-consult-attachment-status/);
+
+  assert.match(consultInfoCard, /viewedVoiceKeys/);
+  assert.match(consultInfoCard, /activeVoiceKey/);
+  assert.match(consultInfoCard, /function isVoiceActive/);
+  assert.match(consultInfoCard, /function openVoice/);
+  assert.match(consultInfoCard, /followup-voucher-item--viewed/);
+  assert.match(consultInfoCard, /data-followup-voucher-status/);
+});
