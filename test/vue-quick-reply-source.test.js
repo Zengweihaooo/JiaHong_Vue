@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue quick reply dialog follows latest H5 single-click close behavior", async () => {
-  const dialogs = await readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8");
+  const [dialogs, uiStyles, legacyStyles] = await Promise.all([
+    readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8")
+  ]);
 
   assert.match(dialogs, /单击快捷用语填入输入框并关闭，双击即可发送/);
   assert.match(dialogs, /let closeQuickReplyTimer = 0/);
@@ -13,4 +17,11 @@ test("Vue quick reply dialog follows latest H5 single-click close behavior", asy
   assert.match(dialogs, /120/);
 
   assert.doesNotMatch(dialogs, /单击快捷用语填入输入框，双击即可发送/);
+
+  assert.match(uiStyles, /\.quick-reply-overlay\s*\{/);
+  assert.match(uiStyles, /\.quick-reply-dialog\s*\{/);
+  assert.match(uiStyles, /\.quick-reply-categories\s*\{/);
+  assert.match(uiStyles, /\.quick-reply-message span\s*\{/);
+  assert.doesNotMatch(legacyStyles, /\.quick-reply-dialog\s*\{/);
+  assert.doesNotMatch(legacyStyles, /\.quick-reply-message\s*\{/);
 });

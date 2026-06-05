@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
-  const chatPanel = await readFile(new URL("../src/components/consultation/ChatPanel.vue", import.meta.url), "utf8");
+  const [chatPanel, uiStyles, legacyStyles] = await Promise.all([
+    readFile(new URL("../src/components/consultation/ChatPanel.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8")
+  ]);
 
   assert.match(chatPanel, /class="ai-reply__title ai-reply__toggle"/);
   assert.match(chatPanel, /展开智能推荐回复/);
@@ -21,6 +25,18 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
   assert.doesNotMatch(chatPanel, /ai-reply__hint/);
   assert.doesNotMatch(chatPanel, /@dblclick="toggleAiReply"/);
   assert.doesNotMatch(chatPanel, /quickReplyClickTimer|function toggleAiReply/);
+
+  assert.match(uiStyles, /\.ai-reply\s*\{/);
+  assert.match(uiStyles, /\.ai-reply__toggle:focus-visible\s*\{/);
+  assert.match(uiStyles, /\.ai-spark\s*\{[\s\S]*?ai-reply-spark-mask\.png/);
+  assert.match(uiStyles, /\.jh-chat-input__top \.quick-reply-trigger\s*\{/);
+  assert.match(uiStyles, /\.jh-chat-input__actions \.jh-btn--primary\s*\{/);
+  assert.match(uiStyles, /\.chat-message-menu\s*\{/);
+
+  assert.doesNotMatch(legacyStyles, /^\.ai-reply\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.ai-reply__toggle:focus-visible\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.jh-chat-input\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.chat-message-menu\s*\{/m);
 });
 
 test("Vue chat panel routes H5 consult info through the shared UI card", async () => {
