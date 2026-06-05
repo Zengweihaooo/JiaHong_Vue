@@ -216,7 +216,7 @@
     </section>
   </div>
 
-  <div :class="['consult-attachment-overlay', { 'is-open': Boolean(store.selectedAttachment) }]" role="dialog" aria-modal="true" :aria-hidden="!store.selectedAttachment" @click.self="store.selectedAttachment = null">
+  <div v-if="store.selectedAttachment" class="consult-attachment-overlay is-open" role="dialog" aria-modal="true" @click.self="store.selectedAttachment = null">
     <div class="consult-attachment-dialog">
       <div class="consult-attachment-dialog__header">
         <h2>

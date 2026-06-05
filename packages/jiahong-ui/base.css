@@ -2993,6 +2993,7 @@ body.page-view-room {
   position: absolute;
   top: 56px;
   left: 240px;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -3002,6 +3003,7 @@ body.page-view-room {
   min-height: 0;
   overflow: hidden;
   padding: var(--jh-consult-top-gap) 24px 24px;
+  background: #f2f3f4;
 }
 
 .room-card {
@@ -3910,6 +3912,7 @@ body.page-view-room {
   position: absolute;
   top: 56px;
   left: 240px;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -3918,6 +3921,7 @@ body.page-view-room {
   min-height: 0;
   overflow: hidden;
   padding: var(--jh-consult-top-gap) 24px 24px;
+  background: #f2f3f4;
 }
 
 .text-card,
