@@ -78,9 +78,9 @@
           <h2>问诊业务组件</h2>
         </div>
         <div class="elements-demo-row">
-          <DurationChip :seconds="180" />
-          <DurationChip :seconds="930" />
-          <DurationChip :seconds="1280" />
+          <DurationChip :seconds="180" label="问诊持续时长：" />
+          <DurationChip :seconds="930" label="问诊持续时长：" />
+          <DurationChip :seconds="1280" label="问诊持续时长：" />
         </div>
         <div class="elements-message-demo">
           <button v-for="item in consultationTypes" :key="item.type" :class="['message-item', `message-item--${item.type}`]" type="button">
@@ -101,7 +101,12 @@
           <h2>复诊凭证 FollowUpVoucher</h2>
         </div>
         <div class="elements-voucher-demo">
-          <FollowUpVoucher :record="followUpVoucherRecord" />
+          <FollowUpVoucher
+            title="复诊凭证"
+            :variant="followUpVoucher.variant"
+            :images="followUpVoucher.images"
+            :voices="followUpVoucher.voices"
+          />
         </div>
         <code class="elements-code">&lt;FollowUpVoucher :record="record" /&gt;</code>
       </section>
@@ -183,8 +188,17 @@ const consultationTypes = [
   { type: "consult", title: "武汉市好药师大药房", preview: "图文咨询处理意见待填写", badge: 0 }
 ];
 
-const followUpVoucherRecord = {
-  id: "cs_20260519_164213_001",
-  type: "text"
+const followUpVoucher = {
+  variant: "mixed",
+  images: [
+    { title: "图片凭证1", image: "assets/consult-materials/allergic-rhinitis.png" },
+    { title: "图片凭证2", image: "assets/consult-materials/pediatric-fever.png" },
+    { title: "图片凭证3", image: "assets/consult-materials/sore-throat.png" },
+    { title: "图片凭证4", image: "assets/consult-materials/skin-rash.png" }
+  ],
+  voices: [
+    { title: "语音凭证1", duration: 8 },
+    { title: "语音凭证2", duration: 7 }
+  ]
 };
 </script>

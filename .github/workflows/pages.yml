@@ -21,15 +21,28 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: JiaHong_YiSheng
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Checkout doctor client
+        uses: actions/checkout@v4
+        with:
+          path: JiaHong_YiSheng
+
+      - name: Checkout JiaHong UI
+        uses: actions/checkout@v4
+        with:
+          repository: Zengweihaooo/JiaHong-UI
+          path: JiaHong_UI
+          token: ${{ secrets.JIAHONG_UI_PAT || github.token }}
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: JiaHong_YiSheng/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -44,9 +57,9 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: JiaHong_YiSheng/dist
 
   deploy:
     needs: build

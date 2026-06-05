@@ -11,7 +11,7 @@
             <span class="jh-tag jh-tag--focus jh-tag--lg risk-tag--medicine medicine-type-tag">{{ medicineTypeLabel }}</span>
           </div>
           <div class="pharmacy-bar__right">
-            <DurationChip :seconds="record?.elapsedSeconds || 0" />
+            <DurationChip :seconds="record?.elapsedSeconds || 0" label="问诊持续时长：" />
             <button class="jh-btn jh-btn--md jh-btn--outline-secondary cancel-consult-trigger" type="button" :disabled="record?.prescriptionSubmitted" @click="store.consultConfirmKind = 'cancel'">取消问诊</button>
           </div>
         </div>

@@ -82,7 +82,14 @@
       </div>
     </section>
 
-    <FollowUpVoucher :record="record" @preview-image="openFollowUpImage" />
+    <FollowUpVoucher
+      v-if="followUpVoucher"
+      title="复诊凭证"
+      :variant="followUpVoucher.variant"
+      :images="followUpVoucher.images"
+      :voices="followUpVoucher.voices"
+      @preview-image="openFollowUpImage"
+    />
 
     <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
       <p v-if="chat?.sessionDate" class="chat-date">{{ chat.sessionDate }}</p>
@@ -218,6 +225,36 @@ const consultAttachments = computed(() => {
     title: attachment.title || `附件${index + 1}`,
     image: assetUrl(attachment.image || "assets/figma-consult/attachment-preview.png")
   }));
+});
+const followUpVoucher = computed(() => {
+  if (props.record?.type !== "text" && props.record?.type !== "video") return null;
+
+  const variants = ["image", "voice", "mixed"];
+  const fallbackImages = [
+    { title: "图片凭证1", image: "assets/consult-materials/allergic-rhinitis.png" },
+    { title: "图片凭证2", image: "assets/consult-materials/pediatric-fever.png" },
+    { title: "图片凭证3", image: "assets/consult-materials/sore-throat.png" },
+    { title: "图片凭证4", image: "assets/consult-materials/skin-rash.png" }
+  ];
+  const fallbackVoices = [
+    { title: "语音凭证1", duration: 8 },
+    { title: "语音凭证2", duration: 7 }
+  ];
+  const explicitVariant = props.record.followUpVoucher?.type;
+  const stableIndex =
+    Array.from(String(props.record.id || props.record.title || props.record.type)).reduce(
+      (sum, char) => sum + char.charCodeAt(0),
+      0
+    ) % variants.length;
+  const variant = variants.includes(explicitVariant) ? explicitVariant : variants[stableIndex];
+  const images = props.record.followUpVoucher?.images?.length ? props.record.followUpVoucher.images : fallbackImages;
+  const voices = props.record.followUpVoucher?.voices?.length ? props.record.followUpVoucher.voices : fallbackVoices;
+
+  return {
+    variant,
+    images,
+    voices
+  };
 });
 const baseAiOptions = computed(() => {
   if (props.record?.type === "consult") {
