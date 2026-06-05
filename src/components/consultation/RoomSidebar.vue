@@ -78,11 +78,14 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { TypeIcon, assetUrl } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
 import { consultationTypeLabel } from "@/utils/format";
 
 const store = useAppStore();
+const route = useRoute();
+const router = useRouter();
 const collapsedMessageGroups = ref(new Set());
 
 const groupedRecords = computed(() =>
@@ -141,6 +144,10 @@ function toggleMessageGroup(type) {
 }
 
 function openRecord(record) {
-  store.setActiveRecord(record.id);
+  if (!store.setActiveRecord(record.id)) return;
+  const targetPath = record.state === "ended" ? "/room/" : record.type === "video" || record.targetView === "video" ? "/video/" : "/text/";
+  const query = record.state === "ended" ? { sessionId: record.id } : { sessionId: record.id };
+  if (route.path === targetPath && route.query.sessionId === record.id) return;
+  router.push({ path: targetPath, query });
 }
 </script>

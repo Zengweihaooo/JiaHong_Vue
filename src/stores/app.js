@@ -196,7 +196,7 @@ export const useAppStore = defineStore("app", {
     },
     setActiveRecord(recordId) {
       const record = this.consultationRecords.find((item) => item.id === recordId);
-      if (!record) return;
+      if (!record) return false;
       if (
         record.type === "video" &&
         record.state === "ongoing" &&
@@ -204,7 +204,7 @@ export const useAppStore = defineStore("app", {
         this.activeVideoRecordId !== record.id
       ) {
         this.showToast("当前视频问诊未结束，暂不可进入新的视频问诊", { tone: "warning", duration: 3200 });
-        return;
+        return false;
       }
       this.activeRecordId = record.id;
       this.messageFilterState = record.state;
@@ -212,6 +212,7 @@ export const useAppStore = defineStore("app", {
         this.activeVideoRecordId = record.id;
         writeActiveVideoRecordId(record.id);
       }
+      return true;
     },
     setMessageFilter({ type = this.messageFilterType, state = this.messageFilterState } = {}) {
       this.messageFilterType = type;
