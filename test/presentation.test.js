@@ -107,6 +107,29 @@ test("quick entry cards escape user text and mark add/custom variants", async ()
   assert.doesNotMatch(add, /quick-card__delete/);
 });
 
+test("home schedule panel renders latest H5 punch dialog structure", async () => {
+  setupBrowserGlobals("/");
+  const { renderScheduleDialog, renderSchedulePanel } = await import("../src/presentation/views/homeSchedulePanel.js?schedule-h5");
+
+  const markup = renderSchedulePanel({ hidden: false, titleId: "schedule-title-test" });
+  assert.match(markup, /今日排班/);
+  assert.match(markup, /schedule-day-grid/);
+  assert.match(markup, /6月3日/);
+  assert.match(markup, /上午  00:00–12:00/);
+  assert.match(markup, /下午  12:00–24:00/);
+  assert.match(markup, /data-schedule-active-status="true"/);
+  assert.match(markup, /schedule-panel__punch schedule-panel__punch--warning/);
+  assert.match(markup, /data-punch-state="warning"/);
+  assert.match(markup, /已打卡：/);
+  assert.match(markup, /待打卡：/);
+  assert.doesNotMatch(markup, /近期排班|schedule-board|schedule-panel__tabs/);
+
+  const dialog = renderScheduleDialog();
+  assert.match(dialog, /role="dialog"/);
+  assert.match(dialog, /id="schedule-dialog-title"/);
+  assert.match(dialog, /schedule-overlay/);
+});
+
 test("medicine table renders empty, editable, readonly, escaped, and warning states", async () => {
   setupBrowserGlobals("/");
   const { renderMedicineTable, renderMedicineTableRow } = await import("../src/presentation/components/medicineTable.js");

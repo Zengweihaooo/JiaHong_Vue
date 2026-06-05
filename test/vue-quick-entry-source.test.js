@@ -51,6 +51,7 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
   assert.match(homeDashboard, /@schedule-detail="store\.showToast\('排班详情暂未开放'\)"/);
   assert.match(quickActionsPanel, /data-schedule-active-status/);
   assert.match(quickActionsPanel, /schedule-day-block__status--done/);
+  assert.doesNotMatch(legacyStyles, /schedule-board|schedule-panel__tabs/);
 
   for (const styles of [legacyStyles, quickActionsPanel, uiStyles]) {
     assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\(100vh - 48px\)\);/);
