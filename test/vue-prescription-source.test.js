@@ -44,6 +44,7 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(uiStyles, /\.table-input\s*\{[\s\S]*?height: 40px;[\s\S]*?border: 1px solid var\(--jh-table-row-border\);/);
   assert.match(uiStyles, /\.medicine-usage-control,\s*\.medicine-unit-control\s*\{[\s\S]*?overflow: visible;/);
   assert.match(uiStyles, /\.medicine-delete-btn\s*\{[\s\S]*?color: var\(--jh-text-tertiary\);[\s\S]*?transition: color 160ms ease;/);
+  assert.doesNotMatch(uiStyles, /\.jh-risk-tag--medium/);
   assert.doesNotMatch(legacyStyles, /\.medicine-risk-tip\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.medicine-table__row\s*\{[\s\S]*?grid-template-columns:/);
   assert.doesNotMatch(legacyStyles, /\.table-input\s*\{/);

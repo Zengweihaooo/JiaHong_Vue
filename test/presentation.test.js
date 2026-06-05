@@ -67,6 +67,7 @@ test("primitive components normalize invalid options and format durations", asyn
   assert.equal(getDoctorStatusLabel("missing"), "离线");
   assert.match(renderReadTag("read"), /已读/);
   assert.match(renderRiskTag({ text: "高", size: "lg" }), /jh-risk-tag--high/);
+  assert.equal(renderRiskTag({ text: "中", size: "sm" }), "");
 });
 
 test("video media toolbar reflects camera and microphone state", async () => {
