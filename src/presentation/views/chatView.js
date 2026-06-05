@@ -6,6 +6,18 @@ import { getActiveChatKey } from "./renderRecordSelectors.js?v=20260528-06";
 
 const defaultMessageIntervalSeconds = 58;
 const defaultAiReplyHighlights = ["多久", "体温", "几天", "位置", "程度", "痰色", "胸闷气促", "呼吸", "低头", "热敷", "活动颈部"];
+const followUpVoucherVariants = ["image", "voice", "mixed"];
+const followUpVoucherImages = [
+  { title: "病例图片1", image: "assets/consult-materials/allergic-rhinitis.png" },
+  { title: "病例图片2", image: "assets/consult-materials/pediatric-fever.png" },
+  { title: "病例图片3", image: "assets/consult-materials/sore-throat.png" },
+  { title: "病例图片4", image: "assets/consult-materials/skin-rash.png" }
+];
+const followUpVoucherVoices = [
+  { title: "病例语音1", duration: 8 },
+  { title: "病例语音2", duration: 7 }
+];
+const defaultConsultCaseVoices = [{ title: "病例信息语音", duration: 7 }];
 
 export function renderChatInput({ className = "" } = {}) {
   return `
@@ -231,16 +243,34 @@ export function renderChatThread(chatKey = getActiveChatKey(), { threadClass = "
 }
 
 function getConsultInfo(record = {}) {
-  const attachments = record.consultInfo?.attachments?.length
-    ? record.consultInfo.attachments
-    : [
-        { title: "附件1", image: "assets/consult-materials/allergic-rhinitis.png" },
-        { title: "附件2", image: "assets/consult-materials/pediatric-fever.png" },
-        { title: "附件3", image: "assets/consult-materials/sore-throat.png" },
-        { title: "附件4", image: "assets/consult-materials/skin-rash.png" }
-      ];
+  const voucher = getFollowUpVoucher(record);
+  const hasConsultInfo = Boolean(record?.consultInfo);
+  const hasConsultAttachments = Array.isArray(record.consultInfo?.attachments) && record.consultInfo.attachments.length > 0;
+  const defaultConsultAttachments = [
+    { title: "附件1", image: "assets/consult-materials/allergic-rhinitis.png" },
+    { title: "附件2", image: "assets/consult-materials/pediatric-fever.png" },
+    { title: "附件3", image: "assets/consult-materials/sore-throat.png" },
+    { title: "附件4", image: "assets/consult-materials/skin-rash.png" }
+  ];
+  const attachments = [
+    ...(hasConsultAttachments ? record.consultInfo.attachments : record?.type === "consult" ? defaultConsultAttachments : []),
+    ...(voucher?.images || [])
+  ];
+  const normalizeVoices = (voices = [], fallback = []) => {
+    const source = Array.isArray(voices) && voices.length ? voices : fallback;
+    return source.map((voice, index) =>
+      typeof voice === "string"
+        ? { title: voice, duration: index === 0 ? 8 : 7 }
+        : { title: voice.title || `语音${index + 1}`, duration: Number(voice.duration || 0) || (index === 0 ? 8 : 7) }
+    );
+  };
+  const caseVoices = [
+    ...normalizeVoices(record.consultInfo?.caseVoices, record?.type === "consult" || hasConsultInfo ? defaultConsultCaseVoices : []),
+    ...normalizeVoices(voucher?.voices || [])
+  ];
   return {
-    description: record.consultInfo?.description || "颈部酸痛僵硬，转头活动受限，久坐后痛感加重",
+    description: record.consultInfo?.description || (record?.type === "consult" ? "颈部酸痛僵硬，转头活动受限，久坐后痛感加重" : ""),
+    caseVoices,
     attachments: attachments.map((attachment, index) =>
       typeof attachment === "string"
         ? {
@@ -255,31 +285,97 @@ function getConsultInfo(record = {}) {
   };
 }
 
+export function getFollowUpVoucher(record = {}) {
+  const source = record?.followUpVoucher;
+  if (!source) return null;
+  const hasImages = Array.isArray(source.images) && source.images.length > 0;
+  const hasVoices = Array.isArray(source.voices) && source.voices.length > 0;
+  const inferredType = hasImages && hasVoices ? "mixed" : hasImages ? "image" : hasVoices ? "voice" : "";
+  const type = followUpVoucherVariants.includes(source.type) ? source.type : inferredType;
+  if (!type) return null;
+  const images = hasImages ? source.images : followUpVoucherImages;
+  const voices = hasVoices ? source.voices : followUpVoucherVoices;
+  return {
+    type,
+    images: type === "voice" ? [] : images.slice(0, 4),
+    voices: type === "image" ? [] : voices.slice(0, 2)
+  };
+}
+
+function renderVoiceWaveform() {
+  return `
+    <span class="followup-voice-wave" aria-hidden="true">
+      <svg class="followup-voice-wave__icon" viewBox="0 0 24 24" focusable="false">
+        <circle class="followup-voice-wave__base" cx="6" cy="12" r="2.1" />
+        <path class="followup-voice-wave__base" d="M10 8.8c1.1.8 1.8 1.9 1.8 3.2s-.7 2.4-1.8 3.2" />
+        <path class="followup-voice-wave__base" d="M13.2 6.2c1.9 1.4 3 3.4 3 5.8s-1.1 4.4-3 5.8" />
+        <path class="followup-voice-wave__base" d="M16.5 3.8c2.7 2 4.2 4.8 4.2 8.2s-1.5 6.2-4.2 8.2" />
+        <circle class="followup-voice-wave__active followup-voice-wave__active--1" cx="6" cy="12" r="2.1" />
+        <path class="followup-voice-wave__active followup-voice-wave__active--1" d="M10 8.8c1.1.8 1.8 1.9 1.8 3.2s-.7 2.4-1.8 3.2" />
+        <path class="followup-voice-wave__active followup-voice-wave__active--2" d="M13.2 6.2c1.9 1.4 3 3.4 3 5.8s-1.1 4.4-3 5.8" />
+        <path class="followup-voice-wave__active followup-voice-wave__active--3" d="M16.5 3.8c2.7 2 4.2 4.8 4.2 8.2s-1.5 6.2-4.2 8.2" />
+      </svg>
+    </span>`;
+}
+
+function renderFollowUpVoucherVoice(voice, index) {
+  const duration = Number(voice.duration || 0) || (index === 0 ? 8 : 7);
+  const title = voice.title || `病例语音${index + 1}`;
+  return `
+    <button class="followup-voucher-voice followup-voucher-item followup-voucher-item--unviewed" type="button" aria-label="播放${escapeHtml(title)}，${duration}秒" aria-pressed="false" data-followup-voucher-item="true" data-followup-voucher-status="unviewed" data-followup-voice-title="${escapeHtml(title)}" data-followup-voice-duration="${duration}">
+      <span class="followup-voice-time">
+        <span data-followup-voice-current>${duration}"</span>
+      </span>
+      ${renderVoiceWaveform()}
+    </button>`;
+}
+
 export function renderConsultInfoCard(record) {
-  if (record?.type !== "consult") return "";
+  if (record?.type !== "consult" && !record?.consultInfo && !getFollowUpVoucher(record)) return "";
   const consultInfo = getConsultInfo(record);
   return `
     <section class="consult-info-card" aria-label="咨询信息">
       <h3>咨询信息</h3>
-      <div class="consult-info-card__row">
-        <span class="consult-info-card__label">病情描述：</span>
-        <p>${escapeHtml(consultInfo.description)}</p>
-      </div>
-      <div class="consult-info-card__row">
-        <span class="consult-info-card__label">病例信息：</span>
-        <div class="consult-attachments">
-          ${consultInfo.attachments
-            .map(
-              (attachment, index) => `
-                <button class="consult-attachment" type="button" aria-label="预览${escapeHtml(attachment.title)}" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment.title)}" data-consult-attachment-image="${assetUrl(attachment.image)}">
-                  <span class="consult-attachment__thumb">
-                    <img src="${assetUrl(attachment.image)}" alt="${escapeHtml(attachment.title)}" loading="lazy" />
-                  </span>
-                </button>`
-            )
-            .join("")}
-        </div>
-      </div>
+      ${
+        consultInfo.description
+          ? `<div class="consult-info-card__row">
+              <span class="consult-info-card__label">病情描述：</span>
+              <p>${escapeHtml(consultInfo.description)}</p>
+            </div>`
+          : ""
+      }
+      ${
+        consultInfo.attachments.length || consultInfo.caseVoices.length
+          ? `<div class="consult-info-card__row">
+              <span class="consult-info-card__label">病例信息：</span>
+              <div class="consult-info-card__content">
+                ${
+                  consultInfo.attachments.length
+                    ? `<div class="consult-attachments">
+                        ${consultInfo.attachments
+                          .map(
+                            (attachment, index) => `
+                              <button class="consult-attachment consult-attachment--unread" type="button" aria-label="未读病例附件：预览${escapeHtml(attachment.title)}" data-consult-attachment-status="unread" data-consult-attachment-index="${index + 1}" data-consult-attachment-total="${consultInfo.attachments.length}" data-consult-attachment-title="${escapeHtml(attachment.title)}" data-consult-attachment-image="${assetUrl(attachment.image)}">
+                                <span class="consult-attachment__thumb">
+                                  <img src="${assetUrl(attachment.image)}" alt="${escapeHtml(attachment.title)}" loading="lazy" />
+                                </span>
+                              </button>`
+                          )
+                          .join("")}
+                      </div>`
+                    : ""
+                }
+                ${
+                  consultInfo.caseVoices.length
+                    ? `<div class="consult-info-card__voices" aria-label="病例信息语音">
+                        ${consultInfo.caseVoices.map((voice, index) => renderFollowUpVoucherVoice(voice, index)).join("")}
+                      </div>`
+                    : ""
+                }
+              </div>
+            </div>`
+          : ""
+      }
     </section>`;
 }
 

@@ -1,7 +1,7 @@
 import { assetUrl } from "../../shared/core.js";
 import { renderButton, renderDurationChip, renderLabelTag, renderRiskTag } from "../components/primitives.js?v=20260527-36";
 import { getActiveConsultationRecord } from "./renderRecordSelectors.js?v=20260528-06";
-import { renderAiReplyComposer, renderChatPanel, renderChatThread } from "./chatView.js?v=20260528-06";
+import { renderAiReplyComposer, renderChatPanel, renderChatThread, renderConsultInfoCard } from "./chatView.js?v=20260528-06";
 import { renderConsultationPanel, renderPrescriptionPanel } from "./prescriptionPanels.js?v=20260528-06";
 import { renderRoomSidebar } from "./roomMessageListView.js?v=20260528-06";
 import { renderRoomTopbar } from "./roomShellView.js?v=20260528-06";
@@ -77,16 +77,19 @@ export function renderVideoChatPanel() {
   return `
     <section class="chat-panel video-chat-panel" aria-label="视频聊天区域">
       <div class="video-window" data-video-controls="true">
-        <div class="video-window__main" role="img" aria-label="患者视频等待画面">
-          <span>等待患者进入</span>
-        </div>
-        <div class="video-window__pip video-window__pip--local${cameraOn ? "" : " is-camera-off"}">
-          <video class="video-window__local-video" data-local-camera autoplay muted playsinline aria-label="医生摄像头画面"></video>
-          <div class="video-window__camera-status" data-camera-status>正在连接摄像头</div>
-          <div class="video-window__pip-off" aria-hidden="${cameraOn}">摄像头已关闭</div>
+        <div class="video-window__stage" aria-label="视频通话画面">
+          <div class="video-window__pane video-window__pane--patient">
+            <img class="video-window__main" src="${assetUrl("assets/video-main.png")}" alt="患者视频画面" />
+          </div>
+          <div class="video-window__pane video-window__pane--doctor video-window__pip video-window__pip--local${cameraOn ? "" : " is-camera-off"}">
+            <video class="video-window__local-video" data-local-camera autoplay muted playsinline aria-label="医生摄像头画面"></video>
+            <div class="video-window__camera-status" data-camera-status>正在连接摄像头</div>
+            <div class="video-window__pip-off" aria-hidden="${cameraOn}">摄像头已关闭</div>
+          </div>
         </div>
         ${renderVideoToolbar()}
       </div>
+      ${renderConsultInfoCard(record)}
       ${renderChatThread(record?.id, { threadClass: "video-chat-thread" })}
       <div class="video-input-wrap">
         ${renderAiReplyComposer(record)}

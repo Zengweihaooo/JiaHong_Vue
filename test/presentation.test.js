@@ -356,6 +356,7 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
 
   const {
     findOngoingChatMessage,
+    getFollowUpVoucher,
     renderAiReplyOptions,
     renderChatBubble,
     renderChatInput,
@@ -401,6 +402,23 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
   });
   assert.match(consultInfo, /颈部酸痛&quot;&lt;&gt;&amp;/);
   assert.match(consultInfo, /data-consult-attachment-title="检查单&quot;&lt;&gt;&amp;"/);
+
+  const videoVoucherInfo = renderConsultInfoCard({
+    type: "video",
+    followUpVoucher: {
+      type: "mixed",
+      images: [{ title: "图片凭证1", image: "assets/consult-materials/sore-throat.png" }],
+      voices: [{ title: "语音凭证1", duration: 8 }]
+    }
+  });
+  assert.match(videoVoucherInfo, /consult-info-card/);
+  assert.match(videoVoucherInfo, /未读病例附件：预览图片凭证1/);
+  assert.match(videoVoucherInfo, /followup-voucher-item--unviewed/);
+  assert.match(videoVoucherInfo, /followup-voucher-voice/);
+  assert.match(videoVoucherInfo, /data-followup-voice-current/);
+  assert.equal(getFollowUpVoucher({ type: "consult" }), null);
+  assert.equal(getFollowUpVoucher({ type: "video", followUpVoucher: { type: "voice" } })?.voices.length, 2);
+
   assert.match(renderConsultAttachmentDialog(), /consult-attachment-overlay/);
   assert.match(renderChatMessageMenu(), /data-action="recall"/);
   const chatPanelMarkup = renderChatPanel("text_1", { record: { type: "text" } });

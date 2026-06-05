@@ -95,6 +95,7 @@ test("consult room view renders text, consult, and video main shells with the ex
       age: "48岁",
       elapsedSeconds: 600,
       diagnosisTags: ["急性支气管炎"],
+      followUpVoucher: { type: "voice" },
       prescriptionMedicines: []
     }
   ];
@@ -131,8 +132,15 @@ test("consult room view renders text, consult, and video main shells with the ex
   videoMediaState.cameraOn = false;
   videoMediaState.micOn = false;
   const videoChat = renderVideoChatPanel();
+  assert.match(videoChat, /video-window__stage/);
+  assert.match(videoChat, /video-window__pane--patient/);
+  assert.match(videoChat, /video-window__pane--doctor/);
+  assert.match(videoChat, /患者视频画面/);
+  assert.match(videoChat, /医生摄像头画面/);
   assert.match(videoChat, /video-window__pip--local is-camera-off/);
   assert.match(videoChat, /摄像头已关闭/);
+  assert.match(videoChat, /consult-info-card/);
+  assert.match(videoChat, /followup-voucher-voice/);
   assert.match(videoChat, /video-chat-thread/);
   assert.match(videoChat, /aria-label="开启麦克风"/);
 
