@@ -13,7 +13,7 @@
 
 <script setup>
 import { Clock } from "@element-plus/icons-vue";
-import { durationTone, formatDuration } from "@/utils/format";
+import { durationTone, formatDuration } from "../../utils/format";
 
 defineProps({
   seconds: {

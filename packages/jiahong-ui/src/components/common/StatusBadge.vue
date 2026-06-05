@@ -4,7 +4,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { doctorStatusLabel } from "@/utils/format";
+import { doctorStatusLabel } from "../../utils/format";
 
 const props = defineProps({
   status: {

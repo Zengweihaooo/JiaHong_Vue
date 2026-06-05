@@ -6,7 +6,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "../../utils/assets";
 
 const props = defineProps({
   type: {

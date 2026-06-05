@@ -29,7 +29,7 @@
 import { computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import AppDialogs from "@/components/common/AppDialogs.vue";
-import DurationChip from "@/components/common/DurationChip.vue";
+import { DurationChip } from "@jiahong/ui";
 import ChatPanel from "@/components/consultation/ChatPanel.vue";
 import PrescriptionPanel from "@/components/consultation/PrescriptionPanel.vue";
 import RoomSidebar from "@/components/consultation/RoomSidebar.vue";

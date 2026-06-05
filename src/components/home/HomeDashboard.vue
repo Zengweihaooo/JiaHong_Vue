@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import StatusBadge from "@/components/common/StatusBadge.vue";
+import { StatusBadge } from "@jiahong/ui";
 import NoticeCard from "@/components/home/NoticeCard.vue";
 import QuickActions from "@/components/home/QuickActions.vue";
 import { useAppStore } from "@/stores/app";

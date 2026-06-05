@@ -69,7 +69,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { assetUrl } from "@/utils/assets";
+import { assetUrl } from "../../utils/assets";
 
 const props = defineProps({
   record: {

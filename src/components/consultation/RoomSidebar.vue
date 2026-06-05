@@ -70,7 +70,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import TypeIcon from "@/components/common/TypeIcon.vue";
+import { TypeIcon } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
 import { consultationTypeLabel } from "@/utils/format";

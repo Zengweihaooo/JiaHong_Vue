@@ -155,11 +155,7 @@
 </template>
 
 <script setup>
-import DurationChip from "@/components/common/DurationChip.vue";
-import ReadTag from "@/components/common/ReadTag.vue";
-import StatusBadge from "@/components/common/StatusBadge.vue";
-import TypeIcon from "@/components/common/TypeIcon.vue";
-import FollowUpVoucher from "@/components/consultation/FollowUpVoucher.vue";
+import { DurationChip, FollowUpVoucher, ReadTag, StatusBadge, TypeIcon } from "@jiahong/ui";
 import { assetUrl } from "@/utils/assets";
 
 const sections = [

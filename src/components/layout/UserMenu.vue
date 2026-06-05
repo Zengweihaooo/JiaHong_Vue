@@ -54,7 +54,7 @@
 
 <script setup>
 import { computed } from "vue";
-import StatusBadge from "@/components/common/StatusBadge.vue";
+import { StatusBadge } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@/utils/assets";
 
