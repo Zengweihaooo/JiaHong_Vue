@@ -107,3 +107,31 @@ test("Vue imports prescription panel CSS from UI source styles instead of stale 
   assert.match(uiStyleEntry, /@import ['"]\.\/components\.css['"]/);
   assert.notEqual(uiPackageJson.exports["./styles.css"], "./dist/styles.css");
 });
+
+test("Vue risk warning dialog uses H5 styles from the shared UI stylesheet", async () => {
+  const [dialogs, legacyStyles, uiStyles] = await Promise.all([
+    readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
+  ]);
+
+  assert.match(dialogs, /class="\['risk-warning-overlay'/);
+  assert.match(dialogs, /class="risk-warning-dialog"/);
+  assert.match(dialogs, /risk-warning-row--linked/);
+  assert.match(dialogs, /risk-warning-status--\$\{item\.status\}/);
+  assert.match(dialogs, /risk-warning-message-item__copy/);
+
+  assert.match(uiStyles, /\.risk-warning-overlay\s*\{[\s\S]*?z-index: 90;[\s\S]*?pointer-events: none;/);
+  assert.match(uiStyles, /\.risk-warning-dialog\s*\{[\s\S]*?width: min\(720px, calc\(100vw - 48px\)\);[\s\S]*?pointer-events: auto;/);
+  assert.match(uiStyles, /\.risk-warning-row\s*\{[\s\S]*?display: grid;[\s\S]*?repeat\(10, minmax\(34px, 1fr\)\);/);
+  assert.match(uiStyles, /\.risk-warning-status--must\s*\{[\s\S]*?background: #cb2c2c;/);
+  assert.match(uiStyles, /\.risk-warning-status--severe\s*\{[\s\S]*?background: #e37318;/);
+  assert.match(uiStyles, /\.risk-warning-status--general\s*\{[\s\S]*?clip-path: polygon\(50% 0, 100% 100%, 0 100%\);/);
+  assert.match(uiStyles, /\.risk-warning-message-item\s*\{[\s\S]*?grid-template-columns: auto minmax\(0, 1fr\) auto;/);
+  assert.match(uiStyles, /@media \(max-width: 720px\)\s*\{[\s\S]*?\.risk-warning-table\s*\{[\s\S]*?min-width: 620px;/);
+
+  assert.doesNotMatch(legacyStyles, /^\.risk-warning-overlay\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.risk-warning-dialog\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.risk-warning-row\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.risk-warning-message-item\s*\{/m);
+});
