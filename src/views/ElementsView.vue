@@ -179,6 +179,20 @@
         </div>
       </section>
 
+      <section id="icons" class="elements-section">
+        <div class="elements-section__head">
+          <p>Icons</p>
+          <h2>工作台图标</h2>
+        </div>
+        <div class="elements-icon-grid">
+          <article v-for="icon in workspaceIconAssets" :key="icon.name" class="elements-icon-card">
+            <img :src="assetUrl(icon.path)" :alt="icon.name" />
+            <strong>{{ icon.name }}</strong>
+            <code>{{ icon.path }}</code>
+          </article>
+        </div>
+      </section>
+
       <section id="forms" class="elements-section">
         <div class="elements-section__head">
           <p>Primitives</p>
@@ -248,6 +262,7 @@ const sections = [
   { id: "basics", name: "基础组件", count: "8" },
   { id: "workspace", name: "工作台", count: "6" },
   { id: "consultation", name: "问诊处方", count: "4" },
+  { id: "icons", name: "工作台图标", count: "19" },
   { id: "forms", name: "表单控制", count: "CSS" }
 ];
 
@@ -308,12 +323,49 @@ const workspaceMenuGroups = [
     ]
   },
   {
+    title: "问诊管理",
+    items: [
+      { label: "三方问诊", icon: "circle" },
+      { label: "问诊记录", icon: "clipboard" },
+      { label: "驳回处方", icon: "checkSquare" }
+    ]
+  },
+  {
     title: "运营相关",
     items: [
       { label: "出诊管理", icon: "briefcase" },
       { label: "值班打卡", icon: "calendar" }
     ]
+  },
+  {
+    title: "账户",
+    items: [
+      { label: "个人中心", icon: "user" },
+      { label: "医生佣金", icon: "shield" }
+    ]
   }
+];
+
+const workspaceIconAssets = [
+  { name: "首页", path: "assets/figma-home/home.svg" },
+  { name: "数据看板", path: "assets/figma-home/trello.svg" },
+  { name: "三方问诊", path: "assets/figma-home/disc.svg" },
+  { name: "问诊记录", path: "assets/figma-home/clipboard.svg" },
+  { name: "驳回处方", path: "assets/figma-home/check-square.svg" },
+  { name: "出诊管理", path: "assets/figma-home/briefcase.svg" },
+  { name: "值班打卡", path: "assets/figma-home/calendar.svg" },
+  { name: "个人中心", path: "assets/figma-home/user.svg" },
+  { name: "医生佣金", path: "assets/figma-home/pocket.svg" },
+  { name: "菜单收起", path: "assets/figma-home/menu-icon.svg" },
+  { name: "问诊入口", path: "assets/figma-home/consult-icon.svg" },
+  { name: "排班底图", path: "assets/figma-home/quick-schedule-box.svg" },
+  { name: "排班标记", path: "assets/figma-home/quick-schedule-mark.svg" },
+  { name: "快捷文档", path: "assets/figma-home/quick-doc.svg" },
+  { name: "新增入口", path: "assets/figma-home/quick-plus.svg" },
+  { name: "时钟底图", path: "assets/figma-home/quick-clock-circle.svg" },
+  { name: "时钟指针", path: "assets/figma-home/quick-clock-hand.svg" },
+  { name: "勾选", path: "assets/figma-home/checkmark.svg" },
+  { name: "搜索", path: "assets/search-icon.png" }
 ];
 
 const workspaceQueueItems = [
@@ -448,13 +500,15 @@ const workspaceQuickActions = [
 .elements-basic-grid,
 .elements-workspace-grid,
 .elements-consult-grid,
+.elements-icon-grid,
 .elements-form-grid {
   display: grid;
   gap: 12px;
 }
 
 .elements-token-grid,
-.elements-component-grid {
+.elements-component-grid,
+.elements-icon-grid {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
@@ -470,6 +524,7 @@ const workspaceQuickActions = [
 
 .elements-token,
 .elements-component-card,
+.elements-icon-card,
 .elements-preview {
   border: 1px solid var(--jh-line);
   border-radius: 8px;
@@ -502,7 +557,8 @@ const workspaceQuickActions = [
 }
 
 .elements-token code,
-.elements-component-card code {
+.elements-component-card code,
+.elements-icon-card code {
   overflow: hidden;
   color: var(--jh-text-tertiary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -518,9 +574,31 @@ const workspaceQuickActions = [
   padding: 14px;
 }
 
+.elements-icon-card {
+  display: grid;
+  min-width: 0;
+  min-height: 132px;
+  justify-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.elements-icon-card img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
 .elements-component-card strong {
   font-size: 15px;
   line-height: 22px;
+}
+
+.elements-icon-card strong {
+  color: var(--jh-text-primary);
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .elements-component-card span {
@@ -623,13 +701,13 @@ const workspaceQuickActions = [
 .elements-preview :deep(.app-shell) {
   width: 100%;
   min-width: 0;
-  min-height: 260px;
-  height: 260px;
+  min-height: 680px;
+  height: 680px;
 }
 
 .elements-preview :deep(.sidebar) {
   position: relative;
-  height: 260px;
+  height: 680px;
 }
 
 .elements-preview :deep(.waiting-card),
