@@ -16,6 +16,7 @@ test("Vue topbars use shared UI avatar assets and H5 menu dismissal behavior", a
 
   assert.match(roomTopbar, /import \{ Avatar, assetUrl \} from "@jiahong\/ui"/);
   assert.match(roomTopbar, /<Avatar :src="assetUrl\('assets\/figma-consult\/avatar-source\.png'\)"/);
+  assert.match(roomTopbar, /class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn"/);
 
   assert.match(userMenu, /ref="menuRoot"/);
   assert.match(userMenu, /document\.addEventListener\("click", handleDocumentClick\)/);
@@ -27,9 +28,12 @@ test("Vue topbars use shared UI avatar assets and H5 menu dismissal behavior", a
   assert.match(uiStyles, /^\.user-menu\s*\{/m);
   assert.match(uiStyles, /^\.user-menu-service\s*\{/m);
   assert.match(uiStyles, /^\.room-user\s*\{/m);
+  assert.match(uiStyles, /^\.room-back-btn\s*\{/m);
+  assert.match(uiStyles, /\.room-back-btn img\s*\{/m);
   assert.match(uiStyles, /@media \(max-width: 620px\)\s*\{[\s\S]*?\.user-chip::before,[\s\S]*?\.room-user__divider/);
   assert.doesNotMatch(legacyStyles, /^\.user-chip\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.user-menu\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.user-menu-service\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.room-user\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.room-back-btn\s*\{/m);
 });

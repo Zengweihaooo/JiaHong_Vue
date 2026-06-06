@@ -102,42 +102,9 @@ button {
   gap: 12px;
 }
 
-.room-back-btn {
-  border-color: transparent;
-  background-color: var(--jh-btn-neutral-bg);
-  background-image: none;
-  color: var(--jh-btn-neutral-text);
-  font-weight: 400;
-}
-
-.room-back-btn:hover {
-  background-color: var(--jh-btn-neutral-hover-bg);
-  color: var(--jh-btn-neutral-text);
-}
-
-.room-back-btn:active {
-  background-color: var(--jh-btn-neutral-active-bg);
-  color: var(--jh-btn-neutral-text);
-}
-
-.room-back-btn[aria-disabled="true"] {
-  background-color: var(--jh-btn-neutral-disabled-bg);
-  color: var(--jh-btn-neutral-disabled-text);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.room-back-btn img {
-  flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
-}
-
 .menu-item:focus-visible,
 .service-tile:focus-visible,
 .quick-card:focus-visible,
-.room-back-btn:focus-visible,
 .room-tag:focus-visible,
 .doctor-status-trigger:focus-visible,
 .doctor-status-menu__item:focus-visible,
@@ -1213,12 +1180,6 @@ body.page-view-room {
   width: 100%;
   height: 56px;
   padding: 10px 32px 10px 24px;
-}
-
-.room-back-btn {
-  width: 112px;
-  min-width: 112px;
-  text-decoration: none;
 }
 
 .room-topbar__right {
