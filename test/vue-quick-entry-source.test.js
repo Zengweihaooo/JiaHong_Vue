@@ -3,15 +3,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue quick entry dialog filters already used entries and keeps elements route entry", async () => {
-  const [dialogs, homeDashboard, quickActionsPanel, store] = await Promise.all([
+  const [dialogs, homeDashboard, quickActionsPanel, store, uiStyles, legacyStyles] = await Promise.all([
     readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/src/components/QuickActionsPanel/QuickActionsPanel.vue", import.meta.url), "utf8"),
-    readFile(new URL("../src/stores/app.js", import.meta.url), "utf8")
+    readFile(new URL("../src/stores/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8")
   ]);
 
   assert.match(dialogs, /store\.availableQuickEntryOptions/);
   assert.match(dialogs, /quick-entry-dialog__empty/);
+  assert.match(dialogs, /quick-icon--menu-\$\{option\.icon\}/);
   assert.doesNotMatch(dialogs, /v-for="\(option, index\) in store\.quickEntryOptions"/);
 
   assert.match(homeDashboard, /QuickActionsPanel/);
@@ -38,6 +41,15 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.match(store, /reorderQuickAction\(fromIndex, toIndex\)/);
   assert.match(store, /showToast\("已调整快捷入口顺序"\)/);
   assert.doesNotMatch(store, /const maxQuickActionCards = 8/);
+
+  assert.match(uiStyles, /^\.icon-box\s*\{/m);
+  assert.match(uiStyles, /^\.quick-icon\s*\{/m);
+  assert.match(uiStyles, /^\.quick-icon--schedule \.quick-icon__base\s*\{/m);
+  assert.match(uiStyles, /^\.quick-icon--menu-user\s*\{/m);
+  assert.match(uiStyles, /@jiahong\/ui\/assets\/figma-home\/user\.svg/);
+  assert.doesNotMatch(legacyStyles, /^\.icon-box\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.quick-icon\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.quick-icon--menu-user\s*\{/m);
 });
 
 test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", async () => {
