@@ -58,6 +58,12 @@ test("Vue chat panel routes H5 consult info through the shared UI card", async (
 
   assert.match(appDialogs, /class="consult-attachment-overlay is-open"/);
   assert.match(appDialogs, /class="consult-attachment-dialog__page consult-attachment-dialog__page--prev"/);
+  assert.match(uiStyles, /^\.consult-info-card\s*\{/m);
+  assert.match(uiStyles, /^\.consult-info-card__row\s*\{/m);
+  assert.match(uiStyles, /^\.consult-info-card__voices,\n\.consult-attachments\s*\{/m);
+  assert.match(uiStyles, /^\.consult-info-card \.consult-attachment--unread\s*\{/m);
+  assert.match(uiStyles, /^\.followup-voucher-voice\s*\{/m);
+  assert.match(uiStyles, /^\.followup-voice-wave__icon\s*\{/m);
   assert.match(uiStyles, /^\.consult-attachment-overlay\s*\{/m);
   assert.match(uiStyles, /^\.consult-attachment-dialog\s*\{/m);
   assert.match(uiStyles, /^\.consult-attachment-dialog__page::before\s*\{/m);

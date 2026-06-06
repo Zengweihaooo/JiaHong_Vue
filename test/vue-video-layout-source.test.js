@@ -19,6 +19,11 @@ test("Vue video consultation layout uses the H5 video workspace rule from the sh
   assert.match(uiStyles, /^\.text-card,\n\.consult-room-card\s*\{/m);
   assert.match(uiStyles, /^\.consult-workspace\s*\{/m);
   assert.match(uiStyles, /\.video-shell \.consult-workspace\s*\{\s*grid-template-columns: minmax\(424px, 3fr\) minmax\(0, 5fr\);/);
+  assert.match(uiStyles, /^\.video-window\s*\{/m);
+  assert.match(uiStyles, /^\.video-window__stage\s*\{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/m);
+  assert.match(uiStyles, /^\.video-window__pane \+ \.video-window__pane\s*\{/m);
+  assert.match(uiStyles, /^\.video-toolbar\s*\{/m);
+  assert.match(uiStyles, /^\.video-window__main\s*\{/m);
   assert.match(uiStyles, /\.jh-duration-chip\s*\{[\s\S]*?display: inline-flex;[\s\S]*?color: rgba\(0, 0, 0, 0\.6\);/);
   assert.match(uiStyles, /\.jh-duration-chip--warning\s*\{\s*color: #e37318;/);
   assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.jh-duration-chip__prefix\s*\{\s*display: none;/);
