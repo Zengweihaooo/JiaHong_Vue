@@ -1,13 +1,5 @@
 /* Legacy page/layout styles that have not yet been promoted to @jiahong/ui. Do not add new shared UI primitives here. */
 
-:root {
-  --jh-consult-chat-width: 424px;
-  --jh-consult-prescription-width: 728px;
-  --jh-consult-card-width: 1152px;
-  --jh-consult-workspace-height: 740px;
-  --jh-consult-top-gap: 24px;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -1834,23 +1826,6 @@ body.page-view-room {
   line-height: 20px;
 }
 
-.text-main,
-.consult-room-main {
-  position: absolute;
-  top: 56px;
-  left: 240px;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  width: calc(100% - 240px);
-  height: calc(100vh - 56px);
-  min-height: 0;
-  overflow: hidden;
-  padding: var(--jh-consult-top-gap) 24px 24px;
-  background: #f2f3f4;
-}
-
 .consult-attachment-overlay {
   position: fixed;
   inset: 0;
@@ -1990,40 +1965,6 @@ body.page-view-room {
 
 .consult-attachment-dialog__page--next {
   right: 0;
-}
-
-.text-card,
-.consult-room-card {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: var(--jh-shadow);
-}
-
-.risk-tag--inspection {
-  background: var(--jh-risk-tag-bg);
-  color: var(--jh-risk-tag-text);
-  font-weight: 700;
-}
-
-.risk-tag--medicine {
-  background: var(--jh-label-light-bg);
-  color: var(--jh-label-light-text);
-}
-
-.consult-workspace {
-  position: absolute;
-  top: 56px;
-  left: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 5fr);
-  width: 100%;
-  height: calc(100% - 56px);
-  min-width: 0;
 }
 
 .chat-panel {
@@ -2223,48 +2164,6 @@ body.page-view-room {
   width: 100%;
 }
 
-@media (max-width: 1180px) {
-  .consult-shell .consult-room-main {
-    height: calc(100vh - 56px);
-    align-items: flex-start;
-    overflow: hidden;
-  }
-
-  .consult-shell .consult-room-card {
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .consult-shell .consult-workspace {
-    position: absolute;
-    top: 56px;
-    margin-top: 0;
-    grid-template-columns: minmax(0, 1fr);
-    height: calc(100% - 56px);
-    overflow-y: auto;
-  }
-
-  .consult-shell .chat-panel {
-    min-height: 0;
-  }
-
-  .consult-shell .video-chat-panel {
-    height: max-content;
-    min-height: max-content;
-    overflow: visible;
-  }
-
-  .consult-shell .prescription-panel {
-    height: auto;
-    min-height: max-content;
-    overflow-x: auto;
-    overflow-y: visible;
-  }
-}
-
-
-
 body {
   margin: 0;
 }
@@ -2318,9 +2217,5 @@ body {
 @media (max-width: 900px) {
   .app-shell--responsive {
     min-width: 0;
-  }
-
-  .consult-workspace {
-    grid-template-columns: 1fr;
   }
 }

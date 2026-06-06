@@ -13,15 +13,21 @@ test("Vue consult pharmacy bar uses H5 styles from the shared UI stylesheet", as
   assert.match(consultRoomView, /class="pharmacy-bar"/);
   assert.match(consultRoomView, /class="pharmacy-bar__left"/);
   assert.match(consultRoomView, /class="pharmacy-bar__right"/);
+  assert.match(consultRoomView, /risk-tag--inspection/);
+  assert.match(consultRoomView, /risk-tag--medicine medicine-type-tag/);
   assert.match(roomView, /class="pharmacy-bar"/);
 
   assert.match(uiStyles, /^\.pharmacy-bar\s*\{/m);
   assert.match(uiStyles, /^\.pharmacy-bar__left,\n\.pharmacy-bar__right\s*\{/m);
   assert.match(uiStyles, /^\.pharmacy-bar h2\s*\{/m);
+  assert.match(uiStyles, /^\.risk-tag--inspection\s*\{/m);
+  assert.match(uiStyles, /^\.risk-tag--medicine\s*\{/m);
   assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.pharmacy-bar\s*\{/);
   assert.match(uiStyles, /\.consult-shell \.pharmacy-bar h2\s*\{\s*max-width: 180px;/);
 
   assert.doesNotMatch(legacyStyles, /^\.pharmacy-bar\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.pharmacy-bar__left,\n\.pharmacy-bar__right\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.pharmacy-bar h2\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.risk-tag--inspection\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.risk-tag--medicine\s*\{/m);
 });
