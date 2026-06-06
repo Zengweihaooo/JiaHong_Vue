@@ -40,8 +40,12 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
 });
 
 test("Vue chat panel routes H5 consult info through the shared UI card", async () => {
-  const chatPanel = await readFile(new URL("../src/components/consultation/ChatPanel.vue", import.meta.url), "utf8");
-  const legacyStyles = await readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8");
+  const [chatPanel, appDialogs, uiStyles, legacyStyles] = await Promise.all([
+    readFile(new URL("../src/components/consultation/ChatPanel.vue", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8")
+  ]);
 
   assert.match(chatPanel, /import \{ ConsultInfoCard, VideoCallWindow \} from "@jiahong\/ui"/);
   assert.match(chatPanel, /<ConsultInfoCard/);
@@ -51,8 +55,18 @@ test("Vue chat panel routes H5 consult info through the shared UI card", async (
   assert.match(chatPanel, /record\?\.type !== "consult" && !hasConsultInfo && !voucher/);
 
   assert.doesNotMatch(chatPanel, /<FollowUpVoucher/);
+
+  assert.match(appDialogs, /class="consult-attachment-overlay is-open"/);
+  assert.match(appDialogs, /class="consult-attachment-dialog__page consult-attachment-dialog__page--prev"/);
+  assert.match(uiStyles, /^\.consult-attachment-overlay\s*\{/m);
+  assert.match(uiStyles, /^\.consult-attachment-dialog\s*\{/m);
+  assert.match(uiStyles, /^\.consult-attachment-dialog__page::before\s*\{/m);
+  assert.match(uiStyles, /^\.consult-attachment-dialog__page--next::before\s*\{/m);
   assert.doesNotMatch(legacyStyles, /\.consult-info-card\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.followup-voucher-card\s*\{/);
+  assert.doesNotMatch(legacyStyles, /^\.consult-attachment-overlay\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.consult-attachment-dialog\s*\{/m);
+  assert.doesNotMatch(legacyStyles, /^\.consult-attachment-dialog__page::before\s*\{/m);
 });
 
 test("shared consult info card keeps H5 attachment viewed states", async () => {
