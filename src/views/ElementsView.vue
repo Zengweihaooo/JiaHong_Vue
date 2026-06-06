@@ -113,9 +113,12 @@
             <WaitingStatusCard :total="6" :items="workspaceQueueItems" />
           </article>
 
-          <article class="elements-preview">
+          <article class="elements-preview elements-preview--wide">
             <h3>ConsultEntryCard</h3>
-            <ConsultEntryCard :has-queue="true" />
+            <div class="elements-consult-card-pair">
+              <ConsultEntryCard variant="blue" />
+              <ConsultEntryCard variant="yellow" :has-queue="true" />
+            </div>
           </article>
 
           <article class="elements-preview">
@@ -645,6 +648,13 @@ const workspaceQuickActions = [
 .elements-preview :deep(.quick-entry-card) {
   min-height: 360px;
   padding: 20px;
+}
+
+.elements-consult-card-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
 }
 
 .elements-preview :deep(.quick-grid) {

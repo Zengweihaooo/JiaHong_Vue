@@ -4,7 +4,11 @@
       <div class="row row--top">
         <WaitingStatusCard :total="store.waitingQueue.total" :items="queueItems" />
 
-        <ConsultEntryCard :has-queue="store.waitingQueue.total > 0" @click="$router.push('/room/')" />
+        <ConsultEntryCard
+          :variant="consultEntryVariant"
+          :has-queue="store.waitingQueue.total > 0"
+          @click="$router.push('/room/')"
+        />
 
         <ServiceStatusCard
           :status="store.doctorStatus"
@@ -46,6 +50,7 @@ const queueItems = computed(() => [
   { key: "video", label: "视频问诊", value: store.waitingQueue.byType.video },
   { key: "consult", label: "图文咨询", value: store.waitingQueue.byType.consult }
 ]);
+const consultEntryVariant = computed(() => (store.waitingQueue.total > 0 ? "yellow" : "blue"));
 
 function toggleService(service) {
   store.toggleService(service.key);
