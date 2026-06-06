@@ -186,7 +186,12 @@
         </div>
         <div class="elements-icon-grid">
           <article v-for="icon in workspaceIconAssets" :key="icon.name" class="elements-icon-card">
-            <img :src="assetUrl(icon.path)" :alt="icon.name" />
+            <span
+              :class="['elements-icon-card__media', icon.tone ? `elements-icon-card__media--${icon.tone}` : '']"
+              :style="{ '--elements-icon-preview-width': icon.width, '--elements-icon-preview-height': icon.height }"
+            >
+              <img :src="assetUrl(icon.path)" :alt="icon.name" />
+            </span>
             <strong>{{ icon.name }}</strong>
             <code>{{ icon.path }}</code>
           </article>
@@ -357,15 +362,15 @@ const workspaceIconAssets = [
   { name: "个人中心", path: "assets/figma-home/user.svg" },
   { name: "医生佣金", path: "assets/figma-home/pocket.svg" },
   { name: "菜单收起", path: "assets/figma-home/menu-icon.svg" },
-  { name: "问诊入口", path: "assets/figma-home/consult-icon.svg" },
+  { name: "问诊入口", path: "assets/figma-home/consult-icon.svg", tone: "blue" },
   { name: "排班底图", path: "assets/figma-home/quick-schedule-box.svg" },
-  { name: "排班标记", path: "assets/figma-home/quick-schedule-mark.svg" },
+  { name: "排班标记", path: "assets/figma-home/quick-schedule-mark.svg", width: "38px", height: "24px" },
   { name: "快捷文档", path: "assets/figma-home/quick-doc.svg" },
   { name: "新增入口", path: "assets/figma-home/quick-plus.svg" },
   { name: "时钟底图", path: "assets/figma-home/quick-clock-circle.svg" },
-  { name: "时钟指针", path: "assets/figma-home/quick-clock-hand.svg" },
-  { name: "勾选", path: "assets/figma-home/checkmark.svg" },
-  { name: "搜索", path: "assets/search-icon.png" }
+  { name: "时钟指针", path: "assets/figma-home/quick-clock-hand.svg", width: "24px", height: "38px" },
+  { name: "勾选", path: "assets/figma-home/checkmark.svg", tone: "blue" },
+  { name: "搜索", path: "assets/search-icon.png", tone: "blue" }
 ];
 
 const workspaceQueueItems = [
@@ -559,6 +564,8 @@ const workspaceQuickActions = [
 .elements-token code,
 .elements-component-card code,
 .elements-icon-card code {
+  display: block;
+  max-width: 100%;
   overflow: hidden;
   color: var(--jh-text-tertiary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -580,13 +587,29 @@ const workspaceQuickActions = [
   min-height: 132px;
   justify-items: center;
   gap: 6px;
+  overflow: hidden;
   padding: 14px 10px;
   text-align: center;
 }
 
-.elements-icon-card img {
-  width: 42px;
-  height: 42px;
+.elements-icon-card__media {
+  display: grid;
+  width: 66px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid var(--jh-line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.elements-icon-card__media--blue {
+  border-color: rgba(0, 110, 249, 0.18);
+  background: linear-gradient(135deg, #1677ff, #005ed8);
+}
+
+.elements-icon-card__media img {
+  width: var(--elements-icon-preview-width, 42px);
+  height: var(--elements-icon-preview-height, 42px);
   object-fit: contain;
 }
 
