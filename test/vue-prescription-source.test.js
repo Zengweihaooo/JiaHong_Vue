@@ -93,3 +93,17 @@ test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet",
   assert.doesNotMatch(legacyStyles, /\.medicine-table__row > span\.medicine-warning-target\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.medicine-delete-btn\s*\{/);
 });
+
+test("Vue imports prescription panel CSS from UI source styles instead of stale dist output", async () => {
+  const [mainEntry, uiPackage, uiStyleEntry] = await Promise.all([
+    readFile(new URL("../src/main.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/package.json", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/index.css", import.meta.url), "utf8")
+  ]);
+  const uiPackageJson = JSON.parse(uiPackage);
+
+  assert.match(mainEntry, /import "@jiahong\/ui\/styles\.css";/);
+  assert.equal(uiPackageJson.exports["./styles.css"], "./styles/index.css");
+  assert.match(uiStyleEntry, /@import ['"]\.\/components\.css['"]/);
+  assert.notEqual(uiPackageJson.exports["./styles.css"], "./dist/styles.css");
+});
