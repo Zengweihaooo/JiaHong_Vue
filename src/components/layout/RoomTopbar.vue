@@ -6,7 +6,7 @@
         <span>返回首页</span>
       </RouterLink>
       <div class="room-topbar__right">
-        <button class="jh-btn jh-btn--md jh-btn--primary room-service-btn" type="button">在线客服</button>
+        <Button class="room-service-btn" tone="primary" size="md">在线客服</Button>
         <div class="room-user">
           <span class="room-user__divider" aria-hidden="true">
             <img :src="assetUrl('assets/figma-consult/topbar-divider.svg')" alt="" />
@@ -34,7 +34,7 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { DoctorAvatar, assetUrl } from "@jiahong/ui";
+import { Button, DoctorAvatar, assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>

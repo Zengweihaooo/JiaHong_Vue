@@ -7,8 +7,8 @@
         <span>2027-01-15</span>
       </div>
       <div class="topbar__actions">
-        <button class="jh-btn jh-btn--md jh-btn--primary" type="button">在线客服</button>
-        <button class="jh-btn jh-btn--md jh-btn--outline-secondary" type="button">医生招聘</button>
+        <Button tone="primary" size="md">在线客服</Button>
+        <Button tone="secondary" size="md">医生招聘</Button>
       </div>
       <div class="user-chip">
         <button
@@ -30,7 +30,7 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { DoctorAvatar } from "@jiahong/ui";
+import { Button, DoctorAvatar } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>

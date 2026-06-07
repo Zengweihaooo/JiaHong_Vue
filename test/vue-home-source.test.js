@@ -29,8 +29,12 @@ test("Vue home consult entry card keeps latest H5 background in shared UI", asyn
   assert.doesNotMatch(legacyStyles, /\.consult-card__content\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.consult-card__bg\s*\{/);
 
-  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
+  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox\s*\{[\s\S]*flex-direction: column;/);
+  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-align: center;/);
+  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-overflow: clip;/);
   assert.match(serviceStatusCard, /word-break: keep-all/);
-  assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*white-space: nowrap;/);
+  assert.match(legacyStyles, /\.service-tile \.jh-checkbox\s*\{[\s\S]*flex-direction: column;/);
+  assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-align: center;/);
+  assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-overflow: clip;/);
   assert.match(app, /store\.refreshRealtime\(\)\.catch\(\(\) => \{\}\)/);
 });
