@@ -56,6 +56,8 @@
         <div class="elements-demo-row">
           <Avatar name="张医生" />
           <Avatar name="嘉虹" size="lg" />
+          <DoctorAvatar name="张医生" context="home" />
+          <DoctorAvatar name="张医生" context="room" />
           <Button tone="primary">确认</Button>
           <Button tone="secondary">取消</Button>
           <Button tone="danger">删除</Button>
@@ -244,6 +246,7 @@ import {
   Card,
   ConsultEntryCard,
   ConsultInfoCard,
+  DoctorAvatar,
   DurationChip,
   EmptyState,
   FollowUpVoucher,
@@ -263,7 +266,7 @@ import {
 
 const sections = [
   { id: "foundations", name: "基础变量", count: "6" },
-  { id: "catalog", name: "组件总览", count: "19" },
+  { id: "catalog", name: "组件总览", count: "20" },
   { id: "basics", name: "基础组件", count: "8" },
   { id: "workspace", name: "工作台", count: "6" },
   { id: "consultation", name: "问诊处方", count: "4" },
@@ -277,6 +280,7 @@ const componentCatalog = [
   { name: "Card", importName: "Card", description: "通用内容容器" },
   { name: "ConsultEntryCard", importName: "ConsultEntryCard", description: "进入问诊室入口" },
   { name: "ConsultInfoCard", importName: "ConsultInfoCard", description: "病情和附件信息" },
+  { name: "DoctorAvatar", importName: "DoctorAvatar", description: "医生端顶部栏头像" },
   { name: "DurationChip", importName: "DurationChip", description: "问诊持续时长" },
   { name: "EmptyState", importName: "EmptyState", description: "空状态展示" },
   { name: "FollowUpVoucher", importName: "FollowUpVoucher", description: "复诊凭证" },

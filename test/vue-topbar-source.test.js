@@ -11,11 +11,11 @@ test("Vue topbars use shared UI avatar assets and H5 menu dismissal behavior", a
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
   ]);
 
-  assert.match(topbar, /import \{ Avatar, assetUrl \} from "@jiahong\/ui"/);
-  assert.match(topbar, /<Avatar :src="assetUrl\('assets\/figma-home\/avatar-source\.png'\)"/);
+  assert.match(topbar, /import \{ DoctorAvatar \} from "@jiahong\/ui"/);
+  assert.match(topbar, /<DoctorAvatar :name="store\.doctor\?\.name \|\| '张医生'" context="home" size="sm" \/>/);
 
-  assert.match(roomTopbar, /import \{ Avatar, assetUrl \} from "@jiahong\/ui"/);
-  assert.match(roomTopbar, /<Avatar :src="assetUrl\('assets\/figma-consult\/avatar-source\.png'\)"/);
+  assert.match(roomTopbar, /import \{ DoctorAvatar, assetUrl \} from "@jiahong\/ui"/);
+  assert.match(roomTopbar, /<DoctorAvatar :name="store\.doctor\?\.name \|\| '张医生'" context="room" size="sm" \/>/);
   assert.match(roomTopbar, /class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn"/);
 
   assert.match(userMenu, /ref="menuRoot"/);
