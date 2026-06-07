@@ -139,6 +139,11 @@
           </article>
 
           <article class="elements-preview elements-preview--wide">
+            <h3>LatestAnnouncementCard</h3>
+            <LatestAnnouncementCard :announcement="latestAnnouncement" />
+          </article>
+
+          <article class="elements-preview elements-preview--wide">
             <h3>RoomPendingWorkspace</h3>
             <RoomPendingWorkspace :skeleton-count="3" />
           </article>
@@ -255,6 +260,7 @@ import {
   DurationChip,
   EmptyState,
   FollowUpVoucher,
+  LatestAnnouncementCard,
   MedicineRiskTip,
   QuickActionsPanel,
   ReadTag,
@@ -272,9 +278,9 @@ import {
 
 const sections = [
   { id: "foundations", name: "基础变量", count: "6" },
-  { id: "catalog", name: "组件总览", count: "21" },
+  { id: "catalog", name: "组件总览", count: "22" },
   { id: "basics", name: "基础组件", count: "8" },
-  { id: "workspace", name: "工作台", count: "7" },
+  { id: "workspace", name: "工作台", count: "8" },
   { id: "consultation", name: "问诊处方", count: "4" },
   { id: "icons", name: "工作台图标", count: "19" },
   { id: "forms", name: "表单控制", count: "CSS" }
@@ -290,6 +296,7 @@ const componentCatalog = [
   { name: "DurationChip", importName: "DurationChip", description: "问诊持续时长" },
   { name: "EmptyState", importName: "EmptyState", description: "空状态展示" },
   { name: "FollowUpVoucher", importName: "FollowUpVoucher", description: "复诊凭证" },
+  { name: "LatestAnnouncementCard", importName: "LatestAnnouncementCard", description: "最新公告卡片" },
   { name: "MedicineRiskTip", importName: "MedicineRiskTip", description: "药品风险提示" },
   { name: "QuickActionsPanel", importName: "QuickActionsPanel", description: "高频操作入口" },
   { name: "ReadTag", importName: "ReadTag", description: "已读未读状态" },
@@ -395,6 +402,15 @@ const workspaceServices = [
   { key: "video", label: "视频问诊", enabled: true },
   { key: "consult", label: "图文咨询", enabled: true }
 ];
+
+const latestAnnouncement = {
+  id: "notice_1",
+  title: "规范开方合规导向",
+  content: "自2024年7月起，根据国家新政策，对于重复开药必须严格审查患者的用药历史。\n请各位医生在开立处方前，认真查看患者既往处方记录。",
+  date: "2026-06-07",
+  publisher: "运营中心",
+  unread: true
+};
 
 const workspaceQuickActions = [
   { title: "排班管理", desc: "查看值班安排", icon: "quickCalendar", feature: "schedule" },

@@ -19,7 +19,11 @@
       </div>
 
       <div class="row row--bottom">
-        <NoticeCard />
+        <LatestAnnouncementCard
+          :announcement="store.latestAnnouncement"
+          @detail="openAnnouncementDetail"
+          @history="store.announcementListVisible = true"
+        />
         <QuickActionsPanel
           :actions="store.quickActions"
           @add="store.openQuickEntryDialog()"
@@ -38,9 +42,8 @@
 
 <script setup>
 import { computed } from "vue";
-import NoticeCard from "@/components/home/NoticeCard.vue";
 import { useAppStore } from "@/stores/app";
-import { ConsultEntryCard, QuickActionsPanel, ServiceStatusCard, WaitingStatusCard } from "@jiahong/ui";
+import { ConsultEntryCard, LatestAnnouncementCard, QuickActionsPanel, ServiceStatusCard, WaitingStatusCard } from "@jiahong/ui";
 import { useRouter } from "vue-router";
 
 const store = useAppStore();
@@ -54,6 +57,13 @@ const consultEntryVariant = computed(() => (store.waitingQueue.total > 0 ? "yell
 
 function toggleService(service) {
   store.toggleService(service.key);
+}
+
+function openAnnouncementDetail(announcement) {
+  if (!announcement?.id) return;
+  store.selectedAnnouncementId = announcement.id;
+  store.markAnnouncementRead(announcement.id);
+  store.announcementDialogVisible = true;
 }
 
 function editQuickAction({ index }) {
