@@ -28,6 +28,9 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.match(quickActionsPanel, /@dragstart\.stop="startDrag\(index, \$event\)"/);
   assert.match(quickActionsPanel, /emit\('reorder'/);
   assert.match(quickActionsPanel, /emit\('schedule-punch'\)/);
+  assert.match(quickActionsPanel, /\.quick-grid\s*\{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(128px, 1fr\)\);/);
+  assert.match(quickActionsPanel, /\.quick-card__title\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
+  assert.match(quickActionsPanel, /\.quick-card__desc\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
   assert.match(quickActionsPanel, /class="schedule-dialog"/);
   assert.match(quickActionsPanel, /schedule-day-grid/);
   assert.match(quickActionsPanel, /schedule-panel__punch/);
@@ -43,6 +46,13 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.doesNotMatch(store, /const maxQuickActionCards = 8/);
 
   assert.match(uiStyles, /^\.icon-box\s*\{/m);
+  assert.match(uiStyles, /^\.quick-entry-card\s*\{/m);
+  assert.match(uiStyles, /\.quick-grid\s*\{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(128px, 1fr\)\);/);
+  assert.match(uiStyles, /\.quick-card__title\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
+  assert.match(uiStyles, /\.quick-card__desc\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
+  assert.match(legacyStyles, /\.quick-grid\s*\{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(128px, 1fr\)\);/);
+  assert.match(legacyStyles, /\.quick-card__title\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
+  assert.match(legacyStyles, /\.quick-card__desc\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
   assert.match(uiStyles, /^\.quick-icon\s*\{/m);
   assert.match(uiStyles, /^\.quick-icon--schedule \.quick-icon__base\s*\{/m);
   assert.match(uiStyles, /^\.quick-icon--menu-user\s*\{/m);
