@@ -1,39 +1,13 @@
 <template>
   <div ref="menuRoot" :class="['user-menu', { 'is-open': visible }]" role="menu" :aria-hidden="!visible">
-    <section class="user-menu-status" aria-label="接诊状态与服务开关">
-      <div class="user-menu-status__row">
-        <div class="user-menu-status__left">
-          <span>出诊状态</span>
-          <StatusBadge :status="store.doctorStatus" />
-        </div>
-        <button
-          :class="['jh-switch user-menu-status__switch', { 'is-on': store.doctorStatus !== 'offline' }]"
-          type="button"
-          aria-label="切换出诊状态"
-          :aria-pressed="store.doctorStatus !== 'offline'"
-          @click="store.toggleDoctorStatus()"
-        ></button>
-      </div>
-      <div class="user-menu-services" aria-label="服务类型">
-        <button
-          v-for="service in orderedServices"
-          :key="service.key"
-          :class="['user-menu-service', { 'is-selected': service.enabled }]"
-          type="button"
-          role="checkbox"
-          :aria-checked="service.enabled"
-          :data-service-key="service.key"
-          @click="store.toggleService(service.key)"
-        >
-          <span class="jh-checkbox user-menu-service__check">
-            <span class="jh-checkbox__icon" aria-hidden="true">
-              <img class="jh-checkbox__mark" :src="assetUrl('assets/figma-home/checkmark.svg')" alt="" />
-            </span>
-            <span class="jh-checkbox__label user-menu-service__label">{{ service.label }}</span>
-          </span>
-        </button>
-      </div>
-    </section>
+    <ServiceStatusPanel
+      class="user-menu-status"
+      density="compact"
+      :status="store.doctorStatus"
+      :services="orderedServices"
+      @toggle-status="store.toggleDoctorStatus()"
+      @toggle-service="toggleService"
+    />
     <div class="user-menu-actions">
       <button class="user-menu__item user-menu__item--settings" type="button" role="menuitem" data-action="账号设置" @click="runMenuAction('账号设置')">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -54,7 +28,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { StatusBadge, assetUrl } from "@jiahong/ui";
+import { ServiceStatusPanel } from "@jiahong/ui";
 import { useAppStore } from "@/stores/app";
 
 const props = defineProps({
@@ -73,6 +47,10 @@ const orderedServices = computed(() =>
     .slice()
     .sort((left, right) => serviceOrder.indexOf(left.key) - serviceOrder.indexOf(right.key))
 );
+
+function toggleService(service) {
+  store.toggleService(service.key);
+}
 
 function closeMenu() {
   store.userMenuVisible = false;

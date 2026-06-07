@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue home consult entry card keeps latest H5 background in shared UI", async () => {
-  const [app, homeDashboard, legacyStyles, uiStyles, consultEntryCard, serviceStatusCard] = await Promise.all([
+  const [app, homeDashboard, legacyStyles, uiStyles, consultEntryCard, serviceStatusCard, serviceStatusPanel] = await Promise.all([
     readFile(new URL("../src/App.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/src/components/ConsultEntryCard/ConsultEntryCard.vue", import.meta.url), "utf8"),
-    readFile(new URL("../../JiaHong_UI/src/components/ServiceStatusCard/ServiceStatusCard.vue", import.meta.url), "utf8")
+    readFile(new URL("../../JiaHong_UI/src/components/ServiceStatusCard/ServiceStatusCard.vue", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/src/components/ServiceStatusPanel/ServiceStatusPanel.vue", import.meta.url), "utf8")
   ]);
 
   assert.match(homeDashboard, /ConsultEntryCard/);
@@ -29,10 +30,15 @@ test("Vue home consult entry card keeps latest H5 background in shared UI", asyn
   assert.doesNotMatch(legacyStyles, /\.consult-card__content\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.consult-card__bg\s*\{/);
 
-  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox\s*\{[\s\S]*flex-direction: column;/);
-  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-align: center;/);
-  assert.match(serviceStatusCard, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-overflow: clip;/);
-  assert.match(serviceStatusCard, /word-break: keep-all/);
+  assert.match(serviceStatusCard, /import ServiceStatusPanel/);
+  assert.match(serviceStatusCard, /<ServiceStatusPanel/);
+  assert.match(serviceStatusCard, /density="regular"/);
+  assert.match(serviceStatusPanel, /\.service-status-panel__check\s*\{[\s\S]*flex-direction: column;/);
+  assert.match(serviceStatusPanel, /\.service-status-panel__label\s*\{[\s\S]*text-align: center;/);
+  assert.match(serviceStatusPanel, /\.service-status-panel__label\s*\{[\s\S]*text-overflow: clip;/);
+  assert.match(serviceStatusPanel, /word-break: keep-all/);
+  assert.match(uiStyles, /^\.service-status-panel\s*\{/m);
+  assert.match(uiStyles, /^\.service-status-panel__service\s*\{/m);
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox\s*\{[\s\S]*flex-direction: column;/);
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-align: center;/);
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-overflow: clip;/);

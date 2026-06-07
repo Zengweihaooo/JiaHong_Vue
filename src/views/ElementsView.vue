@@ -128,6 +128,11 @@
             <ServiceStatusCard status="online" :services="workspaceServices" />
           </article>
 
+          <article class="elements-preview">
+            <h3>ServiceStatusPanel</h3>
+            <ServiceStatusPanel status="online" :services="workspaceServices" density="compact" />
+          </article>
+
           <article class="elements-preview elements-preview--wide">
             <h3>QuickActionsPanel</h3>
             <QuickActionsPanel :actions="workspaceQuickActions" />
@@ -255,6 +260,7 @@ import {
   ReadTag,
   RoomPendingWorkspace,
   ServiceStatusCard,
+  ServiceStatusPanel,
   StatusBadge,
   TypeIcon,
   VideoCallWindow,
@@ -266,9 +272,9 @@ import {
 
 const sections = [
   { id: "foundations", name: "基础变量", count: "6" },
-  { id: "catalog", name: "组件总览", count: "20" },
+  { id: "catalog", name: "组件总览", count: "21" },
   { id: "basics", name: "基础组件", count: "8" },
-  { id: "workspace", name: "工作台", count: "6" },
+  { id: "workspace", name: "工作台", count: "7" },
   { id: "consultation", name: "问诊处方", count: "4" },
   { id: "icons", name: "工作台图标", count: "19" },
   { id: "forms", name: "表单控制", count: "CSS" }
@@ -289,6 +295,7 @@ const componentCatalog = [
   { name: "ReadTag", importName: "ReadTag", description: "已读未读状态" },
   { name: "RoomPendingWorkspace", importName: "RoomPendingWorkspace", description: "待接诊问诊室" },
   { name: "ServiceStatusCard", importName: "ServiceStatusCard", description: "服务状态开关" },
+  { name: "ServiceStatusPanel", importName: "ServiceStatusPanel", description: "服务状态共享面板" },
   { name: "StatusBadge", importName: "StatusBadge", description: "通用状态标签" },
   { name: "TypeIcon", importName: "TypeIcon", description: "问诊类型图标" },
   { name: "VideoCallWindow", importName: "VideoCallWindow", description: "视频问诊画面" },

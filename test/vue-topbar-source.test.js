@@ -22,6 +22,12 @@ test("Vue topbars use shared UI avatar assets and H5 menu dismissal behavior", a
   assert.match(roomTopbar, /class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn"/);
 
   assert.match(userMenu, /ref="menuRoot"/);
+  assert.match(userMenu, /import \{ ServiceStatusPanel \} from "@jiahong\/ui"/);
+  assert.match(userMenu, /<ServiceStatusPanel/);
+  assert.match(userMenu, /density="compact"/);
+  assert.match(userMenu, /@toggle-service="toggleService"/);
+  assert.doesNotMatch(userMenu, /<StatusBadge/);
+  assert.doesNotMatch(userMenu, /user-menu-service/);
   assert.match(userMenu, /document\.addEventListener\("click", handleDocumentClick\)/);
   assert.match(userMenu, /document\.addEventListener\("keydown", handleDocumentKeydown\)/);
   assert.match(userMenu, /closest\?\.\("\.user-menu-trigger"\)/);
@@ -34,6 +40,8 @@ test("Vue topbars use shared UI avatar assets and H5 menu dismissal behavior", a
   assert.match(uiStyles, /^\.jh-button__label\s*\{/m);
   assert.match(uiStyles, /^\.jh-status-badge\s*\{/m);
   assert.match(uiStyles, /^\.jh-status-badge--online\s*\{/m);
+  assert.match(uiStyles, /^\.service-status-panel\s*\{/m);
+  assert.match(uiStyles, /^\.service-status-panel--compact \.service-status-panel__service\s*\{/m);
   assert.match(uiStyles, /^\.room-user\s*\{/m);
   assert.match(uiStyles, /^\.room-back-btn\s*\{/m);
   assert.match(uiStyles, /\.room-back-btn img\s*\{/m);

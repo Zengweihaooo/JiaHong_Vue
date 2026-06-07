@@ -23,6 +23,7 @@ test("Vue Elements page showcases every shared UI component export", async () =>
     "ReadTag",
     "RoomPendingWorkspace",
     "ServiceStatusCard",
+    "ServiceStatusPanel",
     "StatusBadge",
     "TypeIcon",
     "VideoCallWindow",
@@ -40,7 +41,8 @@ test("Vue Elements page showcases every shared UI component export", async () =>
   assert.match(elementsView, /elements-consult-card-pair/);
   assert.match(elementsView, /<ConsultEntryCard variant="blue" \/>/);
   assert.match(elementsView, /<ConsultEntryCard variant="yellow" :has-queue="true" \/>/);
-  assert.match(elementsView, /\{ id: "catalog", name: "组件总览", count: "20" \}/);
+  assert.match(elementsView, /\{ id: "catalog", name: "组件总览", count: "21" \}/);
+  assert.match(elementsView, /<ServiceStatusPanel status="online" :services="workspaceServices" density="compact" \/>/);
   assert.match(elementsView, /const componentCatalog = \[/);
   assert.equal((elementsView.match(/importName:/g) || []).length, sharedComponents.length);
 });
