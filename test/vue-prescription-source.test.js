@@ -29,6 +29,14 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(prescriptionPanel, /v-if="shouldShowMedicineRiskTag\(medicine\.risk\)"/);
   assert.match(prescriptionPanel, /function selectRiskMedicine/);
   assert.match(prescriptionPanel, /function hideMedicineRiskTip/);
+  assert.match(prescriptionPanel, /function updateMedicineField/);
+  assert.match(prescriptionPanel, /function removeMedicine/);
+  assert.match(prescriptionPanel, /function resolvePrescriptionWarnings/);
+  assert.match(prescriptionPanel, /@click\.stop="removeMedicine\(medicine\)"/);
+  assert.match(prescriptionPanel, /data-medicine-field="quantity"/);
+  assert.match(prescriptionPanel, /prescriptionRemarkOptions/);
+  assert.match(prescriptionPanel, /益生菌需与抗生素间隔两小时使用/);
+  assert.match(prescriptionPanel, /filteredPrescriptionRemarkOptions/);
   assert.match(prescriptionPanel, /medicine-table__row--warning-active/);
   assert.match(prescriptionPanel, /data-warning-level/);
   assert.match(prescriptionPanel, /getHighestMedicineRiskLevel/);
@@ -80,6 +88,8 @@ test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet",
     assert.match(styles, /\.patient-info__grid\s*\{[\s\S]*?gap: 12px clamp\(32px, 7%, 72px\);[\s\S]*?line-height: 20px;/);
     assert.match(styles, /\.patient-info__field\s*\{[\s\S]*?gap: 12px;/);
     assert.match(styles, /\.patient-info__field-value\s*\{[\s\S]*?height: 34px;[\s\S]*?padding: 6px 12px;/);
+    assert.match(styles, /\.diagnosis-input\s*\{[\s\S]*?flex-wrap: wrap;[\s\S]*?max-height: 84px;[\s\S]*?overflow-y: auto;/);
+    assert.match(styles, /\.diagnosis-tag\s*\{[\s\S]*?max-width: min\(220px, 100%\);/);
     assert.match(styles, /\.medicine-search-combobox\s*\{[\s\S]*?width: max\(100%, var\(--jh-table-width\)\);[\s\S]*?min-width: var\(--jh-table-width\);/);
   }
 

@@ -319,14 +319,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { useAppStore } from "@/stores/app";
 import { assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
-const activeCancelReasonGroup = ref("medicine");
-const selectedCancelReason = ref("病情特殊存在用药禁忌");
+const activeCancelReasonGroup = ref("patient");
+const selectedCancelReason = ref("");
 const activeQuickReplyCategoryIndex = ref(0);
 const lastQuickReplyPointerAt = new Map();
 let closeQuickReplyTimer = 0;
@@ -509,7 +509,20 @@ function switchConsultAttachment(direction, event) {
 }
 
 async function confirmConsultAction(event) {
+  if (event === "CANCEL" && !selectedCancelReason.value) {
+    store.showToast("请选择取消原因");
+    return;
+  }
   store.consultConfirmKind = "";
   await store.endActiveConsultation(event);
 }
+
+watch(
+  () => store.consultConfirmKind,
+  (kind) => {
+    if (kind !== "cancel") return;
+    activeCancelReasonGroup.value = cancelReasonGroups[0]?.key || "";
+    selectedCancelReason.value = "";
+  }
+);
 </script>

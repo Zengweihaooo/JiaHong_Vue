@@ -14,6 +14,11 @@ test("Vue consult confirm dialogs use H5 styles from the shared UI stylesheet", 
   assert.match(dialogs, /consult-cancel-reason-type/);
   assert.match(dialogs, /consult-cancel-reason-list/);
   assert.match(dialogs, /consult-confirm-submit/);
+  assert.match(dialogs, /const selectedCancelReason = ref\(""\)/);
+  assert.match(dialogs, /store\.showToast\("请选择取消原因"\)/);
+  assert.match(dialogs, /selectedCancelReason\.value = ""/);
+  assert.match(dialogs, /@click="selectedCancelReason = reason"/);
+  assert.doesNotMatch(dialogs, /const selectedCancelReason = ref\("病情特殊存在用药禁忌"\)/);
 
   assert.match(uiStyles, /\.consult-confirm-overlay\s*\{[\s\S]*?z-index: 95;[\s\S]*?background: rgba\(122, 136, 152, 0\.3\);/);
   assert.match(uiStyles, /\.consult-confirm-dialog\s*\{[\s\S]*?width: min\(420px, calc\(100vw - 32px\)\);[\s\S]*?border-radius: 8px;/);

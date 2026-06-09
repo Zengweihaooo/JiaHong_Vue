@@ -11,7 +11,12 @@ test("Vue video consultation layout uses the H5 video workspace rule from the sh
   ]);
 
   assert.match(view, /'video-shell': isVideo/);
-  assert.match(view, /<DurationChip :seconds="record\?\.elapsedSeconds \|\| 0" label="问诊持续时长：" \/>/);
+  assert.match(view, /<DurationChip :seconds="activeElapsedSeconds" label="问诊持续时长：" \/>/);
+  assert.match(view, /const activeElapsedSeconds = ref\(0\)/);
+  assert.match(view, /function startElapsedTimer/);
+  assert.match(view, /window\.setInterval/);
+  assert.match(view, /record\.value\.elapsedSeconds = activeElapsedSeconds\.value/);
+  assert.match(view, /onBeforeUnmount\(clearElapsedTimer\)/);
   assert.match(uiVariables, /--jh-consult-chat-width: 424px;/);
   assert.match(uiVariables, /--jh-consult-prescription-width: 728px;/);
   assert.match(uiVariables, /--jh-consult-card-width: 1152px;/);

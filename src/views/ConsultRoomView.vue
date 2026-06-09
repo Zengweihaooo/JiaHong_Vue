@@ -11,7 +11,7 @@
             <span class="jh-tag jh-tag--focus jh-tag--lg risk-tag--medicine medicine-type-tag">{{ medicineTypeLabel }}</span>
           </div>
           <div class="pharmacy-bar__right">
-            <DurationChip :seconds="record?.elapsedSeconds || 0" label="问诊持续时长：" />
+            <DurationChip :seconds="activeElapsedSeconds" label="问诊持续时长：" />
             <button class="jh-btn jh-btn--md jh-btn--outline-secondary cancel-consult-trigger" type="button" :disabled="record?.prescriptionSubmitted" @click="store.consultConfirmKind = 'cancel'">取消问诊</button>
           </div>
         </div>
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import { DurationChip } from "@jiahong/ui";
@@ -47,6 +47,8 @@ const route = useRoute();
 const store = useAppStore();
 const isVideo = computed(() => props.mode === "video");
 const record = computed(() => store.activeRecord);
+const activeElapsedSeconds = ref(0);
+let elapsedTimer = 0;
 const title = computed(() => {
   if (record.value?.type === "consult" && (!record.value.title || record.value.title.includes("图文咨询"))) {
     return "武汉市好药师大药房";
@@ -76,4 +78,30 @@ function syncActiveRecord() {
 
 onMounted(syncActiveRecord);
 watch(() => route.query.sessionId, syncActiveRecord);
+
+function clearElapsedTimer() {
+  if (!elapsedTimer) return;
+  window.clearInterval(elapsedTimer);
+  elapsedTimer = 0;
+}
+
+function startElapsedTimer() {
+  clearElapsedTimer();
+  if (!record.value || record.value.state !== "ongoing") return;
+  elapsedTimer = window.setInterval(() => {
+    activeElapsedSeconds.value += 1;
+    if (record.value) record.value.elapsedSeconds = activeElapsedSeconds.value;
+  }, 1000);
+}
+
+watch(
+  () => [record.value?.id, record.value?.state],
+  () => {
+    activeElapsedSeconds.value = Number(record.value?.elapsedSeconds || 0);
+    startElapsedTimer();
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(clearElapsedTimer);
 </script>

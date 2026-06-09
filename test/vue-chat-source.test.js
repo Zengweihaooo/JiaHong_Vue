@@ -58,10 +58,6 @@ test("Vue chat panel routes H5 consult info through the shared UI card", async (
 
   assert.match(appDialogs, /class="consult-attachment-overlay is-open"/);
   assert.match(appDialogs, /class="consult-attachment-dialog__page consult-attachment-dialog__page--prev"/);
-  assert.match(uiStyles, /^\.jh-voucher-voice-overlay\s*\{/m);
-  assert.match(uiStyles, /^\.jh-voucher-voice-overlay\.is-open\s*\{/m);
-  assert.match(uiStyles, /^\.jh-voucher-voice-dialog\s*\{/m);
-  assert.match(uiStyles, /^\.jh-voucher-wave\s*\{/m);
   assert.match(uiStyles, /^\.consult-info-card\s*\{/m);
   assert.match(uiStyles, /^\.consult-info-card__row\s*\{/m);
   assert.match(uiStyles, /^\.consult-info-card__voices,\n\.consult-attachments\s*\{/m);
@@ -92,7 +88,6 @@ test("shared consult info card keeps H5 attachment viewed states", async () => {
 
   assert.match(consultInfoCard, /viewedVoiceKeys/);
   assert.match(consultInfoCard, /activeVoiceKey/);
-  assert.match(consultInfoCard, /v-if="activeVoice"/);
   assert.match(consultInfoCard, /activeVoiceRemaining/);
   assert.match(consultInfoCard, /activeVoiceWaveStep/);
   assert.match(consultInfoCard, /function isVoiceActive/);
@@ -104,4 +99,7 @@ test("shared consult info card keeps H5 attachment viewed states", async () => {
   assert.match(consultInfoCard, /data-followup-voice-current/);
   assert.match(consultInfoCard, /data-followup-voice-step/);
   assert.match(consultInfoCard, /is-playing/);
+  assert.doesNotMatch(consultInfoCard, /<Teleport/);
+  assert.doesNotMatch(consultInfoCard, /jh-voucher-voice-overlay/);
+  assert.doesNotMatch(consultInfoCard, /jh-voucher-voice-dialog/);
 });

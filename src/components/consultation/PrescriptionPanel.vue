@@ -138,7 +138,16 @@
             <FieldCombobox :medicine="medicine" field="usage" label="用法" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="frequency" label="服用频次" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="dose" label="用量" :readonly="readonly" />
-            <span :class="warningClass(medicine, 'quantity')">{{ medicine.quantity }}</span>
+            <span v-if="readonly" :class="warningClass(medicine, 'quantity')">{{ medicine.quantity }}</span>
+            <input
+              v-else
+              :class="['table-input medicine-edit-field', warningClass(medicine, 'quantity')]"
+              type="text"
+              :value="medicine.quantity"
+              aria-label="数量"
+              data-medicine-field="quantity"
+              @input="updateMedicineField(medicine, 'quantity', $event.target.value)"
+            />
             <span v-if="readonly" :class="['table-input', warningClass(medicine, 'unit')]">{{ medicine.unit }}</span>
             <div v-else class="medicine-unit-control">
               <button
@@ -161,7 +170,7 @@
             <span class="medicine-risk-cell">
               <span v-if="shouldShowMedicineRiskTag(medicine.risk)" :class="['jh-risk-tag jh-risk-tag--sm risk-small', riskClass(medicine.risk)]">{{ medicine.risk }}</span>
             </span>
-            <button v-if="!readonly" class="jh-btn jh-btn--text medicine-delete-btn" type="button">删除</button>
+            <button v-if="!readonly" class="jh-btn jh-btn--text medicine-delete-btn" type="button" @click.stop="removeMedicine(medicine)">删除</button>
           </div>
         </div>
         <div v-else class="medicine-empty-state">暂无药品信息</div>
@@ -187,14 +196,30 @@
         <span class="prescription-remark-field__label">处方备注：</span>
         <span class="prescription-remark-combobox">
           <input
+            v-model="prescriptionRemark"
             class="jh-input-field jh-input-field--lg diagnosis-select prescription-remark-select prescription-remark-input"
             type="text"
             aria-label="处方备注"
-            aria-expanded="false"
+            :aria-expanded="prescriptionRemarkOpen"
             autocomplete="off"
             placeholder="请选择"
+            @focus="openPrescriptionRemark"
+            @input="openPrescriptionRemark"
+            @blur="deferClosePrescriptionRemark"
           />
-          <span class="prescription-remark-options" role="listbox" hidden></span>
+          <span class="prescription-remark-options" role="listbox" :hidden="!prescriptionRemarkOpen">
+            <button
+              v-for="option in filteredPrescriptionRemarkOptions"
+              :key="option"
+              class="prescription-remark-option"
+              type="button"
+              role="option"
+              :data-prescription-remark="option"
+              @pointerdown.prevent.stop="selectPrescriptionRemark(option)"
+            >
+              {{ option }}
+            </button>
+          </span>
         </span>
       </label>
       <div class="prescription-actions__controls">
@@ -256,9 +281,13 @@ const medicineOptions = ref([]);
 const medicineOpen = ref(false);
 const openUnitIndex = ref("");
 const unitMenuStyle = ref({});
+const openMedicineFieldKey = ref("");
+const medicineFieldMenuStyle = ref({});
 const activeRiskMedicineIndex = ref("");
 const medicineRiskTipDismissed = ref(false);
 const videoSubmitRemaining = ref(0);
+const prescriptionRemark = ref("");
+const prescriptionRemarkOpen = ref(false);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
 let videoSubmitTimer = 0;
@@ -268,6 +297,35 @@ const medicineFieldOptions = {
   frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "必要时", "按需", "单次"],
   dose: ["0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
 };
+const prescriptionRemarkOptions = [
+  "益生菌需与抗生素间隔两小时使用",
+  "蒙脱石散需与其它药前后间隔两小时使用",
+  "联合用药中的补充用药",
+  "为老人带药",
+  "处方中儿童药品为15岁孩子带药",
+  "按疗程使用",
+  "微信支付",
+  "现金支付",
+  "支付宝支付",
+  "阿托伐他汀需与其它药物分开使用",
+  "其他"
+];
+const warningFieldColumns = {
+  frequency: "3",
+  dose: "3",
+  quantity: "3",
+  unit: "3",
+  usage: "4"
+};
+const warningFieldCategories = {
+  name: "重复用药",
+  frequency: "用法用量",
+  dose: "用法用量",
+  quantity: "用法用量",
+  unit: "用法用量",
+  usage: "给药途径"
+};
+const medicineRelationRiskCategories = new Set(["重复用药", "相互作用", "配伍"]);
 const patientDetail = computed(() => props.record?.patientDetail || {});
 const patientName = computed(() => {
   if (!props.record) return "暂无患者信息";
@@ -280,6 +338,11 @@ const diagnosisTags = computed(() => {
   return props.consultation ? tags.filter((tag) => !tag.includes("咨询")) : tags;
 });
 const medicines = computed(() => props.record?.prescriptionMedicines || []);
+const filteredPrescriptionRemarkOptions = computed(() => {
+  const keyword = prescriptionRemark.value.trim();
+  if (!keyword) return prescriptionRemarkOptions;
+  return prescriptionRemarkOptions.filter((option) => option.includes(keyword));
+});
 const riskMedicines = computed(() => medicines.value.filter((medicine) => hasMedicineWarnings(medicine)));
 const defaultRiskMedicine = computed(() => riskMedicines.value[0] || null);
 const activeRiskMedicine = computed(() => {
@@ -414,6 +477,84 @@ function hideMedicineRiskTip() {
   medicineRiskTipDismissed.value = true;
 }
 
+function clearMedicineWarningState(medicine = {}) {
+  delete medicine.warningFields;
+  delete medicine.warningColumns;
+  delete medicine.riskWarnings;
+  delete medicine.warningMessage;
+  delete medicine.warningSuggestion;
+}
+
+function rebuildMedicineWarningsFromFields(medicine = {}, previousWarningColumns = {}) {
+  const fields = Array.isArray(medicine.warningFields) ? medicine.warningFields : [];
+  if (!fields.length) {
+    clearMedicineWarningState(medicine);
+    return;
+  }
+  medicine.warningColumns = fields.reduce((columns, field) => {
+    const column = warningFieldColumns[field];
+    if (!column) return columns;
+    return { ...columns, [column]: previousWarningColumns[column] || "severe" };
+  }, {});
+  if (Array.isArray(medicine.riskWarnings)) {
+    const remainingCategories = new Set(fields.map((field) => warningFieldCategories[field]).filter(Boolean));
+    medicine.riskWarnings = medicine.riskWarnings.filter((warning) => remainingCategories.has(warning.category));
+    if (!medicine.riskWarnings.length) delete medicine.riskWarnings;
+  }
+}
+
+function warningMentionsAnotherMedicine(medicine = {}, list = []) {
+  const warningText = `${medicine.warningMessage || ""} ${medicine.warningSuggestion || ""}`;
+  if (!warningText.trim()) return true;
+  return list.some((item) => item !== medicine && item.name && warningText.includes(item.name));
+}
+
+function resolvePrescriptionWarnings() {
+  const list = medicines.value;
+  list.forEach((medicine) => {
+    const warnings = getMedicineRiskWarnings(medicine);
+    if (!warnings.length) return;
+    const remainingWarnings = warnings.filter((warning) => {
+      if (!medicineRelationRiskCategories.has(warning.category)) return true;
+      if (list.length < 2) return false;
+      return warningMentionsAnotherMedicine(medicine, list);
+    });
+    if (remainingWarnings.length === warnings.length) return;
+    if (!remainingWarnings.length) {
+      clearMedicineWarningState(medicine);
+      return;
+    }
+    medicine.riskWarnings = remainingWarnings;
+  });
+  if (!riskMedicines.value.length) {
+    hideMedicineRiskTip();
+    if (props.record) props.record.inlineRiskWarningVisible = false;
+  }
+}
+
+function updateMedicineField(medicine = {}, field = "", value = "") {
+  if (!medicine || !field) return;
+  const previousValue = medicine[field] ?? "";
+  const nextValue = String(value || "").trim();
+  medicine[field] = nextValue;
+  const fields = Array.isArray(medicine.warningFields) ? medicine.warningFields : [];
+  const previousWarningColumns = medicine.warningColumns || {};
+  if (fields.includes(field) && nextValue && nextValue !== previousValue) {
+    medicine.warningFields = fields.filter((item) => item !== field);
+    rebuildMedicineWarningsFromFields(medicine, previousWarningColumns);
+  }
+  resolvePrescriptionWarnings();
+}
+
+function removeMedicine(medicine = {}) {
+  if (!props.record || !medicine?.name) return;
+  props.record.prescriptionMedicines = medicines.value
+    .filter((item) => item !== medicine && item.name !== medicine.name)
+    .map((item, index) => ({ ...item, index: index + 1 }));
+  resolvePrescriptionWarnings();
+  store.showToast("药品已删除");
+}
+
 async function requestPrescriptionSubmit() {
   if (riskMedicines.value.length) {
     store.showToast("存在用药风险，请点击高亮药品行查看具体提示并完成修改");
@@ -450,6 +591,22 @@ function deferCloseMedicine() {
   window.setTimeout(() => {
     medicineOpen.value = false;
   }, 0);
+}
+
+function openPrescriptionRemark() {
+  prescriptionRemarkOpen.value = true;
+}
+
+function deferClosePrescriptionRemark() {
+  window.setTimeout(() => {
+    prescriptionRemarkOpen.value = false;
+  }, 120);
+}
+
+function selectPrescriptionRemark(option) {
+  prescriptionRemark.value = option;
+  if (props.record) props.record.prescriptionRemark = option;
+  prescriptionRemarkOpen.value = false;
 }
 
 async function refreshDiagnosisOptions() {
@@ -546,8 +703,38 @@ function toggleUnitMenu(medicine, event) {
 
 function setMedicineUnit(medicine, unit) {
   if (!medicine) return;
-  medicine.unit = unit;
+  updateMedicineField(medicine, "unit", unit);
   openUnitIndex.value = "";
+}
+
+function medicineFieldKey(medicine, field) {
+  return `${medicine?.index || ""}-${field}`;
+}
+
+function isMedicineFieldOpen(medicine, field) {
+  return openMedicineFieldKey.value === medicineFieldKey(medicine, field);
+}
+
+function openMedicineFieldMenu(medicine, field, event) {
+  if (!medicine || !field) return;
+  const rect = event.currentTarget.getBoundingClientRect();
+  openMedicineFieldKey.value = medicineFieldKey(medicine, field);
+  medicineFieldMenuStyle.value = {
+    "--medicine-usage-menu-left": `${Math.max(8, rect.left)}px`,
+    "--medicine-usage-menu-top": `${Math.max(8, rect.bottom + 4)}px`,
+    "--medicine-usage-menu-width": `${Math.max(112, rect.width)}px`
+  };
+}
+
+function closeMedicineFieldMenu() {
+  window.setTimeout(() => {
+    openMedicineFieldKey.value = "";
+  }, 120);
+}
+
+function selectMedicineFieldOption(medicine, field, option) {
+  updateMedicineField(medicine, field, option);
+  openMedicineFieldKey.value = "";
 }
 
 const FieldCombobox = defineComponent({
@@ -569,20 +756,29 @@ const FieldCombobox = defineComponent({
         h("input", {
           class: ["table-input medicine-edit-field medicine-usage-input", warningClass(componentProps.medicine, componentProps.field)],
           type: "text",
-          value,
+          value: componentProps.medicine[componentProps.field] || "",
           "aria-label": componentProps.label,
           "aria-haspopup": "listbox",
-          "aria-expanded": "false",
+          "aria-expanded": String(isMedicineFieldOpen(componentProps.medicine, componentProps.field)),
           autocomplete: "off",
-          "data-medicine-field": componentProps.field
+          "data-medicine-field": componentProps.field,
+          onFocus: (event) => openMedicineFieldMenu(componentProps.medicine, componentProps.field, event),
+          onClick: (event) => openMedicineFieldMenu(componentProps.medicine, componentProps.field, event),
+          onInput: (event) => updateMedicineField(componentProps.medicine, componentProps.field, event.target.value),
+          onBlur: closeMedicineFieldMenu
         }),
-        h("div", { class: "medicine-usage-options", role: "listbox", hidden: true }, options.map((option) =>
+        h("div", { class: "medicine-usage-options", role: "listbox", hidden: !isMedicineFieldOpen(componentProps.medicine, componentProps.field), style: medicineFieldMenuStyle.value }, options.map((option) =>
           h("button", {
             class: ["medicine-usage-option", { "is-active": option === value }],
             type: "button",
             role: "option",
             "aria-selected": option === value ? "true" : "false",
-            "data-medicine-option": option
+            "data-medicine-option": option,
+            onPointerdown: (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              selectMedicineFieldOption(componentProps.medicine, componentProps.field, option);
+            }
           }, option)
         ))
       ]);
