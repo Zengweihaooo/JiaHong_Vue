@@ -28,6 +28,10 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.match(quickActionsPanel, /@dragstart\.stop="startDrag\(index, \$event\)"/);
   assert.match(quickActionsPanel, /emit\('reorder'/);
   assert.match(quickActionsPanel, /emit\('schedule-punch'\)/);
+  assert.match(quickActionsPanel, /v-else-if="isMenuIcon\(action\.icon\)"/);
+  assert.match(quickActionsPanel, /quick-icon--menu-\$\{action\.icon\}/);
+  assert.match(quickActionsPanel, /const menuIconKeys = new Set\(\['user', 'shield', 'clipboard', 'briefcase', 'calendar'\]\)/);
+  assert.match(quickActionsPanel, /function isMenuIcon/);
   assert.match(quickActionsPanel, /\.quick-grid\s*\{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(128px, 1fr\)\);/);
   assert.match(quickActionsPanel, /\.quick-card__title\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
   assert.match(quickActionsPanel, /\.quick-card__desc\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
@@ -55,7 +59,9 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.match(legacyStyles, /\.quick-card__desc\s*\{[\s\S]*word-break: keep-all;[\s\S]*overflow-wrap: normal;/);
   assert.match(uiStyles, /^\.quick-icon\s*\{/m);
   assert.match(uiStyles, /^\.quick-icon--schedule \.quick-icon__base\s*\{/m);
+  assert.match(uiStyles, /^\.quick-icon--menu\s*\{[\s\S]*?width: 24px;[\s\S]*?background: linear-gradient\(270deg, #3b92ff 0%, #006ef9 100%\);/m);
   assert.match(uiStyles, /^\.quick-icon--menu-user\s*\{/m);
+  assert.match(uiStyles, /^\.quick-icon--menu-calendar\s*\{/m);
   assert.match(uiStyles, /@jiahong\/ui\/assets\/figma-home\/user\.svg/);
   assert.doesNotMatch(legacyStyles, /^\.icon-box\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.quick-icon\s*\{/m);

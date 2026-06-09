@@ -16,7 +16,15 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   ]);
 
   assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl, shouldShowMedicineRiskTag \} from "@jiahong\/ui"/);
+  assert.match(prescriptionPanel, /import \{ videoPrescriptionSubmitLockSeconds \} from "@\/domain\/consultationRules"/);
   assert.match(prescriptionPanel, /<MedicineRiskTip/);
+  assert.match(prescriptionPanel, /const videoSubmitRemaining = ref\(0\)/);
+  assert.match(prescriptionPanel, /const isVideoSubmitLocked = computed/);
+  assert.match(prescriptionPanel, /function startVideoSubmitCountdown/);
+  assert.match(prescriptionPanel, /window\.setInterval/);
+  assert.match(prescriptionPanel, /onBeforeUnmount\(clearVideoSubmitTimer\)/);
+  assert.match(prescriptionPanel, /v-if="isVideoSubmitLocked"/);
+  assert.match(prescriptionPanel, /\{\{ videoSubmitRemaining \}\}s/);
   assert.match(prescriptionPanel, /class="medicine-risk-cell"/);
   assert.match(prescriptionPanel, /v-if="shouldShowMedicineRiskTag\(medicine\.risk\)"/);
   assert.match(prescriptionPanel, /function selectRiskMedicine/);

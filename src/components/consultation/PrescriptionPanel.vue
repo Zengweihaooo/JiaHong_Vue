@@ -202,10 +202,10 @@
         <button v-else-if="consultation" class="jh-btn jh-btn--md jh-btn--primary end-consult-trigger consultation-complete-trigger" type="button" @click="store.consultConfirmKind = 'end'">完成问诊</button>
         <template v-else>
           <button class="jh-btn jh-btn--md jh-btn--success end-consult-trigger" type="button" :disabled="!record?.prescriptionSubmitted" @click="store.consultConfirmKind = 'end'">结束问诊</button>
-          <span v-if="videoSubmitLock && !record?.prescriptionSubmitted" class="video-prescription-submit-wrap">
-            <span class="video-submit-countdown" data-video-submit-countdown data-remaining="10" aria-live="polite">
+          <span v-if="isVideoSubmitLocked" class="video-prescription-submit-wrap">
+            <span class="video-submit-countdown" data-video-submit-countdown :data-remaining="String(videoSubmitRemaining)" aria-live="polite">
               <el-icon class="video-submit-countdown__icon"><Clock /></el-icon>
-              <span class="video-submit-countdown__value">10s</span>
+              <span class="video-submit-countdown__value">{{ videoSubmitRemaining }}s</span>
             </span>
             <button class="jh-btn jh-btn--md jh-btn--primary jh-prescription-submit" type="button" disabled>提交处方</button>
           </span>
@@ -217,8 +217,9 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, ref, watch, watchEffect } from "vue";
+import { computed, defineComponent, h, onBeforeUnmount, ref, watch, watchEffect } from "vue";
 import { Clock } from "@element-plus/icons-vue";
+import { videoPrescriptionSubmitLockSeconds } from "@/domain/consultationRules";
 import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
@@ -257,8 +258,10 @@ const openUnitIndex = ref("");
 const unitMenuStyle = ref({});
 const activeRiskMedicineIndex = ref("");
 const medicineRiskTipDismissed = ref(false);
+const videoSubmitRemaining = ref(0);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
+let videoSubmitTimer = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
 const medicineFieldOptions = {
   usage: ["口服", "外用", "适量冲洗", "口腔吸入", "鼻吸入"],
@@ -298,6 +301,43 @@ const medicineRiskTip = computed(() => {
   };
 });
 const showMedicineRiskTip = computed(() => Boolean(medicineRiskTip.value && !medicineRiskTipDismissed.value));
+const isVideoSubmitLocked = computed(() => Boolean(props.videoSubmitLock && !props.record?.prescriptionSubmitted && videoSubmitRemaining.value > 0));
+
+function clearVideoSubmitTimer() {
+  if (!videoSubmitTimer) return;
+  window.clearInterval(videoSubmitTimer);
+  videoSubmitTimer = 0;
+}
+
+function stopVideoSubmitCountdown() {
+  clearVideoSubmitTimer();
+  videoSubmitRemaining.value = 0;
+}
+
+function startVideoSubmitCountdown() {
+  clearVideoSubmitTimer();
+  videoSubmitRemaining.value = videoPrescriptionSubmitLockSeconds;
+  videoSubmitTimer = window.setInterval(() => {
+    videoSubmitRemaining.value = Math.max(0, videoSubmitRemaining.value - 1);
+    if (videoSubmitRemaining.value <= 0) {
+      clearVideoSubmitTimer();
+    }
+  }, 1000);
+}
+
+watch(
+  () => [props.record?.id, props.videoSubmitLock, props.record?.prescriptionSubmitted],
+  ([recordId, locked, submitted]) => {
+    if (!recordId || !locked || submitted) {
+      stopVideoSubmitCountdown();
+      return;
+    }
+    startVideoSubmitCountdown();
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(clearVideoSubmitTimer);
 
 watch(
   () => props.record?.id,
