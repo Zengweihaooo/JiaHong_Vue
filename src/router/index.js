@@ -3,7 +3,6 @@ import HomeView from "@/views/HomeView.vue";
 import RoomView from "@/views/RoomView.vue";
 import ConsultRoomView from "@/views/ConsultRoomView.vue";
 import HistoryView from "@/views/HistoryView.vue";
-import ElementsView from "@/views/ElementsView.vue";
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,16 +55,6 @@ export const router = createRouter({
       name: "history",
       component: HistoryView,
       meta: { title: "嘉虹健康开方历史" }
-    },
-    {
-      path: "/elements",
-      redirect: "/elements/"
-    },
-    {
-      path: "/elements/",
-      name: "elements",
-      component: ElementsView,
-      meta: { title: "嘉虹健康 Elements" }
     },
     {
       path: "/:pathMatch(.*)*",

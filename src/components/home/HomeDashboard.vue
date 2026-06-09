@@ -83,10 +83,6 @@ function selectQuickAction({ action, feature }) {
     router.push("/history/");
     return;
   }
-  if (feature === "elements") {
-    router.push("/elements/");
-    return;
-  }
   store.showToast(action.title || action.desc);
 }
 </script>

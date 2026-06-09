@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("Vue quick entry dialog filters already used entries and keeps elements route entry", async () => {
+test("Vue quick entry dialog filters already used entries and removes local component demo route", async () => {
   const [dialogs, homeDashboard, quickActionsPanel, store, uiStyles, legacyStyles] = await Promise.all([
     readFile(new URL("../src/components/common/AppDialogs.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
@@ -18,7 +18,8 @@ test("Vue quick entry dialog filters already used entries and keeps elements rou
   assert.doesNotMatch(dialogs, /v-for="\(option, index\) in store\.quickEntryOptions"/);
 
   assert.match(homeDashboard, /QuickActionsPanel/);
-  assert.match(homeDashboard, /router\.push\("\/elements\/"\)/);
+  assert.doesNotMatch(homeDashboard, /router\.push\("\/elements\/"\)/);
+  assert.doesNotMatch(homeDashboard, /feature === "elements"/);
   assert.match(homeDashboard, /@reorder="reorderQuickAction"/);
   assert.match(homeDashboard, /@schedule-punch="store\.showToast\('打卡成功'\)"/);
   assert.match(quickActionsPanel, /quick-card__attention-dot/);
