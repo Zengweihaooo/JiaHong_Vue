@@ -10,8 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 coverage/
-playwright-report/
-test-results/
+screenshots/
 .vite/
 .cache/
 src/styles/main 2.css
