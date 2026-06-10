@@ -18,6 +18,9 @@ test("Vue room sidebar keeps latest H5 runtime data attributes", async () => {
   assert.match(sidebar, /当前视频问诊未结束，暂不可进入新的视频问诊/);
   assert.match(sidebar, /"is-current-video": isCurrentVideo\(record\)/);
   assert.match(sidebar, /function messageBadgeKey/);
+  assert.match(sidebar, /showUnreadBadge\(record\)/);
+  assert.match(store, /syncWaitingQueue/);
+  assert.match(store, /markConsultationRecordRead/);
   assert.match(sidebar, /useRouter/);
   assert.match(sidebar, /if \(!store\.setActiveRecord\(record\.id\)\) return/);
   assert.match(sidebar, /record\.state === "ended" \? "\/room\/"/);

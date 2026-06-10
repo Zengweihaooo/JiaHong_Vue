@@ -5,6 +5,12 @@ import {
   getMessageListRecords,
   getNextOngoingVideoConsultationRecord
 } from "@/domain/consultationQueue";
+import {
+  getMessageBadgeKey,
+  isMessageBadgeDismissed,
+  readDismissedMessageBadges,
+  rememberDismissedMessageBadge
+} from "@/domain/messageBadges";
 import { isQuickEntryAlreadyUsed, maxQuickActionCards } from "@/domain/quickEntries";
 import { appService } from "@/services/appService";
 
@@ -103,7 +109,8 @@ export const useAppStore = defineStore("app", {
     selectedAttachment: null,
     chatDrafts: {},
     aiCollapsed: true,
-    sidebarInteractionStarted: false
+    sidebarInteractionStarted: false,
+    dismissedMessageBadges: readDismissedMessageBadges()
   }),
   getters: {
     doctorStatus(state) {
@@ -156,7 +163,6 @@ export const useAppStore = defineStore("app", {
         const payload = await appService.getAppBootstrap();
         this.schemaVersion = payload.schemaVersion ?? null;
         this.doctor = clone(payload.doctor) || { name: "张医生", status: "offline" };
-        this.waitingQueue = clone(payload.waitingQueue) || this.waitingQueue;
         this.menuGroups = clone(payload.navigation?.menuGroups) || [];
         this.quickActions = clone(payload.home?.quickActions) || [];
         this.quickEntryOptions = clone(payload.home?.quickEntryOptions) || [];
@@ -164,6 +170,7 @@ export const useAppStore = defineStore("app", {
         this.services = clone(payload.services) || [];
         this.consultationRecords = clone(payload.consultations?.records) || [];
         this.ongoingChats = clone(payload.consultations?.ongoingChats) || {};
+        this.syncWaitingQueue();
         this.quickReplyCategories = clone(payload.quickReplies?.categories) || [];
         this.quickReplyMessages = clone(payload.quickReplies?.messages) || [];
         const storedActiveVideoId = readActiveVideoRecordId();
@@ -207,11 +214,27 @@ export const useAppStore = defineStore("app", {
       }
       this.activeRecordId = record.id;
       this.messageFilterState = record.state;
+      this.markConsultationRecordRead(record);
       if (record.type === "video" && record.state === "ongoing") {
         this.activeVideoRecordId = record.id;
         writeActiveVideoRecordId(record.id);
       }
       return true;
+    },
+    markConsultationRecordRead(record) {
+      if (!record) return;
+      record.unreadCount = 0;
+      record.badge = 0;
+      this.dismissedMessageBadges = rememberDismissedMessageBadge(
+        getMessageBadgeKey(record.id),
+        this.dismissedMessageBadges
+      );
+    },
+    isMessageBadgeDismissed(recordId = "") {
+      return isMessageBadgeDismissed(recordId, this.dismissedMessageBadges);
+    },
+    syncWaitingQueue() {
+      this.waitingQueue = buildWaitingQueueFromRecords(this.consultationRecords);
     },
     setMessageFilter({ type = this.messageFilterType, state = this.messageFilterState } = {}) {
       this.messageFilterType = type;
@@ -314,7 +337,6 @@ export const useAppStore = defineStore("app", {
     },
     async refreshRealtime() {
       const snapshot = await appService.getRealtimeSnapshot();
-      if (snapshot.waitingQueue) this.waitingQueue = snapshot.waitingQueue;
       if (snapshot.doctorStatus && this.doctor) this.doctor.status = snapshot.doctorStatus;
       if (snapshot.newConsultation?.record?.id) {
         const exists = this.consultationRecords.some((record) => record.id === snapshot.newConsultation.record.id);
@@ -329,6 +351,7 @@ export const useAppStore = defineStore("app", {
           writeActiveVideoRecordId(this.activeVideoRecordId);
         }
       }
+      this.syncWaitingQueue();
     },
     async endActiveConsultation(event = "END") {
       const record = this.activeRecord;
@@ -349,7 +372,7 @@ export const useAppStore = defineStore("app", {
         this.activeVideoRecordId = nextVideoRecord?.id || "";
         writeActiveVideoRecordId(this.activeVideoRecordId);
       }
-      this.waitingQueue = buildWaitingQueueFromRecords(this.consultationRecords);
+      this.syncWaitingQueue();
       await appService.updateConsultationStatus(record.id, event, record);
       if (nextVideoRecord) {
         this.messageFilterState = "ongoing";

@@ -66,8 +66,8 @@
           <span v-if="isCurrentVideo(record)" class="message-item__current" aria-label="当前视频问诊进行中">
             <img :src="assetUrl('assets/figma-room/current-video-indicator.svg')" alt="" />
           </span>
-          <span v-else-if="Number(record.unreadCount ?? record.badge ?? 0) > 0" class="message-item__badge">
-            {{ record.unreadCount ?? record.badge }}
+          <span v-else-if="showUnreadBadge(record)" class="message-item__badge">
+            {{ unreadCountFor(record) }}
           </span>
         </button>
       </template>
@@ -80,6 +80,7 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { TypeIcon, assetUrl } from "@jiahong/ui";
+import { getMessageBadgeKey } from "@/domain/messageBadges";
 import { useAppStore } from "@/stores/app";
 import { consultationTypeLabel } from "@/utils/format";
 
@@ -126,7 +127,15 @@ function messageItemClass(record) {
 }
 
 function messageBadgeKey(record) {
-  return record?.id ? `message:${record.id}` : "";
+  return getMessageBadgeKey(record?.id);
+}
+
+function unreadCountFor(record) {
+  return Number(record?.unreadCount ?? record?.badge ?? 0);
+}
+
+function showUnreadBadge(record) {
+  return unreadCountFor(record) > 0 && !store.isMessageBadgeDismissed(record.id);
 }
 
 function isGroupCollapsed(type) {
