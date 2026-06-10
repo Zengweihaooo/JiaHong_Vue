@@ -1252,11 +1252,6 @@ body.page-view-room {
   padding: 0;
 }
 
-.room-main [class~="room-card--pending-consult"] .room-refresh {
-  top: 12px;
-  left: 12px;
-}
-
 @media (max-width: 1180px) {
   .room-topbar__right {
     gap: 16px;
