@@ -37,8 +37,10 @@
         </div>
       </section>
       <RoomPendingWorkspace v-else-if="hasWaitingQueue" @refresh="openTextConsultation" />
-      <section v-else class="room-card" aria-label="候诊室">
-        <button class="jh-btn jh-btn--md jh-btn--outline-secondary room-refresh" type="button" @click="openTextConsultation">刷新列表</button>
+      <section v-else class="room-card room-card--pending-consult" aria-label="候诊室">
+        <div class="room-pending-toolbar">
+          <button class="jh-btn jh-btn--md jh-btn--outline-secondary room-refresh" type="button" @click="openTextConsultation">刷新列表</button>
+        </div>
         <div class="room-empty">
           <img class="room-empty__icon" :src="assetUrl('assets/room-empty.svg')" alt="" aria-hidden="true" />
           <div class="room-empty__copy">

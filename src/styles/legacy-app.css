@@ -1252,6 +1252,35 @@ body.page-view-room {
   padding: 0;
 }
 
+.room-pending-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 10px 24px;
+  background: #ffffff;
+  box-shadow: var(--jh-shadow);
+}
+
+.room-card--pending-consult .room-refresh {
+  flex: 0 0 auto;
+}
+
+.room-pending-workspace {
+  top: 56px;
+  height: calc(100% - 56px);
+}
+
+.room-card--pending-consult > .room-empty {
+  flex: 1;
+  min-height: 0;
+  margin-top: 56px;
+}
+
 @media (max-width: 1180px) {
   .room-topbar__right {
     gap: 16px;
