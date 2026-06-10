@@ -1247,7 +1247,7 @@ body.page-view-room {
   min-width: 88px;
 }
 
-.room-main .room-card--pending-consult .room-refresh {
+.room-main [class~="room-card--pending-consult"] .room-refresh {
   left: 24px;
 }
 

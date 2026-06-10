@@ -15,7 +15,7 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
     readFile(new URL("../src/presentation/interactions/consultDialogBindings.js", import.meta.url), "utf8")
   ]);
 
-  assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl, shouldShowMedicineRiskTag \} from "@jiahong\/ui"/);
+  assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl \} from "@jiahong\/ui"/);
   assert.match(prescriptionPanel, /import \{ videoPrescriptionSubmitLockSeconds \} from "@\/domain\/consultationRules"/);
   assert.match(prescriptionPanel, /<MedicineRiskTip/);
   assert.match(prescriptionPanel, /const videoSubmitRemaining = ref\(0\)/);
@@ -26,7 +26,9 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(prescriptionPanel, /v-if="isVideoSubmitLocked"/);
   assert.match(prescriptionPanel, /\{\{ videoSubmitRemaining \}\}s/);
   assert.match(prescriptionPanel, /class="medicine-risk-cell"/);
-  assert.match(prescriptionPanel, /v-if="shouldShowMedicineRiskTag\(medicine\.risk\)"/);
+  assert.match(prescriptionPanel, /v-if="medicineRiskTagLabel\(medicine\)"/);
+  assert.match(prescriptionPanel, /function medicineRiskTagLabel/);
+  assert.match(prescriptionPanel, /risk === "高" \? "高" : "低"/);
   assert.match(prescriptionPanel, /function selectRiskMedicine/);
   assert.match(prescriptionPanel, /function hideMedicineRiskTip/);
   assert.match(prescriptionPanel, /function updateMedicineField/);

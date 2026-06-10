@@ -26,19 +26,19 @@ jobs:
         working-directory: JiaHong_YiSheng
     steps:
       - name: Checkout doctor client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: JiaHong_YiSheng
 
       - name: Checkout JiaHong UI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Zengweihaooo/JiaHong-UI
           path: JiaHong_UI
           token: ${{ secrets.JIAHONG_UI_PAT || github.token }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
