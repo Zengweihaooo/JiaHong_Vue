@@ -17,7 +17,7 @@ const baseWaitingQueue = {
   total: 4,
   byType: { text: 1, video: 1, consult: 2 }
 };
-const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-36", import.meta.url);
+const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-37", import.meta.url);
 
 function delay(ms = mockLatencyMs) {
   return new Promise((resolve) => {

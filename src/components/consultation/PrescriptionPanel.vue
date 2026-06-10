@@ -168,7 +168,7 @@
               </div>
             </div>
             <span class="medicine-risk-cell">
-              <span v-if="shouldShowMedicineRiskTag(medicine.risk)" :class="['jh-risk-tag jh-risk-tag--sm risk-small', riskClass(medicine.risk)]">{{ medicine.risk }}</span>
+              <span v-if="medicineRiskTagLabel(medicine)" :class="['jh-risk-tag jh-risk-tag--sm risk-small', riskClass(medicineRiskTagLabel(medicine))]">{{ medicineRiskTagLabel(medicine) }}</span>
             </span>
             <button v-if="!readonly" class="jh-btn jh-btn--text medicine-delete-btn" type="button" @click.stop="removeMedicine(medicine)">删除</button>
           </div>
@@ -248,7 +248,7 @@ import { videoPrescriptionSubmitLockSeconds } from "@/domain/consultationRules";
 import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
-import { MedicineRiskTip, assetUrl, shouldShowMedicineRiskTag } from "@jiahong/ui";
+import { MedicineRiskTip, assetUrl } from "@jiahong/ui";
 
 const props = defineProps({
   record: {
@@ -573,6 +573,11 @@ function riskClass(risk) {
     高: "jh-risk-tag--high",
     低: "jh-risk-tag--low"
   }[risk] || "";
+}
+
+function medicineRiskTagLabel(medicine = {}) {
+  const risk = String(medicine.risk || "").trim();
+  return risk === "高" ? "高" : "低";
 }
 
 function ensureRecordArray(key) {

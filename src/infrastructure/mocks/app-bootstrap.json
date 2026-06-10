@@ -272,19 +272,36 @@
             "unit": "盒",
             "risk": "低",
             "warningFields": [
-              "name"
+              "name",
+              "frequency",
+              "dose"
             ],
             "riskWarnings": [
               {
                 "category": "重复用药",
                 "level": "must"
+              },
+              {
+                "category": "用法用量",
+                "level": "severe"
+              },
+              {
+                "category": "患者条件",
+                "level": "general"
+              },
+              {
+                "category": "生化指标",
+                "level": "general"
               }
             ],
             "warningColumns": {
-              "2": "must"
+              "2": "must",
+              "3": "severe",
+              "1": "general",
+              "6": "general"
             },
-            "warningMessage": "[警示信息]布洛芬缓释胶囊与双氯芬酸钠肠溶片同属非甾体抗炎药，联合使用会增加胃肠道出血和肾损伤风险。",
-            "warningSuggestion": "[建议信息]请仅保留一种非甾体抗炎药，并结合疼痛与发热情况调整方案。"
+            "warningMessage": "[警示信息]布洛芬缓释胶囊与双氯芬酸钠肠溶片同属非甾体抗炎药，存在重复用药风险；当前 2次/日、0.3g 的用法用量需结合发热或疼痛程度复核，避免与其他退热止痛药叠加后超过日剂量。",
+            "warningSuggestion": "[建议信息]请核对患者是否正在使用感冒药、退热药或止痛药，确认无胃溃疡、肾功能异常、抗凝药合用等风险后再开具；如需保留 NSAIDs，请仅选择一种并明确给药间隔和最大日剂量。"
           },
           {
             "index": 3,

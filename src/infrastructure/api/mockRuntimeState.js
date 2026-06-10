@@ -1,7 +1,7 @@
 import { getSessionStorage } from "../browser/runtimeEnvironment.js";
 
 const runtimeStorageKey = "jh.mockRuntimeState";
-const runtimeSchemaVersion = 9;
+const runtimeSchemaVersion = 10;
 const runtimeStorage = getSessionStorage();
 
 export function readRuntimeState() {
