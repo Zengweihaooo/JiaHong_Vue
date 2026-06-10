@@ -1,4 +1,5 @@
 import { assetUrl } from "../../shared/core.js";
+import { getDoctorReadState } from "../../domain/chatReadState.js";
 import { renderData } from "../../application/viewModels/renderViewModel.js?v=20260528-06";
 import { renderButton } from "../components/primitives.js";
 import { escapeHtml } from "../ui/html.js";
@@ -163,12 +164,6 @@ function getMessageDate(message = {}, chat = {}, index = 0) {
   const sessionDate = parseMessageDate(chat.sessionDate);
   if (!sessionDate) return null;
   return new Date(sessionDate.getTime() + index * defaultMessageIntervalSeconds * 1000);
-}
-
-function getDoctorReadState(message = {}, messages = [], index = 0) {
-  if (message.readStatus === "read" || message.read === true) return "read";
-  if (message.readStatus === "unread" || message.read === false) return "unread";
-  return messages.slice(index + 1).some((item) => item.from === "patient") ? "read" : "unread";
 }
 
 function renderMessageTimeMeta(message, context, senderLabel) {

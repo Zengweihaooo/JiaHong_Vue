@@ -21,6 +21,8 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
   assert.match(chatPanel, /data-layout-threshold/);
   assert.match(chatPanel, /jh-btn--ai-pill__keyword/);
   assert.match(chatPanel, /function aiReplyTextSegments/);
+  assert.match(chatPanel, /store\.chatScrollNonce/);
+  assert.match(chatPanel, /:key="record\?\.id"/);
 
   assert.doesNotMatch(chatPanel, /ai-reply__hint/);
   assert.doesNotMatch(chatPanel, /@dblclick="toggleAiReply"/);

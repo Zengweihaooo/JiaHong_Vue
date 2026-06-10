@@ -6,6 +6,10 @@ import {
   getNextOngoingVideoConsultationRecord
 } from "@/domain/consultationQueue";
 import {
+  markDoctorMessagesReadWhenPatientReplies,
+  syncDoctorMessageReadState
+} from "@/domain/chatReadState";
+import {
   getMessageBadgeKey,
   isMessageBadgeDismissed,
   readDismissedMessageBadges,
@@ -110,7 +114,8 @@ export const useAppStore = defineStore("app", {
     chatDrafts: {},
     aiCollapsed: true,
     sidebarInteractionStarted: false,
-    dismissedMessageBadges: readDismissedMessageBadges()
+    dismissedMessageBadges: readDismissedMessageBadges(),
+    chatScrollNonce: 0
   }),
   getters: {
     doctorStatus(state) {
@@ -215,6 +220,7 @@ export const useAppStore = defineStore("app", {
       this.activeRecordId = record.id;
       this.messageFilterState = record.state;
       this.markConsultationRecordRead(record);
+      this.requestChatScrollToBottom();
       if (record.type === "video" && record.state === "ongoing") {
         this.activeVideoRecordId = record.id;
         writeActiveVideoRecordId(record.id);
@@ -229,6 +235,15 @@ export const useAppStore = defineStore("app", {
         getMessageBadgeKey(record.id),
         this.dismissedMessageBadges
       );
+      this.markConsultationChatRead(record.id);
+    },
+    markConsultationChatRead(recordId = "") {
+      const chat = this.ongoingChats[recordId];
+      if (!chat?.messages?.length) return;
+      syncDoctorMessageReadState(chat.messages);
+    },
+    requestChatScrollToBottom() {
+      this.chatScrollNonce += 1;
     },
     isMessageBadgeDismissed(recordId = "") {
       return isMessageBadgeDismissed(recordId, this.dismissedMessageBadges);
@@ -407,6 +422,8 @@ export const useAppStore = defineStore("app", {
       });
       if (response?.message && this.ongoingChats[recordId]) {
         this.ongoingChats[recordId].messages.push(response.message);
+        markDoctorMessagesReadWhenPatientReplies(this.ongoingChats[recordId].messages);
+        this.requestChatScrollToBottom();
       }
     },
     recallMessage(messageId) {

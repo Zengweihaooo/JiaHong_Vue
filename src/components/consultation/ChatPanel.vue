@@ -15,6 +15,7 @@
 
     <ConsultInfoCard
       v-if="consultInfoCard"
+      :key="record?.id"
       :description="consultInfoCard.description"
       :images="consultInfoCard.images"
       :voices="consultInfoCard.voices"
@@ -112,6 +113,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Close, Refresh } from "@element-plus/icons-vue";
+import { getDoctorReadState } from "@/domain/chatReadState";
 import { useAppStore } from "@/stores/app";
 import { ConsultInfoCard, VideoCallWindow } from "@jiahong/ui";
 import {
@@ -439,6 +441,7 @@ function collapseAiReply(event) {
 onMounted(async () => {
   await nextTick();
   setupLocalCamera();
+  scrollChatThreadToBottom();
 });
 
 watch(
@@ -468,6 +471,13 @@ watch(
   }
 );
 
+watch(
+  () => [props.record?.id, store.chatScrollNonce],
+  () => {
+    scrollChatThreadToBottom();
+  }
+);
+
 function parseMessageDate(value = "") {
   if (!value) return null;
   const normalized = String(value).replace(" ", "T");
@@ -491,9 +501,7 @@ function messageTime(message, index) {
 }
 
 function doctorReadState(index, message) {
-  if (message.readStatus === "read" || message.read === true) return "read";
-  if (message.readStatus === "unread" || message.read === false) return "unread";
-  return chatMessages.value.slice(index + 1).some((item) => item.from === "patient") ? "read" : "unread";
+  return getDoctorReadState(message, chatMessages.value, index);
 }
 
 async function send() {
@@ -511,9 +519,11 @@ async function sendAiOption(text, event) {
 
 async function scrollChatThreadToBottom() {
   await nextTick();
-  if (chatThread.value) {
+  if (!chatThread.value) return;
+  requestAnimationFrame(() => {
+    if (!chatThread.value) return;
     chatThread.value.scrollTop = chatThread.value.scrollHeight;
-  }
+  });
 }
 
 function openMessageMenu(message, event) {
