@@ -76,7 +76,17 @@ function showMedicineRiskTip(panel, row) {
     levelNode.className = `medicine-risk-tip__level medicine-risk-tip__level--${row.dataset.warningLevel || ""}`;
     levelNode.textContent = row.dataset.warningLevelLabel || "";
   }
-  if (categoriesNode) categoriesNode.textContent = row.dataset.warningCategories || "";
+  if (categoriesNode) {
+    const categories = (row.dataset.warningCategories || "").split("、").filter(Boolean);
+    categoriesNode.replaceChildren(
+      ...categories.map((category) => {
+        const tag = document.createElement("span");
+        tag.className = "medicine-risk-tip__category";
+        tag.textContent = category;
+        return tag;
+      })
+    );
+  }
   if (messageNode) messageNode.textContent = row.dataset.warningMessage || "";
   if (suggestionNode) suggestionNode.textContent = row.dataset.warningSuggestion || "";
   tip.dataset.activeMedicineIndex = row.dataset.medicineIndex || "";

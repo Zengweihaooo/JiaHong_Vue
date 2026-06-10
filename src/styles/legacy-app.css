@@ -1247,8 +1247,14 @@ body.page-view-room {
   min-width: 88px;
 }
 
+.room-main [class~="room-card--pending-consult"] {
+  gap: 0;
+  padding: 0;
+}
+
 .room-main [class~="room-card--pending-consult"] .room-refresh {
-  left: 24px;
+  top: 12px;
+  left: 12px;
 }
 
 @media (max-width: 1180px) {

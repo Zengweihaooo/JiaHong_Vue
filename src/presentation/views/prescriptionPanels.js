@@ -127,6 +127,13 @@ function getDefaultMedicineRiskTip(medicines = []) {
   return medicines.find((medicine) => getMedicineRiskWarnings(medicine).length > 0) || null;
 }
 
+function renderMedicineRiskCategoryTags(categories = []) {
+  return categories
+    .filter(Boolean)
+    .map((category) => `<span class="medicine-risk-tip__category">${escapeHtml(category)}</span>`)
+    .join("");
+}
+
 function renderMedicineRiskTip(medicines = []) {
   const defaultRiskMedicine = getDefaultMedicineRiskTip(medicines);
   const defaultWarnings = defaultRiskMedicine ? getMedicineRiskWarnings(defaultRiskMedicine) : [];
@@ -145,7 +152,7 @@ function renderMedicineRiskTip(medicines = []) {
       </div>
       <div class="medicine-risk-tip__meta">
         <span class="medicine-risk-tip__level medicine-risk-tip__level--${defaultLevel}" data-medicine-risk-level>${escapeHtml(prescriptionRiskLevels[defaultLevel] || "")}</span>
-        <span class="medicine-risk-tip__categories" data-medicine-risk-categories>${escapeHtml(defaultWarnings.map((warning) => warning.category).join("、"))}</span>
+        <span class="medicine-risk-tip__categories" data-medicine-risk-categories>${renderMedicineRiskCategoryTags(defaultWarnings.map((warning) => warning.category))}</span>
       </div>
       <p class="medicine-risk-tip__message" data-medicine-risk-message>${escapeHtml(defaultMessage)}</p>
       <p class="medicine-risk-tip__suggestion" data-medicine-risk-suggestion>${escapeHtml(defaultSuggestion)}</p>
