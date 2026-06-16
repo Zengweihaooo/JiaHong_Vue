@@ -87,9 +87,13 @@
             @dblclick="sendAiOption(option.text, $event)"
           >
             <span class="jh-btn--ai-pill__text">
-              <template v-for="segment in aiReplyTextSegments(option)" :key="`${option.text}-${segment.index}`">
-                <strong v-if="segment.highlight" class="jh-btn--ai-pill__keyword">{{ segment.text }}</strong>
-                <span v-else>{{ segment.text }}</span>
+              <template v-for="segment in aiReplyTextSegments(option)">
+                <strong
+                  v-if="segment.highlight"
+                  :key="`${option.text}-${segment.index}-highlight`"
+                  class="jh-btn--ai-pill__keyword"
+                >{{ segment.text }}</strong>
+                <span v-else :key="`${option.text}-${segment.index}-text`">{{ segment.text }}</span>
               </template>
             </span>
             <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>

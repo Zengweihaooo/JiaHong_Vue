@@ -36,19 +36,7 @@
           />
         </div>
       </section>
-      <RoomPendingWorkspace v-else-if="hasWaitingQueue" @refresh="openTextConsultation" />
-      <section v-else class="room-card room-card--pending-consult" aria-label="候诊室">
-        <div class="room-pending-toolbar">
-          <button class="jh-btn jh-btn--md jh-btn--outline-secondary room-refresh" type="button" @click="openTextConsultation">刷新列表</button>
-        </div>
-        <div class="room-empty">
-          <img class="room-empty__icon" :src="assetUrl('assets/room-empty.svg')" alt="" aria-hidden="true" />
-          <div class="room-empty__copy">
-            <h2>暂无待接诊订单</h2>
-            <p>保持在线后，系统将自动接收新的图文或视频问诊</p>
-          </div>
-        </div>
-      </section>
+      <RoomPendingWorkspace v-else :empty-tone="hasWaitingQueue ? 'warning' : 'info'" @refresh="openTextConsultation" />
     </main>
     <AppDialogs />
   </div>
@@ -61,7 +49,7 @@ import PrescriptionPanel from "@/components/consultation/PrescriptionPanel.vue";
 import RoomSidebar from "@/components/consultation/RoomSidebar.vue";
 import RoomTopbar from "@/components/layout/RoomTopbar.vue";
 import { useAppStore } from "@/stores/app";
-import { RoomPendingWorkspace, assetUrl } from "@jiahong/ui";
+import { RoomPendingWorkspace } from "@jiahong/ui";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
