@@ -19,6 +19,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
+    allowedHosts: [".loca.lt"],
     fs: {
       allow: [
         fileURLToPath(new URL(".", import.meta.url)),

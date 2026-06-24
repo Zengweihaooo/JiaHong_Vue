@@ -3,6 +3,7 @@ import HomeView from "@/views/HomeView.vue";
 import RoomView from "@/views/RoomView.vue";
 import ConsultRoomView from "@/views/ConsultRoomView.vue";
 import HistoryView from "@/views/HistoryView.vue";
+import ABTestView from "@/views/ABTestView.vue";
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +56,16 @@ export const router = createRouter({
       name: "history",
       component: HistoryView,
       meta: { title: "嘉虹健康开方历史" }
+    },
+    {
+      path: "/ab-test",
+      redirect: "/ab-test/"
+    },
+    {
+      path: "/ab-test/",
+      name: "ab-test",
+      component: ABTestView,
+      meta: { title: "嘉虹健康医生PC端AB测试" }
     },
     {
       path: "/:pathMatch(.*)*",

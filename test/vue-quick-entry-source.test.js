@@ -83,7 +83,7 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
   assert.doesNotMatch(legacyStyles, /schedule-board|schedule-panel__tabs/);
 
   for (const styles of [quickActionsPanel, uiStyles]) {
-    assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\(100vh - 48px\)\);/);
+    assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\((?:var\(--jh-viewport-height, 100vh\)|100vh) - 48px\)\);/);
     assert.match(styles, /\.schedule-panel__header\s*\{[\s\S]*?flex: 0 0 48px;[\s\S]*?padding: 12px 16px;/);
     assert.match(styles, /\.schedule-panel__summary\s*\{[\s\S]*?flex: 0 0 52px;[\s\S]*?padding: 20px 24px 0;/);
     assert.match(styles, /\.schedule-day-grid\s*\{[\s\S]*?width: 658px;[\s\S]*?height: 579px;/);
