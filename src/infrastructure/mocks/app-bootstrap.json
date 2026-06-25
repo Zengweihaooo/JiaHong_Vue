@@ -95,6 +95,12 @@
         "feature": "history"
       },
       {
+        "title": "AB 测试",
+        "desc": "界面方案对比",
+        "icon": "clipboard",
+        "feature": "ab-test"
+      },
+      {
         "title": "",
         "desc": "添加快捷入口",
         "icon": "plus",
@@ -143,6 +149,12 @@
         "title": "出诊管理",
         "desc": "维护出诊服务",
         "icon": "briefcase"
+      },
+      {
+        "title": "AB 测试",
+        "desc": "界面方案对比",
+        "icon": "clipboard",
+        "feature": "ab-test"
       }
     ],
     "announcements": [

@@ -83,6 +83,10 @@ function selectQuickAction({ action, feature }) {
     router.push("/history/");
     return;
   }
+  if (feature === "ab-test" || action.title === "AB 测试") {
+    router.push("/ab-test/");
+    return;
+  }
   store.showToast(action.title || action.desc);
 }
 </script>

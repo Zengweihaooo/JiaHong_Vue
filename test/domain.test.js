@@ -264,6 +264,7 @@ test("quick entry feature falls back for built-in route entries", () => {
   assert.equal(getQuickEntryFeature({ title: "历史问诊" }), "history");
   assert.equal(getQuickEntryFeature({ title: "医生佣金条" }), "commission");
   assert.equal(getQuickEntryFeature({ title: "佣金明细" }), "commission");
+  assert.equal(getQuickEntryFeature({ title: "AB 测试" }), "ab-test");
   assert.equal(getQuickEntryFeature({ title: "处方记录" }), "");
 });
 

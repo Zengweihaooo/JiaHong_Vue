@@ -5,7 +5,8 @@ const quickEntryFeaturesByTitle = new Map([
   [scheduleQuickEntryTitle, "schedule"],
   ["历史问诊", "history"],
   ["医生佣金条", "commission"],
-  ["佣金明细", "commission"]
+  ["佣金明细", "commission"],
+  ["AB 测试", "ab-test"]
 ]);
 
 export function getQuickEntryFeature(entry = {}) {
