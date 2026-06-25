@@ -18,25 +18,49 @@
         />
       </div>
 
-      <div class="row row--bottom">
-        <LatestAnnouncementCard
-          :announcement="store.latestAnnouncement"
-          @detail="store.showToast('AB 测试中暂不打开公告详情')"
-          @history="store.showToast('AB 测试中暂不打开历史公告')"
-        />
-        <ABQuickActionsPanel
-          :actions="localActions"
-          :drag-mode="dragMode"
-          :drag-hint="dragHint"
-          attention-feature="__ab-disabled__"
-          @add="store.showToast('AB 测试中暂不添加入口')"
-          @edit="store.showToast('请通过删除或拖拽完成测试')"
-          @remove="removeQuickAction"
-          @reorder="reorderQuickAction"
-          @select="selectQuickAction"
-          @schedule-detail="store.showToast('排班详情暂未开放')"
-          @schedule-punch="store.showToast('打卡成功')"
-        />
+      <div :class="['row row--bottom', { 'row--bottom-announcement-right': isAnnouncementRight }]">
+        <template v-if="isAnnouncementRight">
+          <ABQuickActionsPanel
+            :actions="localActions"
+            :drag-mode="dragMode"
+            :drag-hint="dragHint"
+            attention-feature="__ab-disabled__"
+            @add="store.showToast('AB 测试中暂不添加入口')"
+            @edit="store.showToast('请通过删除或拖拽完成测试')"
+            @remove="removeQuickAction"
+            @reorder="reorderQuickAction"
+            @select="selectQuickAction"
+            @schedule-detail="store.showToast('排班详情暂未开放')"
+            @schedule-punch="store.showToast('打卡成功')"
+          />
+          <ABAnnouncementCard
+            :announcement="store.latestAnnouncement"
+            :time-layout="announcementTimeLayout"
+            @detail="store.showToast('AB 测试中暂不打开公告详情')"
+            @history="store.showToast('AB 测试中暂不打开历史公告')"
+          />
+        </template>
+        <template v-else>
+          <ABAnnouncementCard
+            :announcement="store.latestAnnouncement"
+            :time-layout="announcementTimeLayout"
+            @detail="store.showToast('AB 测试中暂不打开公告详情')"
+            @history="store.showToast('AB 测试中暂不打开历史公告')"
+          />
+          <ABQuickActionsPanel
+            :actions="localActions"
+            :drag-mode="dragMode"
+            :drag-hint="dragHint"
+            attention-feature="__ab-disabled__"
+            @add="store.showToast('AB 测试中暂不添加入口')"
+            @edit="store.showToast('请通过删除或拖拽完成测试')"
+            @remove="removeQuickAction"
+            @reorder="reorderQuickAction"
+            @select="selectQuickAction"
+            @schedule-detail="store.showToast('排班详情暂未开放')"
+            @schedule-punch="store.showToast('打卡成功')"
+          />
+        </template>
       </div>
       <footer class="footer">嘉虹健康　copyright © 2017-2026　鄂ICP备2024037712号-1</footer>
     </div>
@@ -116,8 +140,9 @@ import schedulePunchBImage from "@/assets/ab/schedule-punch-b.png";
 import schedulePunchCImage from "@/assets/ab/schedule-punch-c.png";
 import schedulePunchDImage from "@/assets/ab/schedule-punch-d.png";
 import { useAppStore } from "@/stores/app";
+import ABAnnouncementCard from "@/components/ab/ABAnnouncementCard.vue";
 import ABQuickActionsPanel from "@/components/ab/ABQuickActionsPanel.vue";
-import { ConsultEntryCard, LatestAnnouncementCard, ServiceStatusCard, WaitingStatusCard } from "@jiahong/ui";
+import { ConsultEntryCard, ServiceStatusCard, WaitingStatusCard } from "@jiahong/ui";
 
 const props = defineProps({
   variant: {
@@ -142,9 +167,11 @@ const queueItems = computed(() => [
   { key: "consult", label: "图文咨询", value: store.waitingQueue.byType.consult }
 ]);
 const consultEntryVariant = computed(() => (store.waitingQueue.total > 0 ? "yellow" : "blue"));
-const dragMode = computed(() => (props.variant === "a" ? "handle" : "card"));
+const isAnnouncementRight = computed(() => props.testKey === "announcement-position" && props.variant === "b");
+const announcementTimeLayout = computed(() => (props.testKey === "announcement-time" ? props.variant : "a"));
+const dragMode = computed(() => (props.testKey === "quick-entry" && props.variant === "b" ? "card" : "handle"));
 const dragHint = computed(() =>
-  props.variant === "a" ? "请拖动卡片左上角按钮调整顺序" : "长按并拖动整张卡片调整顺序"
+  props.testKey === "quick-entry" ? (props.variant === "a" ? "请拖动卡片左上角按钮调整顺序" : "长按并拖动整张卡片调整顺序") : ""
 );
 const schedulePunchImages = {
   a: schedulePunchAImage,
@@ -193,6 +220,14 @@ function selectQuickAction({ action }) {
 </script>
 
 <style scoped>
+.row--bottom-announcement-right > .quick-entry-card {
+  grid-column: 1 / span 2;
+}
+
+.row--bottom-announcement-right > .notice-card {
+  grid-column: 3;
+}
+
 .ab-schedule-mask {
   position: fixed;
   inset: 0;

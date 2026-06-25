@@ -16,7 +16,7 @@
         <button
           v-for="(item, index) in testItems"
           :key="item"
-          :class="['ab-test-card', { 'is-disabled': index > 2 }]"
+          :class="['ab-test-card', { 'is-disabled': index > 5 }]"
           type="button"
           @click="openTest(index)"
         >
@@ -39,6 +39,13 @@
       </section>
     </main>
   </section>
+
+  <ABConsultTagTestView
+    v-else-if="step === 'test' && activeTestKey === 'tag-button-style'"
+    :variant="variant"
+    @back="step = 'landing'"
+    @switch-variant="enterVariant"
+  />
 
   <WorkspaceShell
     v-else
@@ -72,13 +79,37 @@
     <ABHomeDashboard :variant="variant" :test-key="activeTestKey" />
 
     <div v-if="step === 'guide'" class="ab-guide-stage" role="button" tabindex="0" @click="showGuideChoice" @keydown.enter="showGuideChoice">
-      <img :src="activeGuideImage" :alt="`${activeGuide.name}引导页`" />
+      <img v-if="usesImageGuide" :src="activeGuideImage" :alt="`${activeGuide.name}引导页`" />
+      <div v-else class="ab-announcement-guide" aria-label="首页最新公告位置引导页">
+        <p class="ab-announcement-guide__title">
+          请选择您喜欢的 <strong>最新公告布局</strong>（偏左或偏右）
+        </p>
+        <section class="ab-announcement-guide__card">
+          <header>
+            <span>最新公告</span>
+            <time>2026-04-08</time>
+          </header>
+          <article>
+            <div>
+              <strong>嘉虹健康医生端新功能发布</strong>
+              <em>未读</em>
+            </div>
+            <p>
+              一、图文问诊未回复提醒确认机制：图文问诊未回复弹框确认持续3秒，若患者未回复，禁止开具处方。
+            </p>
+            <p>二、处方驳回流程调整：取消医生端驳回处方修改功能，药师端驳回处方的同时即作废该处方。</p>
+            <a>……展开详情</a>
+            <footer>成都双流九价通互联网医院</footer>
+          </article>
+          <button type="button">查看全部公告</button>
+        </section>
+      </div>
     </div>
 
     <div v-if="step === 'guide' && guideChoiceVisible" class="ab-guide-mask">
       <section class="ab-guide" role="dialog" aria-modal="true" aria-labelledby="ab-guide-title" @click.stop>
         <h1 id="ab-guide-title">
-          {{ activeGuide.titleBefore }}<strong>{{ activeGuide.primary }}</strong>{{ activeGuide.titleMiddle }}<strong>{{ activeGuide.secondary }}</strong>
+          {{ activeGuide.titleBefore }}<strong>{{ activeGuide.primary }}</strong>{{ activeGuide.titleMiddle }}<strong>{{ activeGuide.secondary }}</strong>{{ activeGuide.titleAfter || "" }}
         </h1>
         <p>测试项目：{{ activeGuide.name }}</p>
         <p>{{ activeGuide.desc }}</p>
@@ -102,7 +133,11 @@ import { computed, ref } from "vue";
 import guideQuickEntryImage from "@/assets/ab/guide-quick-entry.png";
 import guideScheduleStatusImage from "@/assets/ab/guide-schedule-status.png";
 import guideSchedulePunchLayoutImage from "@/assets/ab/guide-schedule-punch-layout.png";
+import guideAnnouncementPositionImage from "@/assets/ab/guide-announcement-position.png";
+import guideAnnouncementTimeImage from "@/assets/ab/guide-announcement-time.png";
+import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.png";
 import AppDialogs from "@/components/common/AppDialogs.vue";
+import ABConsultTagTestView from "@/components/ab/ABConsultTagTestView.vue";
 import ABHomeDashboard from "@/components/ab/ABHomeDashboard.vue";
 import Topbar from "@/components/layout/Topbar.vue";
 import { useAppStore } from "@/stores/app";
@@ -161,22 +196,65 @@ const guideMap = {
       { key: "c", label: "C", desc: "横向排班弹窗底部右侧展示操作按钮" },
       { key: "d", label: "D", desc: "横向排班弹窗顶部右侧展示操作按钮" }
     ]
+  },
+  "announcement-position": {
+    name: "首页最新公告位置",
+    titleBefore: "请选择您喜欢的",
+    primary: "最新公告布局",
+    titleMiddle: "（",
+    secondary: "偏左或偏右",
+    titleAfter: "）",
+    desc: "进入测试页后，请比较最新公告在首页底部区域偏左或偏右时的浏览效率。",
+    options: [
+      { key: "a", label: "A", desc: "最新公告位于高频操作入口左侧" },
+      { key: "b", label: "B", desc: "最新公告位于高频操作入口右侧" }
+    ]
+  },
+  "announcement-time": {
+    name: "公告时间信息布局",
+    titleBefore: "请选择您喜欢的",
+    primary: "最新公告时间布局",
+    titleMiddle: "",
+    secondary: "",
+    desc: "进入测试页后，请比较公告时间位于卡片头部、公告标题区域或底部信息区域时的阅读效率。",
+    options: [
+      { key: "a", label: "A", desc: "时间显示在最新公告卡片右上角" },
+      { key: "b", label: "B", desc: "时间显示在公告标题下方" },
+      { key: "c", label: "C", desc: "时间显示在公告底部信息区" }
+    ]
+  },
+  "tag-button-style": {
+    name: "标签与按钮显现形式",
+    titleBefore: "请选择您认为",
+    primary: "迎检与中药",
+    titleMiddle: "更像是",
+    secondary: "标签",
+    titleAfter: "而不是可点击按钮的页面",
+    desc: "进入测试页后，请比较问诊室顶部“迎检”和“中药”的视觉呈现是否更像状态标签。",
+    options: [
+      { key: "a", label: "A", desc: "使用弱化填充的标签样式展示迎检与中药" },
+      { key: "b", label: "B", desc: "使用描边按钮样式展示迎检与中药" }
+    ]
   }
 };
 const activeGuide = computed(() => guideMap[activeTestKey.value]);
 const guideImageMap = {
   "quick-entry": guideQuickEntryImage,
   "schedule-status": guideScheduleStatusImage,
-  "schedule-punch-layout": guideSchedulePunchLayoutImage
+  "schedule-punch-layout": guideSchedulePunchLayoutImage,
+  "announcement-position": guideAnnouncementPositionImage,
+  "announcement-time": guideAnnouncementTimeImage,
+  "tag-button-style": guideTagButtonStyleImage
 };
 const activeGuideImage = computed(() => guideImageMap[activeTestKey.value]);
+const usesImageGuide = computed(() => Boolean(activeGuideImage.value));
 
 function openTest(index) {
-  if (index > 2) {
+  if (index > 5) {
     store.showToast("这个测试项目稍后接入");
     return;
   }
-  activeTestKey.value = ["quick-entry", "schedule-status", "schedule-punch-layout"][index];
+  activeTestKey.value = ["quick-entry", "schedule-status", "schedule-punch-layout", "announcement-position", "announcement-time", "tag-button-style"][index];
   variant.value = "a";
   guideChoiceVisible.value = false;
   step.value = "guide";
@@ -450,6 +528,139 @@ function enterVariant(nextVariant) {
   height: 96.6%;
   object-fit: contain;
   user-select: none;
+}
+
+.ab-announcement-guide {
+  position: relative;
+  width: min(1248px, calc(100vw - 64px));
+  height: min(702px, calc(100vh - 48px));
+  border-radius: 2px;
+  background:
+    linear-gradient(rgba(151, 160, 174, 0.72), rgba(151, 160, 174, 0.72)),
+    linear-gradient(90deg, #eef3f8 0 108px, transparent 108px),
+    #f5f7fb;
+  box-shadow: 0 24px 70px rgba(16, 42, 67, 0.16);
+  transform-origin: center center;
+}
+
+.ab-announcement-guide::before,
+.ab-announcement-guide::after {
+  position: absolute;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.42);
+  content: "";
+}
+
+.ab-announcement-guide::before {
+  left: 184px;
+  top: 72px;
+  width: 320px;
+  height: 202px;
+}
+
+.ab-announcement-guide::after {
+  left: 520px;
+  top: 72px;
+  width: 344px;
+  height: 202px;
+  background: rgba(0, 110, 249, 0.45);
+}
+
+.ab-announcement-guide__title {
+  position: absolute;
+  left: 140px;
+  top: 184px;
+  z-index: 2;
+  margin: 0;
+  padding: 14px 20px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #424751;
+  font-size: 28px;
+  line-height: 40px;
+  box-shadow: 0 8px 24px rgba(16, 42, 67, 0.1);
+}
+
+.ab-announcement-guide__title strong {
+  font-weight: 700;
+}
+
+.ab-announcement-guide__card {
+  position: absolute;
+  left: 140px;
+  top: 276px;
+  z-index: 2;
+  width: 372px;
+  padding: 30px 28px;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #424751;
+  box-shadow: 0 12px 32px rgba(16, 42, 67, 0.16);
+}
+
+.ab-announcement-guide__card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ab-announcement-guide__card article {
+  margin-top: 22px;
+  padding: 24px 28px 18px;
+  border-radius: 8px;
+  background: #f8f9fb;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ab-announcement-guide__card article div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ab-announcement-guide__card article strong {
+  font-size: 15px;
+}
+
+.ab-announcement-guide__card em {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #fff0e5;
+  color: #f97316;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.ab-announcement-guide__card p {
+  margin: 4px 0;
+  color: rgba(0, 0, 0, 0.58);
+}
+
+.ab-announcement-guide__card a {
+  color: #006ef9;
+}
+
+.ab-announcement-guide__card footer {
+  margin-top: 18px;
+  color: rgba(0, 0, 0, 0.48);
+  text-align: right;
+}
+
+.ab-announcement-guide__card button {
+  width: 100%;
+  height: 42px;
+  margin-top: 22px;
+  border: 1px solid #3b92ff;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #006ef9;
+  font-size: 14px;
 }
 
 .ab-guide-mask {

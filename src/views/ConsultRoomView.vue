@@ -1,14 +1,14 @@
 <template>
   <div :class="['app-shell room-shell consult-shell text-shell', { 'video-shell': isVideo }, 'app-shell--responsive']">
-    <RoomTopbar />
+    <RoomTopbar :use-back-action="useBackAction" @back="$emit('back')" />
     <RoomSidebar />
     <main class="text-main consult-room-main">
       <section class="text-card consult-room-card" :aria-label="isVideo ? '视频问诊' : '图文问诊'">
         <div class="pharmacy-bar">
           <div class="pharmacy-bar__left">
             <h2>{{ title }}</h2>
-            <span class="jh-risk-tag jh-risk-tag--lg risk-tag--inspection">迎检</span>
-            <span class="jh-tag jh-tag--focus jh-tag--lg risk-tag--medicine medicine-type-tag">{{ medicineTypeLabel }}</span>
+            <span :class="inspectionClass">迎检</span>
+            <span :class="medicineTypeClass">{{ medicineTypeLabel }}</span>
           </div>
           <div class="pharmacy-bar__right">
             <DurationChip :seconds="activeElapsedSeconds" label="问诊持续时长：" />
@@ -40,8 +40,19 @@ const props = defineProps({
   mode: {
     type: String,
     default: "text"
+  },
+  tagVariant: {
+    type: String,
+    default: "",
+    validator: (value) => ["", "a", "b"].includes(value)
+  },
+  useBackAction: {
+    type: Boolean,
+    default: false
   }
 });
+
+defineEmits(["back"]);
 
 const route = useRoute();
 const store = useAppStore();
@@ -59,6 +70,16 @@ const medicineTypeLabel = computed(() => {
   if (record.value?.type === "consult") return record.value.consultationAttribute === "with-medicine" ? "带药" : "珮文";
   return "中药";
 });
+const inspectionClass = computed(() =>
+  props.tagVariant === "b"
+    ? "ab-pharmacy-chip ab-pharmacy-chip--inspection"
+    : "jh-risk-tag jh-risk-tag--lg risk-tag--inspection"
+);
+const medicineTypeClass = computed(() =>
+  props.tagVariant === "b"
+    ? "ab-pharmacy-chip ab-pharmacy-chip--medicine"
+    : "jh-tag jh-tag--focus jh-tag--lg risk-tag--medicine medicine-type-tag"
+);
 
 function syncActiveRecord() {
   const sessionId = route.query.sessionId || route.query.record;
@@ -105,3 +126,32 @@ watch(
 
 onBeforeUnmount(clearElapsedTimer);
 </script>
+
+<style scoped>
+.ab-pharmacy-chip {
+  display: inline-flex;
+  height: 28px;
+  min-width: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid #d8dde1;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(16, 42, 67, 0.08);
+  cursor: default;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.ab-pharmacy-chip--inspection {
+  border-color: #f0b9b5;
+  color: #d54941;
+}
+
+.ab-pharmacy-chip--medicine {
+  border-color: #9ac7ff;
+  color: #006ef9;
+}
+</style>

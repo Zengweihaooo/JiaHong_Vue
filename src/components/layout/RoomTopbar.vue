@@ -1,7 +1,17 @@
 <template>
   <header class="room-topbar">
     <div class="room-topbar__inner">
-      <RouterLink class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn" to="/" aria-label="返回首页">
+      <button
+        v-if="useBackAction"
+        class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn"
+        type="button"
+        aria-label="返回首页"
+        @click="$emit('back')"
+      >
+        <img :src="assetUrl('assets/figma-consult/back.svg')" alt="" />
+        <span>返回首页</span>
+      </button>
+      <RouterLink v-else class="jh-btn jh-btn--md jh-btn--neutral jh-btn--icon room-back-btn" :to="backTo" aria-label="返回首页">
         <img :src="assetUrl('assets/figma-consult/back.svg')" alt="" />
         <span>返回首页</span>
       </RouterLink>
@@ -37,4 +47,17 @@ import { useAppStore } from "@/stores/app";
 import { Button, DoctorAvatar, assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
+
+defineProps({
+  backTo: {
+    type: String,
+    default: "/"
+  },
+  useBackAction: {
+    type: Boolean,
+    default: false
+  }
+});
+
+defineEmits(["back"]);
 </script>
