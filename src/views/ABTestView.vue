@@ -16,7 +16,7 @@
         <button
           v-for="(item, index) in testItems"
           :key="item"
-          :class="['ab-test-card', { 'is-disabled': index > 6 }]"
+          :class="['ab-test-card', { 'is-disabled': index > 7 }]"
           type="button"
           @click="openTest(index)"
         >
@@ -49,6 +49,13 @@
 
   <ABSmartReplyTestView
     v-else-if="step === 'test' && activeTestKey === 'smart-quick-reply-layout'"
+    :variant="variant"
+    @back="step = 'landing'"
+    @switch-variant="enterVariant"
+  />
+
+  <ABSelectPresentationTestView
+    v-else-if="step === 'test' && activeTestKey === 'select-presentation'"
     :variant="variant"
     @back="step = 'landing'"
     @switch-variant="enterVariant"
@@ -144,9 +151,11 @@ import guideAnnouncementPositionImage from "@/assets/ab/guide-announcement-posit
 import guideAnnouncementTimeImage from "@/assets/ab/guide-announcement-time.png";
 import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.png";
 import guideSmartQuickReplyImage from "@/assets/ab/guide-smart-quick-reply.png";
+import guideSelectPresentationImage from "@/assets/ab/guide-select-presentation.png";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import ABConsultTagTestView from "@/components/ab/ABConsultTagTestView.vue";
 import ABHomeDashboard from "@/components/ab/ABHomeDashboard.vue";
+import ABSelectPresentationTestView from "@/components/ab/ABSelectPresentationTestView.vue";
 import ABSmartReplyTestView from "@/components/ab/ABSmartReplyTestView.vue";
 import Topbar from "@/components/layout/Topbar.vue";
 import { useAppStore } from "@/stores/app";
@@ -165,7 +174,7 @@ const testItems = [
   "公告时间信息布局",
   "标签与按钮显现形式",
   "智能与快速回复布局",
-  "问诊室信息区布局"
+  "选择框的呈现"
 ];
 const guideMap = {
   "quick-entry": {
@@ -257,6 +266,18 @@ const guideMap = {
       { key: "b", label: "B", desc: "点击“智能回复”按钮后自动上拉展开" },
       { key: "c", label: "C", desc: "点击“智能回复”按钮后跳出弹窗" }
     ]
+  },
+  "select-presentation": {
+    name: "选择框的呈现",
+    titleBefore: "请选择您喜欢的",
+    primary: "下拉选择框",
+    titleMiddle: "",
+    secondary: "呈现形式",
+    desc: "进入测试页后，请点击药品表格中的“用法”“服用频次”或“用量”输入框，比较两种选项呈现方式。",
+    options: [
+      { key: "a", label: "A", desc: "模糊搜索时直接展开全部选项，不需要滚动" },
+      { key: "b", label: "B", desc: "模糊搜索时选项收纳在框内，需要滚动查看" }
+    ]
   }
 };
 const activeGuide = computed(() => guideMap[activeTestKey.value]);
@@ -267,13 +288,14 @@ const guideImageMap = {
   "announcement-position": guideAnnouncementPositionImage,
   "announcement-time": guideAnnouncementTimeImage,
   "tag-button-style": guideTagButtonStyleImage,
-  "smart-quick-reply-layout": guideSmartQuickReplyImage
+  "smart-quick-reply-layout": guideSmartQuickReplyImage,
+  "select-presentation": guideSelectPresentationImage
 };
 const activeGuideImage = computed(() => guideImageMap[activeTestKey.value]);
 const usesImageGuide = computed(() => Boolean(activeGuideImage.value));
 
 function openTest(index) {
-  if (index > 6) {
+  if (index > 7) {
     store.showToast("这个测试项目稍后接入");
     return;
   }
@@ -284,7 +306,8 @@ function openTest(index) {
     "announcement-position",
     "announcement-time",
     "tag-button-style",
-    "smart-quick-reply-layout"
+    "smart-quick-reply-layout",
+    "select-presentation"
   ][index];
   variant.value = "a";
   guideChoiceVisible.value = false;

@@ -19,7 +19,12 @@
         </div>
         <div class="consult-workspace">
           <ChatPanel :record="record" :video="isVideo" :smart-reply-variant="smartReplyVariant" />
-          <PrescriptionPanel :record="record" :consultation="record?.type === 'consult'" :video-submit-lock="isVideo" />
+          <PrescriptionPanel
+            :record="record"
+            :consultation="record?.type === 'consult'"
+            :video-submit-lock="isVideo"
+            :select-presentation-variant="selectPresentationVariant"
+          />
         </div>
       </section>
     </main>
@@ -54,6 +59,11 @@ const props = defineProps({
     type: String,
     default: "",
     validator: (value) => ["", "a", "b", "c"].includes(value)
+  },
+  selectPresentationVariant: {
+    type: String,
+    default: "",
+    validator: (value) => ["", "a", "b"].includes(value)
   },
   useBackAction: {
     type: Boolean,

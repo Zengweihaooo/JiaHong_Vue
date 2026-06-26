@@ -4,7 +4,8 @@
       'prescription-panel',
       {
         'prescription-panel--readonly': readonly,
-        'consultation-panel': consultation
+        'consultation-panel': consultation,
+        [`prescription-panel--select-${selectPresentationVariant}`]: selectPresentationVariant
       }
     ]"
     :aria-label="readonly ? '只读处方信息' : '处方信息'"
@@ -266,6 +267,11 @@ const props = defineProps({
   videoSubmitLock: {
     type: Boolean,
     default: false
+  },
+  selectPresentationVariant: {
+    type: String,
+    default: "",
+    validator: (value) => ["", "a", "b"].includes(value)
   }
 });
 const emit = defineEmits(["open-history"]);
@@ -293,9 +299,9 @@ let medicineRequestSerial = 0;
 let videoSubmitTimer = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
 const medicineFieldOptions = {
-  usage: ["口服", "外用", "适量冲洗", "口腔吸入", "鼻吸入"],
-  frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "必要时", "按需", "单次"],
-  dose: ["0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
+  usage: ["口服", "口嚼", "口腔吸入", "口腔粘膜贴服", "口服（首剂加倍）", "必要时口服", "口服或外用涂敷患处", "口服或咀嚼", "外用", "适量冲洗", "鼻吸入"],
+  frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "每日早晚", "每晚1次", "饭前服用", "饭后服用", "必要时", "按需", "单次"],
+  dose: ["0.25毫克", "0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
 };
 const prescriptionRemarkOptions = [
   "益生菌需与抗生素间隔两小时使用",
@@ -696,12 +702,15 @@ function toggleUnitMenu(medicine, event) {
     return;
   }
   const rect = event.currentTarget.getBoundingClientRect();
-  const menuWidth = 64;
-  const left = Math.min(rect.right + 8, window.innerWidth - menuWidth - 8);
-  const top = Math.max(8, rect.top - 8);
+  const menuWidth = props.selectPresentationVariant === "a" ? 128 : 64;
+  const left = props.selectPresentationVariant
+    ? Math.min(rect.left, window.innerWidth - menuWidth - 8)
+    : Math.min(rect.right + 8, window.innerWidth - menuWidth - 8);
+  const top = props.selectPresentationVariant === "a" ? Math.max(8, rect.bottom + 4) : Math.max(8, rect.top - 8);
   unitMenuStyle.value = {
     "--medicine-unit-menu-left": `${Math.max(8, left)}px`,
-    "--medicine-unit-menu-top": `${top}px`
+    "--medicine-unit-menu-top": `${top}px`,
+    "--medicine-unit-menu-width": `${menuWidth}px`
   };
   openUnitIndex.value = medicine.index;
 }
@@ -724,10 +733,11 @@ function openMedicineFieldMenu(medicine, field, event) {
   if (!medicine || !field) return;
   const rect = event.currentTarget.getBoundingClientRect();
   openMedicineFieldKey.value = medicineFieldKey(medicine, field);
+  const menuWidth = props.selectPresentationVariant === "a" ? 292 : Math.max(112, rect.width);
   medicineFieldMenuStyle.value = {
     "--medicine-usage-menu-left": `${Math.max(8, rect.left)}px`,
     "--medicine-usage-menu-top": `${Math.max(8, rect.bottom + 4)}px`,
-    "--medicine-usage-menu-width": `${Math.max(112, rect.width)}px`
+    "--medicine-usage-menu-width": `${menuWidth}px`
   };
 }
 
@@ -740,6 +750,12 @@ function closeMedicineFieldMenu() {
 function selectMedicineFieldOption(medicine, field, option) {
   updateMedicineField(medicine, field, option);
   openMedicineFieldKey.value = "";
+}
+
+function getMedicineFieldOptions(field, value = "") {
+  const keyword = String(value || "").trim();
+  const baseOptions = medicineFieldOptions[field] || [];
+  return Array.from(new Set([keyword, ...baseOptions].filter(Boolean)));
 }
 
 const FieldCombobox = defineComponent({
@@ -756,7 +772,7 @@ const FieldCombobox = defineComponent({
       if (componentProps.readonly) {
         return h("span", { class: classes }, value);
       }
-      const options = Array.from(new Set([value, ...(medicineFieldOptions[componentProps.field] || [])].filter(Boolean)));
+      const options = getMedicineFieldOptions(componentProps.field, value);
       return h("div", { class: "medicine-usage-control" }, [
         h("input", {
           class: ["table-input medicine-edit-field medicine-usage-input", warningClass(componentProps.medicine, componentProps.field)],
@@ -791,3 +807,60 @@ const FieldCombobox = defineComponent({
   }
 });
 </script>
+
+<style scoped>
+.prescription-panel--select-a .medicine-usage-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(76px, 1fr));
+  gap: 4px;
+  max-height: none;
+  overflow: visible;
+}
+
+.prescription-panel--select-a .medicine-unit-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(48px, 1fr));
+  gap: 4px;
+  width: var(--medicine-unit-menu-width, 128px);
+  max-height: none;
+  overflow: visible;
+}
+
+.prescription-panel--select-a .medicine-usage-option,
+.prescription-panel--select-a .medicine-unit-option {
+  justify-content: center;
+  min-width: 0;
+  height: 28px;
+  padding: 4px 8px;
+  text-align: center;
+  white-space: normal;
+}
+
+.prescription-panel--select-a .medicine-unit-option {
+  width: 100%;
+}
+
+.prescription-panel--select-b .medicine-usage-options,
+.prescription-panel--select-b .medicine-unit-options {
+  max-height: 132px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.prescription-panel--select-b .medicine-unit-options {
+  width: var(--medicine-unit-menu-width, 64px);
+}
+
+.prescription-panel--select-b .medicine-usage-option,
+.prescription-panel--select-b .medicine-unit-option {
+  min-height: 28px;
+  height: auto;
+  padding: 4px 8px;
+  white-space: normal;
+}
+
+.prescription-panel--select-b .medicine-unit-option {
+  width: 100%;
+}
+</style>
