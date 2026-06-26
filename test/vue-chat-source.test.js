@@ -10,8 +10,10 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
   ]);
 
   assert.match(chatPanel, /class="ai-reply__title ai-reply__toggle"/);
-  assert.match(chatPanel, /展开智能推荐回复/);
-  assert.match(chatPanel, /智能推荐回复已展开/);
+  assert.match(chatPanel, /展开\$\{smartReplyButtonText\}/);
+  assert.match(chatPanel, /\$\{smartReplyTitle\}已展开/);
+  assert.match(chatPanel, /const smartReplyTitle = computed/);
+  assert.match(chatPanel, /const smartReplyButtonText = computed/);
   assert.match(chatPanel, /class="ai-reply__actions"/);
   assert.match(chatPanel, /class="ai-reply__close"/);
   assert.match(chatPanel, /@click="collapseAiReply"/);
