@@ -1,5 +1,5 @@
 <template>
-  <section :class="['chat-panel', { 'video-chat-panel': video }]" aria-label="聊天区域">
+  <section :class="['chat-panel', { 'video-chat-panel': video, 'chat-panel--ab-smart-popup': smartReplyVariant === 'c' }]" aria-label="聊天区域">
     <VideoCallWindow
       v-if="video"
       ref="videoWindow"
@@ -51,17 +51,25 @@
     </div>
 
     <div :class="{ 'video-input-wrap': video }">
-      <div :class="['ai-reply', store.aiCollapsed ? 'ai-reply--collapsed' : 'ai-reply--expanded']" :data-ai-reply-state="store.aiCollapsed ? 'collapsed' : 'expanded'">
+      <div
+        v-if="smartReplyVariant !== 'c'"
+        :class="[
+          'ai-reply',
+          store.aiCollapsed ? 'ai-reply--collapsed' : 'ai-reply--expanded',
+          smartReplyVariant ? `ai-reply--ab-${smartReplyVariant}` : ''
+        ]"
+        :data-ai-reply-state="store.aiCollapsed ? 'collapsed' : 'expanded'"
+      >
         <div class="ai-reply__head">
           <button
             class="ai-reply__title ai-reply__toggle"
             type="button"
-            :aria-label="store.aiCollapsed ? '展开智能推荐回复' : '智能推荐回复已展开'"
+            :aria-label="store.aiCollapsed ? `展开${smartReplyButtonText}` : `${smartReplyTitle}已展开`"
             :aria-expanded="!store.aiCollapsed"
             @click="expandAiReply"
           >
             <span class="ai-spark" aria-hidden="true"></span>
-            <h3>智能推荐回复</h3>
+            <h3>{{ smartReplyTitle }}</h3>
           </button>
           <div class="ai-reply__actions">
             <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
@@ -102,13 +110,72 @@
         <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
         <div class="jh-chat-input">
           <div class="jh-chat-input__top">
-            <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
+            <div v-if="smartReplyVariant === 'b' && store.aiCollapsed" class="ab-reply-toolbar">
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary ab-smart-reply-trigger" type="button" @click="expandAiReply">智能回复</button>
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
+            </div>
+            <button v-else class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
             <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
           </div>
           <div class="jh-chat-input__actions">
             <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">发送</button>
           </div>
         </div>
+      </div>
+      <div v-else class="ai-reply ai-reply--ab-c ai-reply--collapsed" data-ai-reply-state="collapsed">
+        <div class="jh-chat-input">
+          <div class="jh-chat-input__top">
+            <div class="ab-reply-toolbar">
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary ab-smart-reply-trigger" type="button" @click="openAiReplyPopup">智能回复</button>
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
+            </div>
+            <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
+          </div>
+          <div class="jh-chat-input__actions">
+            <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">发送</button>
+          </div>
+        </div>
+        <section v-if="aiReplyPopupVisible" class="ab-ai-popup" role="dialog" aria-modal="false" aria-labelledby="ab-ai-popup-title">
+          <header class="ai-reply__head">
+            <span class="ai-reply__title">
+              <span class="ai-spark" aria-hidden="true"></span>
+              <h3 id="ab-ai-popup-title">智能推荐回复</h3>
+            </span>
+            <div class="ai-reply__actions">
+              <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
+                <el-icon><Refresh /></el-icon>
+                <span>换一批</span>
+              </button>
+              <button class="ai-reply__close" type="button" aria-label="关闭智能推荐回复" @click="aiReplyPopupVisible = false">
+                <el-icon><Close /></el-icon>
+              </button>
+            </div>
+          </header>
+          <div :class="['ai-reply__options', { 'ai-reply__options--long': aiOptionsAreLong }]">
+            <button
+              v-for="option in aiOptions"
+              :key="option.text"
+              class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill"
+              type="button"
+              :data-reply-text="option.text"
+              @click="draft = option.text"
+              @dblclick="sendAiOption(option.text, $event)"
+            >
+              <span class="jh-btn--ai-pill__text">
+                <template v-for="segment in aiReplyTextSegments(option)">
+                  <strong
+                    v-if="segment.highlight"
+                    :key="`${option.text}-${segment.index}-popup-highlight`"
+                    class="jh-btn--ai-pill__keyword"
+                  >{{ segment.text }}</strong>
+                  <span v-else :key="`${option.text}-${segment.index}-popup-text`">{{ segment.text }}</span>
+                </template>
+              </span>
+              <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>
+            </button>
+          </div>
+          <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
+        </section>
       </div>
     </div>
   </section>
@@ -135,6 +202,11 @@ const props = defineProps({
   video: {
     type: Boolean,
     default: false
+  },
+  smartReplyVariant: {
+    type: String,
+    default: "",
+    validator: (value) => ["", "a", "b", "c"].includes(value)
   }
 });
 
@@ -148,6 +220,7 @@ const cameraReady = ref(false);
 const cameraError = ref(false);
 const cameraStatusText = ref("正在连接摄像头");
 const aiRotation = ref(0);
+const aiReplyPopupVisible = ref(false);
 const draft = computed({
   get: () => store.chatDrafts[props.record?.id] || "",
   set: (value) => {
@@ -187,6 +260,9 @@ const aiOptions = computed(() => {
 const aiOptionsAreLong = computed(() =>
   Math.max(0, ...aiOptions.value.map((option) => option.text.length)) >= aiReplyLayoutTextThreshold
 );
+const smartReplyVariant = computed(() => props.smartReplyVariant);
+const smartReplyTitle = computed(() => (props.smartReplyVariant === "b" && store.aiCollapsed ? "智能回复" : "智能推荐回复"));
+const smartReplyButtonText = computed(() => (props.smartReplyVariant === "b" ? "智能回复" : "智能推荐回复"));
 
 const defaultMessageIntervalSeconds = 58;
 const minimumInitialCameraErrorDelayMs = 2200;
@@ -429,6 +505,12 @@ function openQuickReplyDialog(event) {
   store.quickReplyDialogVisible = true;
 }
 
+function openAiReplyPopup(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  aiReplyPopupVisible.value = true;
+}
+
 function expandAiReply(event) {
   event?.preventDefault();
   event?.stopPropagation();
@@ -455,6 +537,16 @@ watch(
     await nextTick();
     setupLocalCamera();
   }
+);
+
+watch(
+  () => props.smartReplyVariant,
+  (value) => {
+    if (!value) return;
+    store.aiCollapsed = true;
+    aiReplyPopupVisible.value = false;
+  },
+  { immediate: true }
 );
 
 watch(
@@ -540,3 +632,153 @@ function openMessageMenu(message, event) {
   });
 }
 </script>
+
+<style scoped>
+.ai-reply--ab-b.ai-reply--collapsed {
+  overflow: visible;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chat-panel--ab-smart-popup {
+  overflow: visible;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__head {
+  display: none;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__options,
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__notice {
+  display: none;
+}
+
+.ai-reply--ab-c {
+  position: relative;
+  overflow: visible;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input,
+.ai-reply--ab-c .jh-chat-input {
+  display: flex;
+  position: relative;
+  box-sizing: border-box;
+  min-height: 150px;
+  padding: 16px 16px 52px;
+  overflow: visible;
+  border: 1px solid #eceef0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__top,
+.ai-reply--ab-c .jh-chat-input__top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 82px;
+}
+
+.ab-reply-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ab-smart-reply-trigger {
+  width: 88px;
+  min-width: 88px;
+  height: 32px;
+  border-color: #7f63ff;
+  color: #6f55ff;
+  font-weight: 700;
+}
+
+.ab-reply-toolbar .quick-reply-trigger {
+  width: 88px;
+  min-width: 88px;
+  height: 32px;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed textarea,
+.ai-reply--ab-c textarea {
+  width: 100%;
+  min-height: 54px;
+  padding-right: 120px;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__actions,
+.ai-reply--ab-c .jh-chat-input__actions {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+}
+
+.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__actions .jh-btn,
+.ai-reply--ab-c .jh-chat-input__actions .jh-btn {
+  width: 88px;
+  height: 40px;
+}
+
+.ab-ai-popup {
+  position: absolute;
+  left: calc(100% + 20px);
+  bottom: 74px;
+  z-index: 80;
+  width: 398px;
+  padding: 14px;
+  border: 1px solid #dcd6ff;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfaff 0%, #f5f8ff 100%);
+  box-shadow: 0 16px 36px rgba(63, 48, 143, 0.18);
+}
+
+.ab-ai-popup .ai-reply__head {
+  position: relative;
+  padding-right: 24px;
+}
+
+.ab-ai-popup .ai-reply__refresh,
+.ab-ai-popup .ai-reply__close {
+  display: inline-flex;
+}
+
+.ab-ai-popup .ai-reply__close {
+  position: absolute;
+  top: 2px;
+  right: 0;
+}
+
+.ab-ai-popup .ai-reply__options {
+  display: flex;
+  margin-top: 10px;
+}
+
+.ab-ai-popup .ai-reply__notice {
+  display: block;
+  margin: 8px 0 0;
+}
+
+.ab-ai-popup .jh-btn--ai-pill {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@media (max-width: 1280px) {
+  .ab-ai-popup {
+    right: 0;
+    bottom: 100%;
+    margin-bottom: 12px;
+  }
+}
+</style>

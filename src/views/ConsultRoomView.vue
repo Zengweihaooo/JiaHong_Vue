@@ -7,8 +7,10 @@
         <div class="pharmacy-bar">
           <div class="pharmacy-bar__left">
             <h2>{{ title }}</h2>
-            <span :class="inspectionClass">迎检</span>
-            <span :class="medicineTypeClass">{{ medicineTypeLabel }}</span>
+            <img v-if="tagVariant === 'b'" class="ab-pharmacy-tag-image ab-pharmacy-tag-image--inspection" :src="inspectionTagImage" alt="迎检" />
+            <span v-else :class="inspectionClass">迎检</span>
+            <img v-if="tagVariant === 'b'" class="ab-pharmacy-tag-image ab-pharmacy-tag-image--medicine" :src="medicineTagImage" :alt="medicineTypeLabel" />
+            <span v-else :class="medicineTypeClass">{{ medicineTypeLabel }}</span>
           </div>
           <div class="pharmacy-bar__right">
             <DurationChip :seconds="activeElapsedSeconds" label="问诊持续时长：" />
@@ -16,7 +18,7 @@
           </div>
         </div>
         <div class="consult-workspace">
-          <ChatPanel :record="record" :video="isVideo" />
+          <ChatPanel :record="record" :video="isVideo" :smart-reply-variant="smartReplyVariant" />
           <PrescriptionPanel :record="record" :consultation="record?.type === 'consult'" :video-submit-lock="isVideo" />
         </div>
       </section>
@@ -28,6 +30,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import inspectionTagImage from "@/assets/ab/tag-inspection-b.png";
+import medicineTagImage from "@/assets/ab/tag-medicine-b.png";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import { DurationChip } from "@jiahong/ui";
 import ChatPanel from "@/components/consultation/ChatPanel.vue";
@@ -45,6 +49,11 @@ const props = defineProps({
     type: String,
     default: "",
     validator: (value) => ["", "a", "b"].includes(value)
+  },
+  smartReplyVariant: {
+    type: String,
+    default: "",
+    validator: (value) => ["", "a", "b", "c"].includes(value)
   },
   useBackAction: {
     type: Boolean,
@@ -153,5 +162,21 @@ onBeforeUnmount(clearElapsedTimer);
 .ab-pharmacy-chip--medicine {
   border-color: #9ac7ff;
   color: #006ef9;
+}
+
+.ab-pharmacy-tag-image {
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.ab-pharmacy-tag-image--inspection {
+  width: 56px;
+}
+
+.ab-pharmacy-tag-image--medicine {
+  width: 36px;
 }
 </style>

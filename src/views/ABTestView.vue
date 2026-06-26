@@ -16,7 +16,7 @@
         <button
           v-for="(item, index) in testItems"
           :key="item"
-          :class="['ab-test-card', { 'is-disabled': index > 5 }]"
+          :class="['ab-test-card', { 'is-disabled': index > 6 }]"
           type="button"
           @click="openTest(index)"
         >
@@ -42,6 +42,13 @@
 
   <ABConsultTagTestView
     v-else-if="step === 'test' && activeTestKey === 'tag-button-style'"
+    :variant="variant"
+    @back="step = 'landing'"
+    @switch-variant="enterVariant"
+  />
+
+  <ABSmartReplyTestView
+    v-else-if="step === 'test' && activeTestKey === 'smart-quick-reply-layout'"
     :variant="variant"
     @back="step = 'landing'"
     @switch-variant="enterVariant"
@@ -136,9 +143,11 @@ import guideSchedulePunchLayoutImage from "@/assets/ab/guide-schedule-punch-layo
 import guideAnnouncementPositionImage from "@/assets/ab/guide-announcement-position.png";
 import guideAnnouncementTimeImage from "@/assets/ab/guide-announcement-time.png";
 import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.png";
+import guideSmartQuickReplyImage from "@/assets/ab/guide-smart-quick-reply.png";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import ABConsultTagTestView from "@/components/ab/ABConsultTagTestView.vue";
 import ABHomeDashboard from "@/components/ab/ABHomeDashboard.vue";
+import ABSmartReplyTestView from "@/components/ab/ABSmartReplyTestView.vue";
 import Topbar from "@/components/layout/Topbar.vue";
 import { useAppStore } from "@/stores/app";
 import { WorkspaceShell, WorkspaceSidebar } from "@jiahong/ui";
@@ -235,6 +244,19 @@ const guideMap = {
       { key: "a", label: "A", desc: "使用弱化填充的标签样式展示迎检与中药" },
       { key: "b", label: "B", desc: "使用描边按钮样式展示迎检与中药" }
     ]
+  },
+  "smart-quick-reply-layout": {
+    name: "智能与快速回复布局",
+    titleBefore: "请选择您喜欢的",
+    primary: "智能回复",
+    titleMiddle: "和",
+    secondary: "快捷回复布局形式",
+    desc: "进入测试页后，请点击智能推荐回复或智能回复按钮，比较三种展开方式。",
+    options: [
+      { key: "a", label: "A", desc: "点击“智能推荐回复”后自动上拉展开" },
+      { key: "b", label: "B", desc: "点击“智能回复”按钮后自动上拉展开" },
+      { key: "c", label: "C", desc: "点击“智能回复”按钮后跳出弹窗" }
+    ]
   }
 };
 const activeGuide = computed(() => guideMap[activeTestKey.value]);
@@ -244,17 +266,26 @@ const guideImageMap = {
   "schedule-punch-layout": guideSchedulePunchLayoutImage,
   "announcement-position": guideAnnouncementPositionImage,
   "announcement-time": guideAnnouncementTimeImage,
-  "tag-button-style": guideTagButtonStyleImage
+  "tag-button-style": guideTagButtonStyleImage,
+  "smart-quick-reply-layout": guideSmartQuickReplyImage
 };
 const activeGuideImage = computed(() => guideImageMap[activeTestKey.value]);
 const usesImageGuide = computed(() => Boolean(activeGuideImage.value));
 
 function openTest(index) {
-  if (index > 5) {
+  if (index > 6) {
     store.showToast("这个测试项目稍后接入");
     return;
   }
-  activeTestKey.value = ["quick-entry", "schedule-status", "schedule-punch-layout", "announcement-position", "announcement-time", "tag-button-style"][index];
+  activeTestKey.value = [
+    "quick-entry",
+    "schedule-status",
+    "schedule-punch-layout",
+    "announcement-position",
+    "announcement-time",
+    "tag-button-style",
+    "smart-quick-reply-layout"
+  ][index];
   variant.value = "a";
   guideChoiceVisible.value = false;
   step.value = "guide";
