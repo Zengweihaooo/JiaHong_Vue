@@ -81,6 +81,34 @@
     </div>
     <p v-if="editing && dragHint" class="quick-entry-card__drag-hint">{{ dragHint }}</p>
     <Teleport to="body">
+      <div
+        v-if="dragPreview.visible"
+        :class="['quick-drag-preview', `quick-drag-preview--${dragPreview.type}`]"
+        :style="dragPreviewStyle"
+        aria-hidden="true"
+      >
+        <template v-if="dragPreview.type === 'card' && dragPreview.action">
+          <span class="quick-card__body">
+            <span class="icon-box">
+              <span v-if="dragPreview.action.icon === 'quickCalendar'" class="quick-icon quick-icon--schedule" aria-hidden="true">
+                <img class="quick-icon__base" :src="assetUrl('assets/figma-home/quick-schedule-box.svg')" alt="" />
+                <img class="quick-icon__mark" :src="assetUrl('assets/figma-home/quick-schedule-mark.svg')" alt="" />
+              </span>
+              <span v-else-if="dragPreview.action.icon === 'clock'" class="quick-icon quick-icon--clock" aria-hidden="true">
+                <img class="quick-icon__base" :src="assetUrl('assets/figma-home/quick-clock-circle.svg')" alt="" />
+                <img class="quick-icon__hand" :src="assetUrl('assets/figma-home/quick-clock-hand.svg')" alt="" />
+              </span>
+              <span v-else-if="isMenuIcon(dragPreview.action.icon)" :class="['quick-icon quick-icon--menu', `quick-icon--menu-${dragPreview.action.icon}`]" aria-hidden="true"></span>
+              <img v-else class="quick-icon" :class="`quick-icon--${dragPreview.action.icon || 'document'}`" :src="quickIcon(dragPreview.action.icon)" alt="" aria-hidden="true" />
+            </span>
+            <span v-if="dragPreview.action.title" class="quick-card__title">{{ dragPreview.action.title }}</span>
+            <span class="quick-card__desc">{{ dragPreview.action.desc }}</span>
+          </span>
+        </template>
+        <span v-else class="quick-card__drag quick-drag-preview__handle" aria-hidden="true"></span>
+      </div>
+    </Teleport>
+    <Teleport to="body">
       <div :class="['schedule-overlay', { 'is-open': scheduleOpen }]" :aria-hidden="String(!scheduleOpen)" @click.self="closeSchedulePanel">
         <section v-if="scheduleOpen" class="schedule-dialog" role="dialog" aria-modal="true" aria-labelledby="schedule-dialog-title">
           <section class="schedule-panel" aria-label="今日排班">
@@ -263,11 +291,28 @@ const pointerDrag = ref({
   startY: 0,
   moved: false
 })
+const dragPreview = ref({
+  visible: false,
+  type: 'handle',
+  action: null,
+  x: 0,
+  y: 0,
+  offsetX: 0,
+  offsetY: 0,
+  width: 28,
+  height: 28
+})
 const suppressNextClick = ref(false)
 const punchedCount = computed(() => props.initialPunchedCount + (punchDone.value ? 1 : 0))
 const unpunchedCount = computed(() => Math.max(0, props.initialUnpunchedCount - (punchDone.value ? 1 : 0)))
 const morningScheduleBlocks = computed(() => props.scheduleBlocks.filter((block) => block.column === 'morning'))
 const afternoonScheduleBlocks = computed(() => props.scheduleBlocks.filter((block) => block.column === 'afternoon'))
+const dragPreviewStyle = computed(() => ({
+  left: `${dragPreview.value.x - dragPreview.value.offsetX}px`,
+  top: `${dragPreview.value.y - dragPreview.value.offsetY}px`,
+  width: `${dragPreview.value.width}px`,
+  height: `${dragPreview.value.height}px`
+}))
 
 watch(
   () => props.initialPunchDone,
@@ -346,12 +391,28 @@ function beginPointerDrag(index, event) {
   if (!isMovableIndex(index) || event?.button !== 0) return
   if (event?.target?.closest?.('.quick-card__delete')) return
   event.preventDefault()
+  const previewType = props.dragMode === 'card' ? 'card' : 'handle'
+  const previewElement = previewType === 'card'
+    ? event.currentTarget?.closest?.('.quick-card') || event.currentTarget
+    : event.currentTarget
+  const previewRect = previewElement?.getBoundingClientRect?.()
   pointerDrag.value = {
     active: true,
     fromIndex: index,
     startX: event.clientX,
     startY: event.clientY,
     moved: false
+  }
+  dragPreview.value = {
+    visible: true,
+    type: previewType,
+    action: previewType === 'card' ? props.actions[index] : null,
+    x: event.clientX,
+    y: event.clientY,
+    offsetX: previewRect ? event.clientX - previewRect.left : 14,
+    offsetY: previewRect ? event.clientY - previewRect.top : 14,
+    width: previewRect?.width || (previewType === 'card' ? 180 : 28),
+    height: previewRect?.height || (previewType === 'card' ? 168 : 28)
   }
   draggingIndex.value = index
   dragOverIndex.value = index
@@ -362,6 +423,11 @@ function beginPointerDrag(index, event) {
 
 function movePointerDrag(event) {
   if (!pointerDrag.value.active) return
+  dragPreview.value = {
+    ...dragPreview.value,
+    x: event.clientX,
+    y: event.clientY
+  }
   const deltaX = Math.abs(event.clientX - pointerDrag.value.startX)
   const deltaY = Math.abs(event.clientY - pointerDrag.value.startY)
   if (deltaX > 4 || deltaY > 4) {
@@ -381,6 +447,7 @@ function finishPointerDrag() {
   const { fromIndex, moved } = pointerDrag.value
   const toIndex = dragOverIndex.value
   pointerDrag.value = { active: false, fromIndex: -1, startX: 0, startY: 0, moved: false }
+  resetDragPreview()
   if (moved && isMovableIndex(fromIndex) && isMovableIndex(toIndex) && fromIndex !== toIndex) {
     const actions = props.actions.slice()
     const [action] = actions.splice(fromIndex, 1)
@@ -399,7 +466,22 @@ function finishPointerDrag() {
 function cancelPointerDrag() {
   window.removeEventListener('pointermove', movePointerDrag)
   pointerDrag.value = { active: false, fromIndex: -1, startX: 0, startY: 0, moved: false }
+  resetDragPreview()
   endDrag()
+}
+
+function resetDragPreview() {
+  dragPreview.value = {
+    visible: false,
+    type: 'handle',
+    action: null,
+    x: 0,
+    y: 0,
+    offsetX: 0,
+    offsetY: 0,
+    width: 28,
+    height: 28
+  }
 }
 
 function handleDragOver(index, event) {
@@ -755,7 +837,7 @@ function ScheduleBlock({ block, punched }) {
 
 .quick-card.is-dragging {
   z-index: 3;
-  opacity: 0.86;
+  opacity: 0.42;
   cursor: grabbing;
   transform: scale(1.025);
   box-shadow: 0 18px 30px -18px rgba(0, 110, 249, 0.48);
@@ -763,6 +845,47 @@ function ScheduleBlock({ block, punched }) {
     opacity 140ms ease,
     box-shadow 140ms ease,
     transform 140ms ease;
+}
+
+.quick-drag-preview {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
+  user-select: none;
+  will-change: left, top;
+}
+
+.quick-drag-preview--handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-drag-preview__handle {
+  position: static;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  color: var(--jh-blue);
+  border-color: #cfe3ff;
+  box-shadow: 0 12px 22px -12px rgba(0, 110, 249, 0.5);
+}
+
+.quick-drag-preview--card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 14px 10px;
+  overflow: hidden;
+  border: 1px solid #91c4ff;
+  border-radius: 6px;
+  background: #f8fbff;
+  color: var(--jh-text-secondary);
+  cursor: grabbing;
+  box-shadow: 0 22px 36px -18px rgba(0, 110, 249, 0.5);
+  transform: scale(1.02);
 }
 
 .quick-card.is-drag-over {

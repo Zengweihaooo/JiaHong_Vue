@@ -135,7 +135,7 @@
             <span>{{ medicine.index }}</span>
             <span :class="warningClass(medicine, 'name')">{{ medicine.name }}</span>
             <span>{{ medicine.type }}</span>
-            <span class="medicine-spec-text">{{ medicine.spec }}</span>
+            <FieldCombobox :medicine="medicine" field="spec" label="规格" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="usage" label="用法" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="frequency" label="服用频次" :readonly="readonly" />
             <FieldCombobox :medicine="medicine" field="dose" label="用量" :readonly="readonly" />
@@ -299,10 +299,62 @@ let medicineRequestSerial = 0;
 let videoSubmitTimer = 0;
 const medicineUnitOptions = ["盒", "瓶", "支", "袋", "板", "片"];
 const medicineFieldOptions = {
-  usage: ["口服", "口嚼", "口腔吸入", "口腔粘膜贴服", "口服（首剂加倍）", "必要时口服", "口服或外用涂敷患处", "口服或咀嚼", "外用", "适量冲洗", "鼻吸入"],
+  spec: ["0.125g*6片", "0.25g*6片", "0.5g*6片", "0.125g*12片", "0.25g*12片", "10ml*6支", "100ml/瓶", "5g*10袋", "10g*10袋"],
+  usage: [
+    "口服",
+    "口嚼",
+    "口腔吸入",
+    "口腔粘膜贴服",
+    "口服（首剂加倍）",
+    "必要时口服",
+    "口服或外用涂敷患处",
+    "口服或咀嚼",
+    "打碎后口服",
+    "空腹或进餐后口服",
+    "口含",
+    "吞服，或用水分散后",
+    "加水分散后口服",
+    "口腔黏膜注射",
+    "性生活前1小时口服",
+    "性生活前30分钟口服",
+    "餐前30分钟口服",
+    "餐前1小时口服",
+    "餐时口服",
+    "清晨空腹口服",
+    "睡前1小时口服",
+    "喷口",
+    "餐前15分钟口服",
+    "餐后2小时口服",
+    "月经第1-14日口服",
+    "口服（首次服用0.4g）",
+    "餐后1小时口服",
+    "晚饭后口服"
+  ],
   frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "每日早晚", "每晚1次", "饭前服用", "饭后服用", "必要时", "按需", "单次"],
   dose: ["0.25毫克", "0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
 };
+const selectAUsagePopupOptions = [
+  "每日1次",
+  "1次每日",
+  "每天1次",
+  "1粒每天",
+  "每次1粒，每日1次",
+  "每次1片，每日1次",
+  "每晚1次",
+  "每晨1次",
+  "早餐后1次",
+  "晚餐后1次",
+  "睡前1次",
+  "空腹1次",
+  "饭后1次",
+  "饭前1次",
+  "每日固定时间1次",
+  "隔日1次",
+  "每周1次",
+  "每月1次",
+  "必要时1次",
+  "发作时1次"
+];
 const prescriptionRemarkOptions = [
   "益生菌需与抗生素间隔两小时使用",
   "蒙脱石散需与其它药前后间隔两小时使用",
@@ -702,11 +754,11 @@ function toggleUnitMenu(medicine, event) {
     return;
   }
   const rect = event.currentTarget.getBoundingClientRect();
-  const menuWidth = props.selectPresentationVariant === "a" ? 128 : 64;
+  const menuWidth = props.selectPresentationVariant === "a" ? 156 : 64;
   const left = props.selectPresentationVariant
     ? Math.min(rect.left, window.innerWidth - menuWidth - 8)
     : Math.min(rect.right + 8, window.innerWidth - menuWidth - 8);
-  const top = props.selectPresentationVariant === "a" ? Math.max(8, rect.bottom + 4) : Math.max(8, rect.top - 8);
+  const top = props.selectPresentationVariant ? Math.max(8, rect.bottom + 4) : Math.max(8, rect.top - 8);
   unitMenuStyle.value = {
     "--medicine-unit-menu-left": `${Math.max(8, left)}px`,
     "--medicine-unit-menu-top": `${top}px`,
@@ -733,12 +785,46 @@ function openMedicineFieldMenu(medicine, field, event) {
   if (!medicine || !field) return;
   const rect = event.currentTarget.getBoundingClientRect();
   openMedicineFieldKey.value = medicineFieldKey(medicine, field);
-  const menuWidth = props.selectPresentationVariant === "a" ? 292 : Math.max(112, rect.width);
+  const menuWidth = props.selectPresentationVariant === "a"
+    ? selectPresentationMenuWidth(field)
+    : props.selectPresentationVariant === "b"
+      ? selectPresentationBMenuWidth(field)
+      : Math.max(112, rect.width);
+  const left = props.selectPresentationVariant === "a"
+    ? Math.max(8, Math.min(rect.left - selectPresentationMenuOffset(field), window.innerWidth - menuWidth - 8))
+    : Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
   medicineFieldMenuStyle.value = {
-    "--medicine-usage-menu-left": `${Math.max(8, rect.left)}px`,
+    "--medicine-usage-menu-left": `${left}px`,
     "--medicine-usage-menu-top": `${Math.max(8, rect.bottom + 4)}px`,
     "--medicine-usage-menu-width": `${menuWidth}px`
   };
+}
+
+function selectPresentationMenuWidth(field) {
+  return {
+    spec: 236,
+    usage: 272,
+    frequency: 236,
+    dose: 236
+  }[field] || 236;
+}
+
+function selectPresentationMenuOffset(field) {
+  return {
+    spec: 72,
+    usage: 120,
+    frequency: 80,
+    dose: 80
+  }[field] || 80;
+}
+
+function selectPresentationBMenuWidth(field) {
+  return {
+    spec: 128,
+    usage: 176,
+    frequency: 96,
+    dose: 96
+  }[field] || 112;
 }
 
 function closeMedicineFieldMenu() {
@@ -753,6 +839,7 @@ function selectMedicineFieldOption(medicine, field, option) {
 }
 
 function getMedicineFieldOptions(field, value = "") {
+  if (props.selectPresentationVariant === "a" && field === "usage") return selectAUsagePopupOptions;
   const keyword = String(value || "").trim();
   const baseOptions = medicineFieldOptions[field] || [];
   return Array.from(new Set([keyword, ...baseOptions].filter(Boolean)));
@@ -783,14 +870,18 @@ const FieldCombobox = defineComponent({
           "aria-expanded": String(isMedicineFieldOpen(componentProps.medicine, componentProps.field)),
           autocomplete: "off",
           "data-medicine-field": componentProps.field,
-          onFocus: (event) => openMedicineFieldMenu(componentProps.medicine, componentProps.field, event),
           onClick: (event) => openMedicineFieldMenu(componentProps.medicine, componentProps.field, event),
           onInput: (event) => updateMedicineField(componentProps.medicine, componentProps.field, event.target.value),
           onBlur: closeMedicineFieldMenu
         }),
-        h("div", { class: "medicine-usage-options", role: "listbox", hidden: !isMedicineFieldOpen(componentProps.medicine, componentProps.field), style: medicineFieldMenuStyle.value }, options.map((option) =>
+        h("div", {
+          class: ["medicine-usage-options", `medicine-usage-options--${componentProps.field}`],
+          role: "listbox",
+          hidden: !isMedicineFieldOpen(componentProps.medicine, componentProps.field),
+          style: medicineFieldMenuStyle.value
+        }, options.map((option, index) =>
           h("button", {
-            class: ["medicine-usage-option", { "is-active": option === value }],
+            class: ["medicine-usage-option", { "is-active": option === value || (props.selectPresentationVariant === "a" && componentProps.field === "usage" && index === 0) }],
             type: "button",
             role: "option",
             "aria-selected": option === value ? "true" : "false",
@@ -811,56 +902,141 @@ const FieldCombobox = defineComponent({
 <style scoped>
 .prescription-panel--select-a .medicine-usage-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(76px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  gap: 6px 8px;
   max-height: none;
+  padding: 10px;
   overflow: visible;
+  border: 1px solid #d8dde1;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px -18px rgba(16, 42, 67, 0.26),
+    0 8px 18px -10px rgba(16, 42, 67, 0.18);
+}
+
+.prescription-panel--select-a .medicine-usage-options--usage {
+  grid-auto-flow: column;
+  grid-template-columns: repeat(2, 120px);
+  grid-template-rows: repeat(10, 24px);
+  width: var(--medicine-usage-menu-width, 272px);
+  min-height: 254px;
+}
+
+.prescription-panel--select-a .medicine-usage-options--spec,
+.prescription-panel--select-a .medicine-usage-options--frequency,
+.prescription-panel--select-a .medicine-usage-options--dose {
+  width: var(--medicine-usage-menu-width, 236px);
+}
+
+.prescription-panel--select-a .medicine-usage-options--usage::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 136px;
+  width: 1px;
+  background: #e5e8eb;
 }
 
 .prescription-panel--select-a .medicine-unit-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(48px, 1fr));
-  gap: 4px;
-  width: var(--medicine-unit-menu-width, 128px);
+  grid-template-columns: repeat(2, minmax(56px, 1fr));
+  gap: 6px;
+  width: var(--medicine-unit-menu-width, 156px);
   max-height: none;
+  padding: 10px;
   overflow: visible;
+  border: 1px solid #d8dde1;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px -18px rgba(16, 42, 67, 0.26),
+    0 8px 18px -10px rgba(16, 42, 67, 0.18);
 }
 
 .prescription-panel--select-a .medicine-usage-option,
 .prescription-panel--select-a .medicine-unit-option {
   justify-content: center;
   min-width: 0;
-  height: 28px;
+  min-height: 28px;
+  height: auto;
   padding: 4px 8px;
+  border-radius: 6px;
+  color: #424751;
+  font-size: 12px;
+  line-height: 20px;
   text-align: center;
   white-space: normal;
+}
+
+.prescription-panel--select-a .medicine-usage-option.is-active,
+.prescription-panel--select-a .medicine-unit-option.is-active {
+  background: #0878ff;
+  color: #ffffff;
+}
+
+.prescription-panel--select-a .medicine-usage-option:hover,
+.prescription-panel--select-a .medicine-unit-option:hover {
+  background: #ebf3ff;
+  color: #006ef9;
+}
+
+.prescription-panel--select-a .medicine-usage-option.is-active:hover,
+.prescription-panel--select-a .medicine-unit-option.is-active:hover {
+  background: #0878ff;
+  color: #ffffff;
 }
 
 .prescription-panel--select-a .medicine-unit-option {
   width: 100%;
 }
 
-.prescription-panel--select-b .medicine-usage-options,
-.prescription-panel--select-b .medicine-unit-options {
-  max-height: 132px;
+.prescription-panel--select-b .medicine-usage-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  max-height: 250px;
+  padding: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  width: var(--medicine-usage-menu-width, 112px);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 16px 40px -16px rgba(16, 42, 67, 0.14),
+    0 4px 8px -2px rgba(16, 42, 67, 0.08);
 }
 
-.prescription-panel--select-b .medicine-unit-options {
-  width: var(--medicine-unit-menu-width, 64px);
-}
-
-.prescription-panel--select-b .medicine-usage-option,
-.prescription-panel--select-b .medicine-unit-option {
-  min-height: 28px;
-  height: auto;
-  padding: 4px 8px;
-  white-space: normal;
-}
-
-.prescription-panel--select-b .medicine-unit-option {
+.prescription-panel--select-b .medicine-usage-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   width: 100%;
+  min-height: 24px;
+  height: auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--jh-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.prescription-panel--select-b .medicine-usage-option {
+  min-width: 0;
+}
+
+.prescription-panel--select-b .medicine-usage-option.is-active,
+.prescription-panel--select-b .medicine-usage-option.is-active:hover,
+.prescription-panel--select-b .medicine-usage-option.is-active:focus-visible {
+  background: #0878ff;
+  color: #ffffff;
 }
 </style>

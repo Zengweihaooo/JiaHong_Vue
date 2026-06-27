@@ -119,13 +119,25 @@
 
         <section
           v-else
-          :class="['ab-schedule-image-modal', { 'ab-schedule-image-modal--small': testKey === 'schedule-punch-layout' }]"
+          :class="[
+            'ab-schedule-image-modal',
+            {
+              'ab-schedule-image-modal--small': testKey === 'schedule-punch-layout',
+              [`ab-schedule-image-modal--${variant}`]: testKey === 'schedule-punch-layout'
+            }
+          ]"
           role="dialog"
           aria-modal="true"
           aria-label="今日排班"
         >
           <img :src="scheduleImageSource" alt="今日排班" />
-          <button type="button" aria-label="关闭今日排班" @click="scheduleVisible = false"></button>
+          <button
+            class="ab-schedule-image-modal__close"
+            type="button"
+            aria-label="关闭今日排班"
+            @pointerdown.stop
+            @click.stop="scheduleVisible = false"
+          ></button>
         </section>
       </div>
     </Teleport>
@@ -279,15 +291,32 @@ function selectQuickAction({ action }) {
   user-select: none;
 }
 
-.ab-schedule-image-modal button {
+.ab-schedule-image-modal__close {
   position: absolute;
-  top: 24px;
-  right: 48px;
-  width: 56px;
-  height: 56px;
+  top: 12px;
+  right: 16px;
+  z-index: 2;
+  width: 112px;
+  height: 96px;
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.ab-schedule-image-modal--small.ab-schedule-image-modal--a .ab-schedule-image-modal__close,
+.ab-schedule-image-modal--small.ab-schedule-image-modal--b .ab-schedule-image-modal__close {
+  top: 0;
+  right: 384px;
+  width: 148px;
+  height: 120px;
+}
+
+.ab-schedule-image-modal--small.ab-schedule-image-modal--c .ab-schedule-image-modal__close,
+.ab-schedule-image-modal--small.ab-schedule-image-modal--d .ab-schedule-image-modal__close {
+  top: 6px;
+  right: 6px;
+  width: 152px;
+  height: 112px;
 }
 
 .ab-schedule-head {
