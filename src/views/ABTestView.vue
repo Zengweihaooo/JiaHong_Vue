@@ -21,15 +21,7 @@
           @click="openTest(index)"
         >
           <span class="ab-test-card__preview" aria-hidden="true">
-            <span class="ab-mini-screen">
-              <span class="ab-mini-side"></span>
-              <span class="ab-mini-top"></span>
-              <span class="ab-mini-line ab-mini-line--one"></span>
-              <span class="ab-mini-line ab-mini-line--two"></span>
-              <span class="ab-mini-card ab-mini-card--blue"></span>
-              <span class="ab-mini-card ab-mini-card--white"></span>
-              <span class="ab-mini-card ab-mini-card--wide"></span>
-            </span>
+            <img :src="testThumbnails[index]" :alt="`${item}缩略图`" />
           </span>
           <span class="ab-test-card__foot">
             <span>{{ item }}</span>
@@ -152,6 +144,14 @@ import guideAnnouncementTimeImage from "@/assets/ab/guide-announcement-time.png"
 import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.png";
 import guideSmartQuickReplyImage from "@/assets/ab/guide-smart-quick-reply.png";
 import guideSelectPresentationImage from "@/assets/ab/guide-select-presentation.png";
+import thumbTest1 from "@/assets/ab/thumb-test-1.png";
+import thumbTest2 from "@/assets/ab/thumb-test-2.png";
+import thumbTest3 from "@/assets/ab/thumb-test-3.png";
+import thumbTest4 from "@/assets/ab/thumb-test-4.png";
+import thumbTest5 from "@/assets/ab/thumb-test-5.png";
+import thumbTest6 from "@/assets/ab/thumb-test-6.png";
+import thumbTest7 from "@/assets/ab/thumb-test-7.png";
+import thumbTest8 from "@/assets/ab/thumb-test-8.png";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import ABConsultTagTestView from "@/components/ab/ABConsultTagTestView.vue";
 import ABHomeDashboard from "@/components/ab/ABHomeDashboard.vue";
@@ -176,6 +176,7 @@ const testItems = [
   "智能与快速回复布局",
   "选择框的呈现"
 ];
+const testThumbnails = [thumbTest1, thumbTest2, thumbTest3, thumbTest4, thumbTest5, thumbTest6, thumbTest7, thumbTest8];
 const guideMap = {
   "quick-entry": {
     name: "编辑高频操作入口",
@@ -417,8 +418,21 @@ function enterVariant(nextVariant) {
 
 .ab-test-card__preview {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 237px;
+  padding: 12px;
   background: #f4f5f6;
+}
+
+.ab-test-card__preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  object-fit: contain;
+  user-select: none;
 }
 
 .ab-mini-screen {
