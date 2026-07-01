@@ -79,8 +79,13 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
 
   assert.match(homeDashboard, /@schedule-detail="store\.showToast\('排班详情暂未开放'\)"/);
   assert.match(quickActionsPanel, /data-schedule-active-status/);
-  assert.match(quickActionsPanel, /schedule-day-block__status--done/);
+  assert.match(quickActionsPanel, /canPunchNow/);
+  assert.match(quickActionsPanel, /未到打卡时间/);
+  assert.doesNotMatch(quickActionsPanel, /schedule-day-block__status--check/);
   assert.doesNotMatch(legacyStyles, /schedule-board|schedule-panel__tabs/);
+
+  assert.match(quickActionsPanel, /getMissedCalloutStyle/);
+  assert.match(quickActionsPanel, /getCurrentLineStyle/);
 
   for (const styles of [quickActionsPanel, uiStyles]) {
     assert.match(styles, /\.schedule-dialog\s*\{[\s\S]*?width: min\(706px, calc\(100vw - 48px\)\);[\s\S]*?height: min\(715px, calc\((?:var\(--jh-viewport-height, 100vh\)|100vh) - 48px\)\);/);
@@ -89,9 +94,10 @@ test("Vue quick schedule panel keeps latest H5 dialog styles in shared UI", asyn
     assert.match(styles, /\.schedule-day-grid\s*\{[\s\S]*?width: 658px;[\s\S]*?height: 579px;/);
     assert.match(styles, /\.schedule-day-grid__hours\s*\{[\s\S]*?grid-template-rows: repeat\(12, 44px\);/);
     assert.match(styles, /\.schedule-day-block\s*\{[\s\S]*?top: calc\(var\(--start-hour\) \* 44px\);[\s\S]*?height: calc\(var\(--duration-hours\) \* 44px\);/);
-    assert.match(styles, /\.schedule-day-grid__missed-callout\s*\{[\s\S]*?top: 300px;/);
-    assert.match(styles, /\.schedule-day-grid__current-line\s*\{[\s\S]*?top: 352px;[\s\S]*?background: #e12727;/);
   }
+
+  assert.match(quickActionsPanel, /\.schedule-day-grid__missed-callout\s*\{[\s\S]*?z-index: 0;/);
+  assert.match(quickActionsPanel, /\.schedule-day-block--orange[\s\S]*z-index: 2;/);
 
   assert.doesNotMatch(legacyStyles, /^\.schedule-dialog\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.schedule-panel\s*\{/m);

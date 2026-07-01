@@ -4,6 +4,7 @@ import {
   generatePatientAutoReply as mockGeneratePatientAutoReply,
   getAppBootstrap as mockGetAppBootstrap,
   getRealtimeSnapshot as mockGetRealtimeSnapshot,
+  resetWaitingQueueDemo as mockResetWaitingQueueDemo,
   searchDiagnosisCatalog as mockSearchDiagnosisCatalog,
   searchMedicineCatalog as mockSearchMedicineCatalog,
   updateConsultationStatus as mockUpdateConsultationStatus,
@@ -17,6 +18,7 @@ const mockApi = {
   updateServiceAvailability: mockUpdateServiceAvailability,
   updateConsultationStatus: mockUpdateConsultationStatus,
   getRealtimeSnapshot: mockGetRealtimeSnapshot,
+  resetWaitingQueueDemo: mockResetWaitingQueueDemo,
   generatePatientAutoReply: mockGeneratePatientAutoReply,
   searchDiagnosisCatalog: mockSearchDiagnosisCatalog,
   searchMedicineCatalog: mockSearchMedicineCatalog
@@ -38,6 +40,7 @@ const backendApi = {
   updateConsultationStatus: (recordId, event, recordPatch) =>
     request({ url: `/consultations/${recordId}/status`, method: "PUT", data: { event, recordPatch } }),
   getRealtimeSnapshot: () => request({ url: "/doctor/realtime", method: "GET" }),
+  resetWaitingQueueDemo: () => Promise.resolve(),
   generatePatientAutoReply: (payload) => request({ url: "/ai/patient-reply", method: "POST", data: payload }),
   searchDiagnosisCatalog: (payload) => {
     const { keyword, exclude } = normalizeCatalogSearchPayload(payload);

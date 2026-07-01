@@ -57,7 +57,8 @@ test("Vue room sidebar and store clear unread badges and sync waiting queue", as
   assert.match(sidebar, /store\.isMessageBadgeDismissed\(record\.id\)/);
   assert.match(sidebar, /getMessageBadgeKey/);
   assert.match(store, /markConsultationRecordRead/);
-  assert.match(store, /syncWaitingQueue\(\)/);
+  assert.match(store, /applyMockWaitingQueue/);
+  assert.match(store, /snapshot\.waitingQueue/);
   assert.match(store, /record\.unreadCount = 0/);
   assert.match(store, /rememberDismissedMessageBadge/);
 });

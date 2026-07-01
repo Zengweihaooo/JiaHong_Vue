@@ -14,8 +14,8 @@ let realtimeTick = 0;
 const maxRuntimeConsultations = 6;
 const dispatchDelayAfterOnlineMs = 20_000;
 const baseWaitingQueue = {
-  total: 4,
-  byType: { text: 1, video: 1, consult: 2 }
+  total: 0,
+  byType: { text: 0, video: 0, consult: 0 }
 };
 const bootstrapUrl = new URL("../mocks/app-bootstrap.json?v=20260527-37", import.meta.url);
 
@@ -92,6 +92,25 @@ function getDispatchGate(runtimeState, fallbackStatus = "offline", date = new Da
     canDispatch: date.getTime() >= dispatchEnabledAt,
     dispatchEnabledAt: new Date(dispatchEnabledAt).toISOString()
   };
+}
+
+export function resetWaitingQueueDemo(doctorStatus = "offline") {
+  const patch = {
+    waitingQueue: {
+      total: 0,
+      byType: { text: 0, video: 0, consult: 0 },
+      updatedAt: new Date().toISOString()
+    },
+    consultationRecords: [],
+    ongoingChats: {}
+  };
+  if (doctorStatus === "online") {
+    patch.doctorStatus = "online";
+    patch.doctorOnlineAt = new Date().toISOString();
+    patch.dispatchEnabledAt = new Date(Date.now() + dispatchDelayAfterOnlineMs).toISOString();
+  }
+  writeRuntimeState(patch);
+  realtimeTick = 0;
 }
 
 export async function getAppBootstrap() {
@@ -269,7 +288,9 @@ export async function updateConsultationStatus(recordId, event, recordPatch = nu
       const nextRecords = runtimeRecords.some((record) => record.id === recordId)
         ? runtimeRecords.map((record) => (record.id === recordId ? nextRecord : record))
         : [nextRecord, ...runtimeRecords];
-      writeRuntimeState({ consultationRecords: nextRecords });
+      const waitingQueue = buildWaitingQueue(nextRecords);
+      writeRuntimeState({ consultationRecords: nextRecords, waitingQueue });
+      return { recordId, event, updatedAt: new Date().toISOString(), waitingQueue };
     }
   }
   return { recordId, event, updatedAt: new Date().toISOString() };

@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { normalizeArchivedConsultationRecord } from "@/domain/archivedConsultation";
 import {
-  buildWaitingQueueFromRecords,
   getMessageListRecords,
   getNextOngoingVideoConsultationRecord
 } from "@/domain/consultationQueue";
@@ -24,6 +23,12 @@ function clone(value) {
 
 const activeVideoStorageKey = "jh.activeVideoConsultationId.v1";
 let toastTimer = 0;
+
+const emptyWaitingQueue = {
+  total: 0,
+  byType: { text: 0, video: 0, consult: 0 },
+  updatedAt: null
+};
 
 function readActiveVideoRecordId() {
   try {
@@ -68,9 +73,7 @@ export const useAppStore = defineStore("app", {
     schemaVersion: null,
     doctor: null,
     waitingQueue: {
-      total: 0,
-      byType: { text: 0, video: 0, consult: 0 },
-      updatedAt: null
+      ...emptyWaitingQueue
     },
     menuGroups: [],
     quickActions: [],
@@ -175,7 +178,8 @@ export const useAppStore = defineStore("app", {
         this.services = clone(payload.services) || [];
         this.consultationRecords = clone(payload.consultations?.records) || [];
         this.ongoingChats = clone(payload.consultations?.ongoingChats) || {};
-        this.syncWaitingQueue();
+        await appService.resetWaitingQueueDemo(this.doctor?.status || "offline");
+        this.resetHomeWaitingQueue({ skipMockReset: true });
         this.quickReplyCategories = clone(payload.quickReplies?.categories) || [];
         this.quickReplyMessages = clone(payload.quickReplies?.messages) || [];
         const storedActiveVideoId = readActiveVideoRecordId();
@@ -248,8 +252,18 @@ export const useAppStore = defineStore("app", {
     isMessageBadgeDismissed(recordId = "") {
       return isMessageBadgeDismissed(recordId, this.dismissedMessageBadges);
     },
-    syncWaitingQueue() {
-      this.waitingQueue = buildWaitingQueueFromRecords(this.consultationRecords);
+    applyMockWaitingQueue(queue) {
+      if (!queue) return;
+      this.waitingQueue = clone(queue);
+    },
+    resetHomeWaitingQueue({ skipMockReset = false } = {}) {
+      if (!skipMockReset) {
+        appService.resetWaitingQueueDemo(this.doctorStatus);
+      }
+      this.waitingQueue = {
+        ...emptyWaitingQueue,
+        updatedAt: new Date().toISOString()
+      };
     },
     setMessageFilter({ type = this.messageFilterType, state = this.messageFilterState } = {}) {
       this.messageFilterType = type;
@@ -366,7 +380,9 @@ export const useAppStore = defineStore("app", {
           writeActiveVideoRecordId(this.activeVideoRecordId);
         }
       }
-      this.syncWaitingQueue();
+      if (snapshot.waitingQueue) {
+        this.applyMockWaitingQueue(snapshot.waitingQueue);
+      }
     },
     async endActiveConsultation(event = "END") {
       const record = this.activeRecord;
@@ -387,8 +403,10 @@ export const useAppStore = defineStore("app", {
         this.activeVideoRecordId = nextVideoRecord?.id || "";
         writeActiveVideoRecordId(this.activeVideoRecordId);
       }
-      this.syncWaitingQueue();
-      await appService.updateConsultationStatus(record.id, event, record);
+      const statusResult = await appService.updateConsultationStatus(record.id, event, record);
+      if (statusResult.waitingQueue) {
+        this.applyMockWaitingQueue(statusResult.waitingQueue);
+      }
       if (nextVideoRecord) {
         this.messageFilterState = "ongoing";
         this.messageFilterType = "all";

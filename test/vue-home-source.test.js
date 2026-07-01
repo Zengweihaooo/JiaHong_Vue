@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue home consult entry card keeps latest H5 background in shared UI", async () => {
-  const [app, homeDashboard, legacyStyles, uiStyles, consultEntryCard, serviceStatusCard, serviceStatusPanel] = await Promise.all([
+  const [app, homeView, homeDashboard, legacyStyles, uiStyles, consultEntryCard, serviceStatusCard, serviceStatusPanel] = await Promise.all([
     readFile(new URL("../src/App.vue", import.meta.url), "utf8"),
+    readFile(new URL("../src/views/HomeView.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/components/home/HomeDashboard.vue", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/legacy-app.css", import.meta.url), "utf8"),
     readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8"),
@@ -43,4 +44,5 @@ test("Vue home consult entry card keeps latest H5 background in shared UI", asyn
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-align: center;/);
   assert.match(legacyStyles, /\.service-tile \.jh-checkbox__label\s*\{[\s\S]*text-overflow: clip;/);
   assert.match(app, /store\.refreshRealtime\(\)\.catch\(\(\) => \{\}\)/);
+  assert.match(homeView, /resetHomeWaitingQueue/);
 });

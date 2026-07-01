@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:ui": "npm run build --prefix ../JiaHong_UI",
     "dev": "vite --host 0.0.0.0",
+    "predev": "npm run build:ui",
     "build": "vite build",
+    "prebuild": "npm run build:ui",
     "build:pages": "vite build && cp -R node_modules/@jiahong/ui/assets/. dist/assets/ && cp dist/index.html dist/404.html",
+    "prebuild:pages": "npm run build:ui",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test"
   },

@@ -12,7 +12,7 @@
           <h3>{{ store.selectedAnnouncement.title }}</h3>
           <span>{{ store.selectedAnnouncement.date }}</span>
         </div>
-        <p>{{ store.selectedAnnouncement.content }}</p>
+        <AnnouncementContent :content="store.selectedAnnouncement.content" class-name="announcement-dialog__content" />
         <div class="announcement-dialog__publisher">{{ store.selectedAnnouncement.publisher }}</div>
       </div>
     </section>
@@ -40,7 +40,9 @@
               <span class="announcement-list-item__title-text">{{ announcement.title }}</span>
               <span v-if="announcement.unread" class="announcement-list-item__unread-dot" aria-label="未读公告"></span>
             </span>
-            <span class="announcement-list-item__summary">{{ announcement.content.split("\n")[0] }}</span>
+            <span class="announcement-list-item__summary">
+              <AnnouncementContent :content="announcement.content.split('\n')[0]" inline />
+            </span>
           </span>
           <span class="announcement-list-item__date">{{ announcement.date }}</span>
         </button>
@@ -322,7 +324,7 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
 import { useAppStore } from "@/stores/app";
-import { assetUrl } from "@jiahong/ui";
+import { assetUrl, AnnouncementContent } from "@jiahong/ui";
 
 const store = useAppStore();
 const activeCancelReasonGroup = ref("patient");

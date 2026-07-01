@@ -21,6 +21,7 @@
 </template>
 
 <script setup>
+import { onMounted } from "vue";
 import AppDialogs from "@/components/common/AppDialogs.vue";
 import HomeDashboard from "@/components/home/HomeDashboard.vue";
 import Topbar from "@/components/layout/Topbar.vue";
@@ -28,4 +29,8 @@ import { useAppStore } from "@/stores/app";
 import { WorkspaceShell, WorkspaceSidebar } from "@jiahong/ui";
 
 const store = useAppStore();
+
+onMounted(() => {
+  store.resetHomeWaitingQueue();
+});
 </script>
