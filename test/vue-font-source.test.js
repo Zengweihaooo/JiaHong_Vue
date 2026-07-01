@@ -10,8 +10,8 @@ test("Vue app loads H5 YaHei fonts from shared UI before page styles", async () 
   ]);
 
   assert.match(main, /import "@jiahong\/ui\/fonts\.css";\nimport "@jiahong\/ui\/styles\.css";\nimport "@\/styles\/main\.css";/);
-  assert.match(uiFonts, /font-family: "JiaHong YaHei"/);
-  assert.match(uiFonts, /微软雅黑\.ttf/);
+  assert.match(uiFonts, /font-family: "Microsoft YaHei"/);
+  assert.match(uiFonts, /\.\.\/assets\/fonts\/微软雅黑\.ttf/);
   assert.match(uiFonts, /msyhbd\.ttf/);
-  assert.match(uiVariables, /--jh-font-family: "JiaHong YaHei", "Microsoft YaHei", "微软雅黑"/);
+  assert.match(uiVariables, /--jh-font-family: "Microsoft YaHei", "微软雅黑", "Microsoft YaHei UI", sans-serif;/);
 });

@@ -22,7 +22,7 @@ test("Vue announcement components use unread dots and mark details as read", asy
   assert.match(latestAnnouncementCard, /查看历史公告/);
   assert.match(latestAnnouncementCard, /defineEmits\(\['detail', 'history'\]\)/);
   assert.match(latestAnnouncementCard, /AnnouncementContent/);
-  assert.match(latestAnnouncementCard, /:max-lines="2"/);
+  assert.doesNotMatch(latestAnnouncementCard, /:max-lines="2"/);
   assert.doesNotMatch(latestAnnouncementCard, /split\('\\n'\)\.slice\(0, 2\)/);
   assert.doesNotMatch(latestAnnouncementCard, /useAppStore|store\.|announcement-tag|ReadTag/);
 
@@ -40,6 +40,8 @@ test("Vue announcement components use unread dots and mark details as read", asy
   assert.match(latestAnnouncementCard, /announcement__date/);
   assert.doesNotMatch(latestAnnouncementCard, /notice-card__date/);
   assert.match(uiStyles, /\.announcement__date\s*\{/);
+  assert.match(uiStyles, /\.notice-card:not\(\.ab-notice-card\) \.announcement__body\s*\{[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(uiStyles, /\.jh-btn--block-outline:hover\s*\{/);
   assert.match(uiStyles, /\.announcement__unread-dot,\s*\.announcement-list-item__unread-dot\s*\{/);
   assert.match(uiStyles, /\.announcement-overlay\s*\{[\s\S]*?z-index: 85;/);
   assert.match(uiStyles, /\.announcement-list-overlay,\s*\.quick-entry-overlay\s*\{/);
