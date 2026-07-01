@@ -25,9 +25,16 @@ test("Vue video consultation layout uses the H5 video workspace rule from the sh
   assert.match(uiStyles, /^\.consult-workspace\s*\{/m);
   assert.match(uiStyles, /\.video-shell \.consult-workspace\s*\{\s*grid-template-columns: minmax\(424px, 3fr\) minmax\(0, 5fr\);/);
   assert.match(uiStyles, /^\.video-window\s*\{/m);
-  assert.match(uiStyles, /^\.video-window__stage\s*\{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/m);
+  assert.match(uiStyles, /^\.video-window__stage\s*\{[\s\S]*?display: grid;/m);
   assert.match(uiStyles, /^\.video-window__pane \+ \.video-window__pane\s*\{/m);
-  assert.match(uiStyles, /^\.video-toolbar\s*\{/m);
+  assert.match(uiStyles, /^\.video-window__controls-overlay\s*\{/m);
+  assert.match(uiStyles, /^\.video-window__dock\s*\{[\s\S]*?right: 0;[\s\S]*?bottom: 16px;/m);
+  assert.match(uiStyles, /^\.video-window__dock-toggle\s*\{[\s\S]*?border-radius: 18px 0 0 18px;/m);
+  assert.match(uiStyles, /^\.video-window__dock-chevron\s*\{[\s\S]*?border-right: 5px solid rgba\(255, 255, 255, 0\.82\);/m);
+  assert.doesNotMatch(uiStyles, /\.video-window__dock-label\s*\{/);
+  assert.match(uiStyles, /\.video-window__dock \.video-toolbar\s*\{/);
+  assert.match(uiStyles, /\.video-toolbar__btn\s*\{[\s\S]*?width: 32px;/);
+  assert.match(uiStyles, /\.video-control-icon\s*\{[\s\S]*?width: 14px;/);
   assert.match(uiStyles, /^\.video-window__main\s*\{/m);
   assert.match(uiStyles, /\.jh-duration-chip\s*\{[\s\S]*?display: inline-flex;[\s\S]*?color: rgba\(0, 0, 0, 0\.6\);/);
   assert.match(uiStyles, /\.jh-duration-chip--warning\s*\{\s*color: #e37318;/);

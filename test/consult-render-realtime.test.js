@@ -134,6 +134,12 @@ test("consult room view renders text, consult, and video main shells with the ex
   const videoChat = renderVideoChatPanel();
   assert.match(videoChat, /video-window__stage/);
   assert.match(videoChat, /video-window__pane--patient/);
+  assert.match(videoChat, /video-window__controls-overlay/);
+  assert.match(videoChat, /video-window__dock/);
+  assert.match(videoChat, /video-window__dock-toggle/);
+  assert.match(videoChat, /video-window__dock-chevron/);
+  assert.doesNotMatch(videoChat, /video-window__dock-label/);
+  assert.match(videoChat, /video-window__pip--local/);
   assert.match(videoChat, /video-window__pane--doctor/);
   assert.match(videoChat, /患者视频画面/);
   assert.match(videoChat, /医生摄像头画面/);

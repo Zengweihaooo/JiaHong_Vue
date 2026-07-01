@@ -3,8 +3,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Vue room sidebar keeps latest H5 runtime data attributes", async () => {
-  const sidebar = await readFile(new URL("../src/components/consultation/RoomSidebar.vue", import.meta.url), "utf8");
-  const store = await readFile(new URL("../src/stores/app.js", import.meta.url), "utf8");
+  const [sidebar, store, uiStyles] = await Promise.all([
+    readFile(new URL("../src/components/consultation/RoomSidebar.vue", import.meta.url), "utf8"),
+    readFile(new URL("../src/stores/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../../JiaHong_UI/styles/components.css", import.meta.url), "utf8")
+  ]);
 
   assert.match(sidebar, /data-waiting-total/);
   assert.match(sidebar, /data-filter-state="ongoing"/);
@@ -26,6 +29,8 @@ test("Vue room sidebar keeps latest H5 runtime data attributes", async () => {
   assert.match(sidebar, /record\.state === "ended" \? "\/room\/"/);
   assert.match(sidebar, /record\.type === "video" \|\| record\.targetView === "video" \? "\/video\/" : "\/text\/"/);
   assert.match(sidebar, /router\.push\(\{ path: targetPath, query \}\)/);
+  assert.match(uiStyles, /^\.message-item__current\s*\{/m);
+  assert.match(uiStyles, /^\.message-item__current img\s*\{[\s\S]*?width: 20px;[\s\S]*?height: 20px;/m);
   assert.match(store, /collapseVideoQueue: true/);
   assert.match(store, /return false/);
   assert.match(store, /return true/);
