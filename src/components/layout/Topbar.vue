@@ -20,6 +20,9 @@
         >
           <DoctorAvatar :name="store.doctor?.name || '张医生'" context="home" size="sm" />
           <span>{{ store.doctor?.name || "张医生" }}</span>
+          <span class="user-chip__chevron" aria-hidden="true">
+            <img :src="assetUrl('assets/figma-consult/chevron-down.svg')" alt="" />
+          </span>
         </button>
         <UserMenu :visible="store.userMenuVisible" />
       </div>
@@ -30,7 +33,7 @@
 <script setup>
 import UserMenu from "@/components/layout/UserMenu.vue";
 import { useAppStore } from "@/stores/app";
-import { Button, DoctorAvatar } from "@jiahong/ui";
+import { Button, DoctorAvatar, assetUrl } from "@jiahong/ui";
 
 const store = useAppStore();
 </script>

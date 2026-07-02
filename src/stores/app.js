@@ -14,6 +14,10 @@ import {
   readDismissedMessageBadges,
   rememberDismissedMessageBadge
 } from "@/domain/messageBadges";
+import {
+  buildChatQuote,
+  createEmptyChatComposerState
+} from "@/domain/chatComposer";
 import { isQuickEntryAlreadyUsed, maxQuickActionCards } from "@/domain/quickEntries";
 import { appService } from "@/services/appService";
 
@@ -50,13 +54,16 @@ function writeActiveVideoRecordId(recordId = "") {
   }
 }
 
-function createDoctorMessage(text) {
+function createDoctorMessage(text, { quote = null } = {}) {
   return {
     id: `doctor-${Date.now()}`,
     from: "doctor",
     text,
     sentAt: new Date().toISOString(),
-    readStatus: "unread"
+    readStatus: "unread",
+    recalled: false,
+    edited: false,
+    quote: quote ? { ...quote } : null
   };
 }
 
@@ -101,6 +108,7 @@ export const useAppStore = defineStore("app", {
       visible: false,
       messageId: "",
       text: "",
+      from: "",
       x: 0,
       y: 0
     },
@@ -115,6 +123,7 @@ export const useAppStore = defineStore("app", {
     selectedAnnouncementId: "",
     selectedAttachment: null,
     chatDrafts: {},
+    chatComposers: {},
     aiCollapsed: true,
     sidebarInteractionStarted: false,
     dismissedMessageBadges: readDismissedMessageBadges(),
@@ -153,6 +162,9 @@ export const useAppStore = defineStore("app", {
     },
     activeChat(state) {
       return state.ongoingChats[state.activeRecordId] || null;
+    },
+    activeChatComposer(state) {
+      return state.chatComposers[state.activeRecordId] || createEmptyChatComposerState();
     },
     messageList(state) {
       return getMessageListRecords(state.consultationRecords, {
@@ -427,10 +439,21 @@ export const useAppStore = defineStore("app", {
       const content = String(text || "").trim();
       if (!content || !this.activeRecordId) return;
       const recordId = this.activeRecordId;
-      const message = createDoctorMessage(content);
+      const composer = this.activeChatComposer;
+
+      if (composer.edit?.messageId) {
+        this.editDoctorMessage(composer.edit.messageId, content);
+        this.clearChatComposer(recordId);
+        this.chatDrafts[recordId] = "";
+        this.showToast("消息已更新");
+        return;
+      }
+
+      const message = createDoctorMessage(content, { quote: composer.quote });
       const chat = this.ongoingChats[recordId] || { sessionDate: formatEndedAt(), messages: [] };
       chat.messages = [...(chat.messages || []), message];
       this.ongoingChats[recordId] = chat;
+      this.clearChatComposer(recordId);
       this.chatDrafts[recordId] = "";
       const response = await appService.generatePatientAutoReply({
         recordId,
@@ -444,21 +467,72 @@ export const useAppStore = defineStore("app", {
         this.requestChatScrollToBottom();
       }
     },
+    editDoctorMessage(messageId, text) {
+      const content = String(text || "").trim();
+      if (!content) return;
+      const message = this.activeChat?.messages?.find((item) => item.id === messageId);
+      if (message?.from !== "doctor" || message.recalled) return;
+      message.text = content;
+      message.edited = true;
+      message.editedAt = new Date().toISOString();
+    },
     recallMessage(messageId) {
       const message = this.activeChat?.messages?.find((item) => item.id === messageId);
       if (message?.from === "doctor") {
         message.recalled = true;
       }
     },
+    ensureChatComposer(recordId = this.activeRecordId) {
+      if (!recordId) return;
+      if (!this.chatComposers[recordId]) {
+        this.chatComposers[recordId] = createEmptyChatComposerState();
+      }
+    },
+    clearChatComposer(recordId = this.activeRecordId) {
+      if (!recordId) return;
+      this.chatComposers[recordId] = createEmptyChatComposerState();
+    },
+    setChatQuote({ messageId = "", from = "", text = "" } = {}) {
+      const recordId = this.activeRecordId;
+      const quote = buildChatQuote({ messageId, from, text });
+      if (!recordId || !quote) return;
+      this.ensureChatComposer(recordId);
+      this.chatComposers[recordId] = {
+        quote,
+        edit: null
+      };
+    },
+    clearChatQuote(recordId = this.activeRecordId) {
+      if (!recordId || !this.chatComposers[recordId]) return;
+      this.chatComposers[recordId].quote = null;
+    },
+    setChatEdit({ messageId = "", text = "" } = {}) {
+      const recordId = this.activeRecordId;
+      if (!recordId || !messageId) return;
+      this.ensureChatComposer(recordId);
+      this.chatComposers[recordId] = {
+        quote: null,
+        edit: {
+          messageId,
+          text: String(text || "")
+        }
+      };
+      this.chatDrafts[recordId] = String(text || "");
+    },
+    clearChatEdit(recordId = this.activeRecordId) {
+      if (!recordId || !this.chatComposers[recordId]) return;
+      this.chatComposers[recordId].edit = null;
+    },
     toggleSidebarCollapsed() {
       this.sidebarInteractionStarted = true;
       this.sidebarCollapsed = !this.sidebarCollapsed;
     },
-    openChatMessageMenu({ messageId = "", text = "", x = 0, y = 0 } = {}) {
+    openChatMessageMenu({ messageId = "", text = "", from = "", x = 0, y = 0 } = {}) {
       this.chatMessageMenu = {
         visible: true,
         messageId,
         text,
+        from,
         x,
         y
       };
@@ -467,10 +541,21 @@ export const useAppStore = defineStore("app", {
       this.chatMessageMenu.visible = false;
     },
     async runChatMessageAction(action) {
-      const { messageId, text } = this.chatMessageMenu;
+      const { messageId, text, from } = this.chatMessageMenu;
       if (action === "recall") {
+        if (from !== "doctor") {
+          this.closeChatMessageMenu();
+          return;
+        }
         this.recallMessage(messageId);
         this.showToast("消息已撤回");
+      } else if (action === "edit") {
+        if (from !== "doctor") {
+          this.closeChatMessageMenu();
+          return;
+        }
+        this.setChatEdit({ messageId, text });
+        this.showToast("已进入编辑");
       } else if (action === "copy") {
         try {
           await navigator.clipboard.writeText(text || "");
@@ -478,10 +563,9 @@ export const useAppStore = defineStore("app", {
         } catch {
           this.showToast("复制失败");
         }
-      } else if (action === "quote" && this.activeRecordId && text) {
-        const current = this.chatDrafts[this.activeRecordId]?.trim();
-        this.chatDrafts[this.activeRecordId] = current ? `${current}\n引用：${text}` : `引用：${text}`;
-        this.showToast("已引用到输入框");
+      } else if (action === "quote" && text) {
+        this.setChatQuote({ messageId, from, text });
+        this.showToast("已引用消息");
       }
       this.closeChatMessageMenu();
     },

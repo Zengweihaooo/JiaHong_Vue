@@ -28,6 +28,7 @@ import { compareByPinyin } from "../src/domain/prescriptionCatalog.js";
 import {
   getHighestMedicineRiskLevel,
   getMedicineRiskWarnings,
+  getPrescriptionRiskCategoryLevel,
   prescriptionRiskCategories,
   prescriptionRiskLevels
 } from "../src/domain/prescriptionRisk.js";
@@ -75,16 +76,43 @@ test("prescription risk reminders use independent categories and red-orange-yell
     severe: "严重警告",
     general: "一般警告"
   });
+  assert.equal(getPrescriptionRiskCategoryLevel("重复用药"), "must");
+  assert.equal(getPrescriptionRiskCategoryLevel("患者条件"), "general");
+  assert.equal(getPrescriptionRiskCategoryLevel("生化指标"), "severe");
 
   const medicine = {
     risk: "低",
     riskWarnings: [
       { category: "患者条件", level: "general" },
-      { category: "重复用药", level: "must" }
+      { category: "重复用药", level: "must" },
+      { category: "用法用量", level: "severe" },
+      { category: "生化指标", level: "general" }
     ]
   };
-  assert.equal(getMedicineRiskWarnings(medicine).length, 2);
+  assert.equal(getMedicineRiskWarnings(medicine).length, 4);
   assert.equal(getHighestMedicineRiskLevel(medicine), "must");
+  assert.deepEqual(
+    getMedicineRiskWarnings(medicine).find((warning) => warning.category === "重复用药"),
+    { category: "重复用药", level: "must" }
+  );
+  assert.deepEqual(
+    getMedicineRiskWarnings(medicine).find((warning) => warning.category === "用法用量"),
+    { category: "用法用量", level: "severe" }
+  );
+  assert.deepEqual(
+    getMedicineRiskWarnings(medicine).find((warning) => warning.category === "患者条件"),
+    { category: "患者条件", level: "general" }
+  );
+  assert.deepEqual(
+    getMedicineRiskWarnings(medicine).find((warning) => warning.category === "生化指标"),
+    { category: "生化指标", level: "severe" }
+  );
+
+  const diclofenac = {
+    riskWarnings: [{ category: "相互作用", level: "must" }]
+  };
+  assert.equal(getHighestMedicineRiskLevel(diclofenac), "severe");
+  assert.deepEqual(getMedicineRiskWarnings(diclofenac), [{ category: "相互作用", level: "severe" }]);
 });
 
 test("ongoing contact records prioritize the active video, then type order, time, and stable input order", () => {
@@ -289,4 +317,21 @@ test("pinyin comparator provides a stable Chinese sort order hook", () => {
     "便秘",
     "咳嗽"
   ]);
+});
+
+test("chat composer helpers build quote metadata and truncate previews", async () => {
+  const { buildChatQuote, getChatQuoteAuthorLabel, truncateChatPreview } = await import(
+    "../src/domain/chatComposer.js"
+  );
+
+  assert.equal(getChatQuoteAuthorLabel("doctor"), "我");
+  assert.equal(getChatQuoteAuthorLabel("patient"), "患者");
+  assert.deepEqual(buildChatQuote({ messageId: "m1", from: "patient", text: "  你好  " }), {
+    messageId: "m1",
+    from: "patient",
+    authorLabel: "患者",
+    text: "你好"
+  });
+  assert.equal(buildChatQuote({ text: "   " }), null);
+  assert.equal(truncateChatPreview("1234567890", 5), "12345…");
 });

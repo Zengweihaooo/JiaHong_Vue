@@ -11,12 +11,19 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
 
   assert.match(chatPanel, /class="ai-reply__title ai-reply__toggle"/);
   assert.match(chatPanel, /展开\$\{smartReplyButtonText\}/);
-  assert.match(chatPanel, /\$\{smartReplyTitle\}已展开/);
+  assert.match(chatPanel, /收起\$\{smartReplyButtonText\}/);
+  assert.match(chatPanel, /@click="toggleAiReply"/);
   assert.match(chatPanel, /const smartReplyTitle = computed/);
   assert.match(chatPanel, /const smartReplyButtonText = computed/);
   assert.match(chatPanel, /class="ai-reply__actions"/);
   assert.match(chatPanel, /class="ai-reply__close"/);
   assert.match(chatPanel, /@click="collapseAiReply"/);
+  assert.match(chatPanel, /toggleAiReplyForVariantA/);
+  assert.match(chatPanel, /@dblclick="toggleAiReplyForVariantA"/);
+  assert.match(chatPanel, /smartReplyVariant === 'b'/);
+  assert.match(chatPanel, /ab-reply-toolbar--quick-only/);
+  assert.match(chatPanel, /store\.aiCollapsed = value !== "a"/);
+  assert.match(chatPanel, /class="jh-btn jh-btn--sm jh-btn--outline-primary smart-reply-trigger"/);
   assert.match(chatPanel, /class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger"/);
   assert.match(chatPanel, /@click="openQuickReplyDialog"/);
   assert.match(chatPanel, /ai-reply__options--long/);
@@ -28,14 +35,33 @@ test("Vue chat panel uses the latest H5 AI reply header controls", async () => {
 
   assert.doesNotMatch(chatPanel, /ai-reply__hint/);
   assert.doesNotMatch(chatPanel, /@dblclick="toggleAiReply"/);
-  assert.doesNotMatch(chatPanel, /quickReplyClickTimer|function toggleAiReply/);
+  assert.doesNotMatch(chatPanel, /quickReplyClickTimer/);
 
   assert.match(uiStyles, /\.ai-reply\s*\{/);
   assert.match(uiStyles, /\.ai-reply__toggle:focus-visible\s*\{/);
   assert.match(uiStyles, /\.ai-spark\s*\{[\s\S]*?ai-reply-spark-mask\.png/);
+  assert.match(uiStyles, /\.chat-reply-toolbar\s*\{/);
+  assert.match(uiStyles, /\.jh-chat-input__top \.smart-reply-trigger,/);
+  assert.match(chatPanel, /class="chat-panel__body"/);
+  assert.match(chatPanel, /class="chat-panel__composer"/);
+  assert.match(chatPanel, /@click="toggleAiReply"/);
+  assert.match(uiStyles, /\.chat-panel__body\s*\{/);
+  assert.match(uiStyles, /\.chat-panel__composer\s*\{/);
+  assert.match(uiStyles, /\.ai-reply--expanded:not\(\.ai-reply--ab-a\):not\(\.ai-reply--ab-b\):not\(\.ai-reply--ab-c\)\s*\{/);
+  assert.match(chatPanel, /:aria-expanded="!store\.aiCollapsed"/);
+  assert.match(uiStyles, /\.ai-reply--collapsed:not\(\.ai-reply--ab-a\):not\(\.ai-reply--ab-b\):not\(\.ai-reply--ab-c\) \.ai-reply__panel\s*\{[\s\S]*?display: none/);
+  assert.doesNotMatch(uiStyles, /\.ai-reply--expanded \.smart-reply-trigger\s*\{/);
   assert.match(uiStyles, /\.jh-chat-input__top \.quick-reply-trigger\s*\{/);
   assert.match(uiStyles, /\.jh-chat-input__actions \.jh-btn--primary\s*\{/);
   assert.match(uiStyles, /\.chat-message-menu\s*\{/);
+  assert.match(uiStyles, /\.chat-composer-quote\s*\{/);
+  assert.match(uiStyles, /\.chat-bubble__quote\s*\{/);
+  assert.match(uiStyles, /\.chat-bubble__edited\s*\{/);
+
+  assert.match(chatPanel, /chat-composer-quote/);
+  assert.match(chatPanel, /chat-composer-edit/);
+  assert.match(chatPanel, /chat-bubble__quote/);
+  assert.match(chatPanel, /chat-bubble__edited/);
 
   assert.doesNotMatch(legacyStyles, /^\.ai-reply\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.ai-reply__toggle:focus-visible\s*\{/m);
@@ -61,6 +87,7 @@ test("Vue chat panel routes H5 consult info through the shared UI card", async (
   assert.doesNotMatch(chatPanel, /<FollowUpVoucher/);
 
   assert.match(appDialogs, /class="consult-attachment-overlay is-open"/);
+  assert.match(appDialogs, /chatMessageMenu\.from === 'doctor'/);
   assert.match(appDialogs, /class="consult-attachment-dialog__page consult-attachment-dialog__page--prev"/);
   assert.match(uiStyles, /^\.consult-info-card\s*\{/m);
   assert.match(uiStyles, /^\.consult-info-card__row\s*\{/m);

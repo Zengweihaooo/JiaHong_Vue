@@ -11,6 +11,8 @@ test("Vue consult confirm dialogs use H5 styles from the shared UI stylesheet", 
 
   assert.match(dialogs, /class="\['consult-confirm-overlay'/);
   assert.match(dialogs, /consult-confirm-dialog--cancel-reason/);
+  assert.match(dialogs, /consult-confirm-dialog--end-anchor/);
+  assert.match(dialogs, /syncEndConsultConfirmPosition/);
   assert.match(dialogs, /consult-cancel-reason-type/);
   assert.match(dialogs, /consult-cancel-reason-list/);
   assert.match(dialogs, /consult-confirm-submit/);
@@ -28,6 +30,9 @@ test("Vue consult confirm dialogs use H5 styles from the shared UI stylesheet", 
   assert.match(uiStyles, /\.consult-cancel-reasons__body\s*\{[\s\S]*?min-height: 192px;/);
   assert.match(uiStyles, /\.consult-cancel-reason-type,\s*\.consult-cancel-reason\s*\{[\s\S]*?min-height: 32px;/);
   assert.match(uiStyles, /\.consult-confirm-dialog--cancel-reason \.consult-confirm-dialog__footer\s*\{[\s\S]*?gap: 24px;[\s\S]*?border-top: 0\.667px solid #e5e8eb;/);
+  assert.match(uiStyles, /\.consult-confirm-overlay\[data-confirm-kind="end"\]\s*\{[\s\S]*?align-items: flex-end;/);
+  assert.match(uiStyles, /\.consult-confirm-overlay\[data-confirm-kind="end"\] \.consult-confirm-dialog\s*\{[\s\S]*?--consult-confirm-end-right/);
+  assert.match(uiStyles, /\.consult-confirm-dialog--end-anchor \.consult-confirm-dialog__footer\s*\{[\s\S]*?gap: 8px;/);
 
   assert.match(legacyStyles, /\.consult-shell--readonly \.quick-reply-overlay,\s*\.consult-shell--readonly \.risk-warning-overlay,\s*\.consult-shell--readonly \.consult-confirm-overlay/);
   assert.doesNotMatch(legacyStyles, /^\.consult-confirm-overlay\s*\{/m);

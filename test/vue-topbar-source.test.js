@@ -12,10 +12,12 @@ test("Vue topbars use shared UI avatar component and H5 menu dismissal behavior"
     readFile(new URL("../../JiaHong_UI/src/components/DoctorAvatar/DoctorAvatar.vue", import.meta.url), "utf8")
   ]);
 
-  assert.match(topbar, /import \{ Button, DoctorAvatar \} from "@jiahong\/ui"/);
+  assert.match(topbar, /import \{ Button, DoctorAvatar, assetUrl \} from "@jiahong\/ui"/);
   assert.match(topbar, /<Button tone="primary" size="md">在线客服<\/Button>/);
   assert.match(topbar, /<Button tone="secondary" size="md">医生招聘<\/Button>/);
   assert.match(topbar, /<DoctorAvatar :name="store\.doctor\?\.name \|\| '张医生'" context="home" size="sm" \/>/);
+  assert.match(topbar, /user-chip__chevron/);
+  assert.match(roomTopbar, /room-user__chevron/);
 
   assert.match(roomTopbar, /import \{ Button, DoctorAvatar, assetUrl \} from "@jiahong\/ui"/);
   assert.match(roomTopbar, /<Button class="room-service-btn" tone="primary" size="md">在线客服<\/Button>/);
@@ -46,6 +48,7 @@ test("Vue topbars use shared UI avatar component and H5 menu dismissal behavior"
   assert.match(uiStyles, /^\.service-status-panel\s*\{/m);
   assert.match(uiStyles, /^\.service-status-panel--compact \.service-status-panel__service\s*\{/m);
   assert.match(uiStyles, /^\.room-user\s*\{/m);
+  assert.match(uiStyles, /\.user-menu-trigger\[aria-expanded="true"\] \.user-chip__chevron,\s*\.user-menu-trigger\[aria-expanded="true"\] \.room-user__chevron\s*\{[\s\S]*?transform: rotate\(180deg\);/);
   assert.match(uiStyles, /^\.room-back-btn\s*\{/m);
   assert.match(uiStyles, /\.room-back-btn img\s*\{/m);
   assert.match(uiStyles, /@media \(max-width: 620px\)\s*\{[\s\S]*?\.user-chip::before,[\s\S]*?\.room-user__divider/);

@@ -1757,16 +1757,37 @@ body.page-view-room {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: #f8f8f9;
 }
 
+.chat-panel__body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-panel__composer {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-panel__body .chat-thread,
+.chat-panel__body .video-chat-thread {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .chat-thread {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 16px;
   width: 100%;
@@ -1922,13 +1943,61 @@ body.page-view-room {
   line-height: 20px;
 }
 
+.chat-bubble__quote {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-left: 3px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.chat-bubble--doctor .chat-bubble__quote {
+  border-left-color: rgba(41, 121, 255, 0.45);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.chat-bubble__quote-author {
+  display: block;
+  color: var(--jh-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.chat-bubble__quote-text {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--jh-text-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.chat-bubble__text {
+  max-width: 100%;
+  margin: 0;
+}
+
+.chat-bubble__edited {
+  display: block;
+  align-self: flex-end;
+  margin-top: 4px;
+  color: var(--jh-text-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
 .video-chat-panel {
   justify-content: flex-start;
 }
 
 .video-chat-thread {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 16px;
   width: 100%;
@@ -1943,7 +2012,6 @@ body.page-view-room {
 
 .video-input-wrap {
   width: 100%;
-  margin-top: auto;
   padding: 0 12px 12px;
 }
 

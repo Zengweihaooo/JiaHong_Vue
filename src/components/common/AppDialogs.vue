@@ -139,7 +139,26 @@
     :hidden="!store.chatMessageMenu.visible"
     :style="chatMessageMenuStyle"
   >
-    <button type="button" class="chat-message-menu__item" role="menuitem" data-action="recall" @click="store.runChatMessageAction('recall')">撤回</button>
+    <button
+      v-if="store.chatMessageMenu.from === 'doctor'"
+      type="button"
+      class="chat-message-menu__item"
+      role="menuitem"
+      data-action="recall"
+      @click="store.runChatMessageAction('recall')"
+    >
+      撤回
+    </button>
+    <button
+      v-if="store.chatMessageMenu.from === 'doctor'"
+      type="button"
+      class="chat-message-menu__item"
+      role="menuitem"
+      data-action="edit"
+      @click="store.runChatMessageAction('edit')"
+    >
+      编辑
+    </button>
     <button type="button" class="chat-message-menu__item" role="menuitem" data-action="copy" @click="store.runChatMessageAction('copy')">复制</button>
     <button type="button" class="chat-message-menu__item" role="menuitem" data-action="quote" @click="store.runChatMessageAction('quote')">引用</button>
   </div>
@@ -297,7 +316,7 @@
 
   <div :class="['consult-confirm-overlay', { 'is-open': store.consultConfirmKind === 'end' }]" data-confirm-kind="end" :aria-hidden="store.consultConfirmKind !== 'end'">
     <section
-      class="consult-confirm-dialog"
+      class="consult-confirm-dialog consult-confirm-dialog--end-anchor"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="consult-confirm-title-end"
@@ -321,8 +340,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { getMedicineRiskWarnings, prescriptionRiskCategories } from "@/domain/prescriptionRisk";
+import {
+  bindEndConsultConfirmPositionSync,
+  clearEndConsultConfirmPosition,
+  syncEndConsultConfirmPosition
+} from "@/presentation/ui/consultConfirmPosition.js";
 import { useAppStore } from "@/stores/app";
 import { assetUrl, AnnouncementContent } from "@jiahong/ui";
 
@@ -522,9 +546,25 @@ async function confirmConsultAction(event) {
 watch(
   () => store.consultConfirmKind,
   (kind) => {
+    if (kind === "end") {
+      nextTick(() => {
+        syncEndConsultConfirmPosition();
+        window.requestAnimationFrame(syncEndConsultConfirmPosition);
+      });
+      return;
+    }
+    clearEndConsultConfirmPosition();
     if (kind !== "cancel") return;
     activeCancelReasonGroup.value = cancelReasonGroups[0]?.key || "";
     selectedCancelReason.value = "";
   }
 );
+
+onMounted(() => {
+  bindEndConsultConfirmPositionSync();
+});
+
+onBeforeUnmount(() => {
+  clearEndConsultConfirmPosition();
+});
 </script>

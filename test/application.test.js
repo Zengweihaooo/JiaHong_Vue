@@ -20,6 +20,8 @@ import {
   getDiagnosisOptions,
   getMedicineOptions,
   hasUnresolvedPrescriptionWarnings,
+  hasUnresolvedMustPrescriptionWarnings,
+  canEndConsultation,
   removeDiagnosisFromActiveRecord,
   removeMedicineFromActiveRecord,
   updateMedicineFieldInActiveRecord
@@ -393,6 +395,35 @@ test("removing or editing risky medicines resolves matching risk reminders", () 
   assert.equal(hasUnresolvedPrescriptionWarnings(recordAfterEdit), false);
 });
 
+test("can end consultation only after prescription submit without must-level risks", () => {
+  const record = {
+    prescriptionSubmitted: false,
+    prescriptionMedicines: [
+      {
+        index: 1,
+        name: "布洛芬缓释胶囊",
+        riskWarnings: [{ category: "重复用药", level: "must" }]
+      },
+      {
+        index: 2,
+        name: "氯雷他定片",
+        riskWarnings: [{ category: "患者条件", level: "general" }]
+      }
+    ]
+  };
+
+  assert.equal(hasUnresolvedMustPrescriptionWarnings(record), true);
+  assert.equal(canEndConsultation(record), false);
+
+  record.prescriptionSubmitted = true;
+  assert.equal(canEndConsultation(record), false);
+
+  record.prescriptionMedicines[0].riskWarnings = [];
+  assert.equal(hasUnresolvedMustPrescriptionWarnings(record), false);
+  assert.equal(hasUnresolvedPrescriptionWarnings(record), true);
+  assert.equal(canEndConsultation(record), true);
+});
+
 test("chat controller appends timestamped doctor messages and recalls them once", () => {
   resetAppData({
     consultations: {
@@ -406,7 +437,7 @@ test("chat controller appends timestamped doctor messages and recalls them once"
   });
 
   const date = new Date(2026, 4, 28, 1, 2, 3);
-  const message = appendDoctorChatMessage("r1", "请补充体温", date);
+  const message = appendDoctorChatMessage("r1", "请补充体温", { date });
 
   assert.equal(message.id, `r1-doctor-${date.getTime()}`);
   assert.equal(message.time, "2026-05-28 01:02:03");

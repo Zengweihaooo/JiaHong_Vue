@@ -361,6 +361,7 @@ test("consult workspace binds H5 AI reply title, close, and quick reply controls
   const root = new FakeNode();
   const aiReply = new FakeNode({ classNames: ["ai-reply", "ai-reply--collapsed"], dataset: { aiReplyState: "collapsed" } });
   const titleToggle = new FakeNode({ classNames: ["ai-reply__title", "ai-reply__toggle"] });
+  const smartReplyTrigger = new FakeNode({ classNames: ["smart-reply-trigger"] });
   const refreshButton = new FakeNode({ classNames: ["ai-reply__refresh"] });
   const closeButton = new FakeNode({ classNames: ["ai-reply__close"] });
   const quickReplyTrigger = new FakeNode({ classNames: ["quick-reply-trigger"] });
@@ -370,6 +371,7 @@ test("consult workspace binds H5 AI reply title, close, and quick reply controls
   aiReply.appendChild(titleToggle);
   aiReply.appendChild(refreshButton);
   aiReply.appendChild(closeButton);
+  aiReply.appendChild(smartReplyTrigger);
   aiReply.appendChild(quickReplyTrigger);
   quickReplyOverlay.appendChild(quickReplyClose);
   root.appendChild(aiReply);
@@ -394,6 +396,16 @@ test("consult workspace binds H5 AI reply title, close, and quick reply controls
   assert.equal(titleToggle.focused, true);
   assert.equal(titleToggle.getAttribute("aria-expanded"), "false");
   assert.equal(titleToggle.getAttribute("aria-label"), "展开智能推荐回复");
+
+  smartReplyTrigger.dispatch("click");
+  assert.equal(aiReply.dataset.aiReplyState, "expanded");
+  assert.equal(smartReplyTrigger.getAttribute("aria-expanded"), "true");
+  assert.equal(smartReplyTrigger.getAttribute("aria-label"), "收起智能推荐回复");
+
+  smartReplyTrigger.dispatch("click");
+  assert.equal(aiReply.dataset.aiReplyState, "collapsed");
+  assert.equal(smartReplyTrigger.getAttribute("aria-expanded"), "false");
+  assert.equal(smartReplyTrigger.getAttribute("aria-label"), "展开智能推荐回复");
 
   quickReplyTrigger.dispatch("click");
   assert.equal(quickReplyOverlay.classList.contains("is-open"), true);

@@ -199,8 +199,10 @@ test("prescription form fields escape labels, placeholders, and diagnosis tags",
   assert.match(renderSelectField({ label: `请选择"<>&`, size: "bad", showChevron: false }), /jh-input-field--sm/);
   assert.match(renderSelectField({ label: `请选择"<>&`, size: "bad", showChevron: false }), /请选择&quot;&lt;&gt;&amp;/);
   assert.doesNotMatch(renderSelectField({ showChevron: false }), /jh-input-field__chevron/);
-  assert.match(renderMedicineSearchCombobox(), /medicine-options" role="listbox" hidden/);
-  assert.match(renderDiagnosisSelectInput(), /diagnosis-options" role="listbox" hidden/);
+  assert.match(renderMedicineSearchCombobox(), /medicine-options jh-custom-scroll" role="listbox" hidden/);
+  assert.match(renderPrescriptionRemarkSelect(), /jh-custom-scroll__bar/);
+  assert.match(renderDiagnosisSelectInput(), /diagnosis-options jh-custom-scroll" role="listbox" hidden/);
+  assert.match(renderDiagnosisSelectInput(), /jh-custom-scroll__bar/);
   assert.match(renderPrescriptionRemarkSelect(), /data-prescription-remark="益生菌需与抗生素间隔两小时使用"/);
 
   const editableTags = renderDiagnosisTags([`急性咽炎"<>&`]);
@@ -368,7 +370,10 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
   } = await import("../src/presentation/views/chatView.js?presentation-chat");
 
   assert.match(renderChatInput({ className: "is-compact" }), /jh-chat-input is-compact/);
-  assert.match(renderChatInput(), /jh-btn--sm[^"]*quick-reply-trigger/);
+  assert.match(renderChatInput(), /smart-reply-trigger/);
+  assert.match(renderChatInput(), /quick-reply-trigger/);
+  assert.match(renderChatInput(), /chat-reply-toolbar/);
+  assert.match(renderChatInput(), /chat-composer-preview/);
   assert.match(renderAiReplyOptions([{ text: `体温"<>&多久`, tag: `追问"<>&` }]), /data-reply-text="体温&quot;&lt;&gt;&amp;多久"/);
   assert.match(renderAiReplyOptions([{ text: `体温"<>&多久`, tag: `追问"<>&` }]), /jh-btn--ai-pill__keyword">体温</);
   assert.equal(findOngoingChatMessage("text_1", "m2").text, `37.8"<>&`);
@@ -379,6 +384,7 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
     messages: chatState.text_1.messages
   });
   assert.match(doctorBubble, /请描述体温&quot;&lt;&gt;&amp;/);
+  assert.match(doctorBubble, /chat-bubble__text/);
   assert.match(doctorBubble, /chat-message__read-state--read/);
 
   const recalledBubble = renderChatBubble(chatState.text_1.messages[2], {
@@ -421,9 +427,16 @@ test("chat view renders escaped AI replies, message bubbles, threads, and consul
 
   assert.match(renderConsultAttachmentDialog(), /consult-attachment-overlay/);
   assert.match(renderChatMessageMenu(), /data-action="recall"/);
+  assert.match(renderChatMessageMenu(), /data-action="edit"/);
+  assert.match(renderChatMessageMenu(), /chat-message-menu__item--doctor-only/);
   const chatPanelMarkup = renderChatPanel("text_1", { record: { type: "text" } });
+  assert.match(chatPanelMarkup, /chat-panel__body/);
+  assert.match(chatPanelMarkup, /chat-panel__composer/);
   assert.match(chatPanelMarkup, /chat-panel/);
+  assert.match(chatPanelMarkup, /ai-reply__panel/);
   assert.match(chatPanelMarkup, /ai-reply__title ai-reply__toggle/);
+  assert.match(chatPanelMarkup, /smart-reply-trigger/);
+  assert.match(chatPanelMarkup, /chat-reply-toolbar/);
   assert.match(chatPanelMarkup, /aria-label="展开智能推荐回复"/);
   assert.match(chatPanelMarkup, /aria-expanded="false"/);
   assert.match(chatPanelMarkup, /ai-reply__actions/);
@@ -689,7 +702,7 @@ test("prescription panels render patient details, medicine risk tips, readonly h
   assert.match(panel, /王女士&nbsp;&nbsp;女&nbsp;&nbsp;35岁&nbsp;&nbsp;55KG/);
   assert.match(panel, /data-medicine-risk-tip/);
   assert.match(panel, /药品风险提示 · 阿莫西林&quot;&lt;&gt;&amp;/);
-  assert.match(panel, /medicine-risk-tip__level--severe/);
+  assert.match(panel, /medicine-risk-tip__legend-item--must[\s\S]*必须处理/);
   assert.doesNotMatch(panel, /inline-risk-warning|has-inline-risk-warning/);
   assert.match(panel, /阿莫西林&quot;&lt;&gt;&amp;/);
   assert.match(panel, /剂量缺失&quot;&lt;&gt;&amp;/);

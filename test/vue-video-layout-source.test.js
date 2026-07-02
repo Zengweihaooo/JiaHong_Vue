@@ -40,6 +40,9 @@ test("Vue video consultation layout uses the H5 video workspace rule from the sh
   assert.match(uiStyles, /\.jh-duration-chip--warning\s*\{\s*color: #e37318;/);
   assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.jh-duration-chip__prefix\s*\{\s*display: none;/);
   assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.consult-workspace\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.consult-workspace\s*\{[\s\S]*?grid-template-rows: minmax\(0, 1fr\) auto;/);
+  assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.consult-workspace\s*\{[\s\S]*?overflow: hidden;/);
+  assert.match(uiStyles, /@media \(max-width: 1180px\)\s*\{[\s\S]*?\.consult-shell \.chat-panel\s*\{[\s\S]*?height: 100%;/);
   assert.doesNotMatch(legacyStyles, /--jh-consult-chat-width:/);
   assert.doesNotMatch(legacyStyles, /^\.text-main,\n\.consult-room-main\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.text-card,\n\.consult-room-card\s*\{/m);

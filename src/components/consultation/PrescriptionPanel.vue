@@ -10,6 +10,7 @@
     ]"
     :aria-label="readonly ? '只读处方信息' : '处方信息'"
   >
+    <div class="prescription-panel__body">
     <div class="patient-info">
       <div class="patient-info__header">
         <div class="patient-info__name">{{ patientName }}</div>
@@ -37,25 +38,37 @@
             v-model="diagnosisKeyword"
             class="jh-input-field jh-input-field--lg diagnosis-select diagnosis-select-input"
             type="text"
-            aria-label="请选择诊断"
+            aria-label="请输入诊断"
             :aria-expanded="diagnosisOpen && diagnosisOptions.length > 0"
             autocomplete="off"
-            placeholder="请选择诊断"
+            placeholder="请输入诊断"
             @focus="refreshDiagnosisOptions"
             @input="refreshDiagnosisOptions"
             @blur="deferCloseDiagnosis"
           />
-          <div class="diagnosis-options" role="listbox" :hidden="!diagnosisOpen || !diagnosisOptions.length">
-            <button
-              v-for="diagnosis in diagnosisOptions"
-              :key="diagnosis"
-              class="diagnosis-option"
-              type="button"
-              role="option"
-              @pointerdown.prevent.stop="addDiagnosis(diagnosis)"
-            >
-              {{ diagnosis }}
-            </button>
+          <div
+            ref="diagnosisOptionsRoot"
+            class="diagnosis-options jh-custom-scroll"
+            role="listbox"
+            :hidden="!diagnosisOpen || !diagnosisOptions.length"
+          >
+            <div class="jh-custom-scroll__viewport">
+              <div class="jh-custom-scroll__content">
+                <button
+                  v-for="diagnosis in diagnosisOptions"
+                  :key="diagnosis"
+                  class="diagnosis-option"
+                  type="button"
+                  role="option"
+                  @pointerdown.prevent.stop="addDiagnosis(diagnosis)"
+                >
+                  {{ diagnosis }}
+                </button>
+              </div>
+            </div>
+            <div class="jh-custom-scroll__bar" aria-hidden="true">
+              <div class="jh-custom-scroll__thumb"></div>
+            </div>
           </div>
         </div>
         <div class="diagnosis-input">
@@ -90,6 +103,7 @@
               <img :src="assetUrl('assets/search-icon.png')" alt="" />
             </span>
             <input
+              ref="medicineSearchInput"
               v-model="medicineKeyword"
               type="text"
               placeholder="请输入药品名称或首字母做模糊查询"
@@ -101,22 +115,34 @@
               @blur="deferCloseMedicine"
             />
           </label>
-          <div class="medicine-options" role="listbox" :hidden="!medicineOpen || !medicineOptions.length">
-            <button
-              v-for="medicine in medicineOptions"
-              :key="`${medicine.name}-${medicine.spec}`"
-              class="medicine-option"
-              type="button"
-              role="option"
-              @pointerdown.prevent.stop="addMedicine(medicine)"
-            >
-              <span>{{ medicine.name }}</span><small>{{ medicine.spec }}</small>
-            </button>
+          <div
+            ref="medicineOptionsRoot"
+            class="medicine-options jh-custom-scroll"
+            role="listbox"
+            :hidden="!medicineOpen || !medicineOptions.length"
+          >
+            <div class="jh-custom-scroll__viewport">
+              <div class="jh-custom-scroll__content">
+                <button
+                  v-for="medicine in medicineOptions"
+                  :key="`${medicine.name}-${medicine.spec}`"
+                  class="medicine-option"
+                  type="button"
+                  role="option"
+                  @pointerdown.prevent.stop="addMedicine(medicine)"
+                >
+                  <span>{{ medicine.name }}</span><small>{{ medicine.spec }}</small>
+                </button>
+              </div>
+            </div>
+            <div class="jh-custom-scroll__bar" aria-hidden="true">
+              <div class="jh-custom-scroll__thumb"></div>
+            </div>
           </div>
         </div>
         <div v-if="medicines.length" :class="['medicine-table', { 'medicine-table--single': medicines.length === 1 }]">
           <div class="medicine-table__row medicine-table__head">
-            <span>序号</span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
+            <span class="medicine-table__index medicine-table__index--head" aria-label="序号"><span>序</span><span>号</span></span><span>药品名称</span><span>类型</span><span>规格</span><span>用法</span><span>服用频次</span><span>用量</span><span>数量</span><span>单位</span><span>风险</span><span>操作</span>
           </div>
           <div
             v-for="medicine in medicines"
@@ -132,7 +158,7 @@
             :title="hasMedicineWarnings(medicine) && !readonly ? '点击查看风险提示' : undefined"
             @click="selectRiskMedicine(medicine, $event)"
           >
-            <span>{{ medicine.index }}</span>
+            <span class="medicine-table__index">{{ medicine.index }}</span>
             <span :class="warningClass(medicine, 'name')">{{ medicine.name }}</span>
             <span>{{ medicine.type }}</span>
             <FieldCombobox :medicine="medicine" field="spec" label="规格" :readonly="readonly" />
@@ -176,20 +202,21 @@
         </div>
         <div v-else class="medicine-empty-state">暂无药品信息</div>
       </div>
+      <MedicineRiskTip
+        v-if="medicineRiskTip"
+        :title="medicineRiskTip.title"
+        :level="medicineRiskTip.level"
+        :level-label="medicineRiskTip.levelLabel"
+        :warnings="medicineRiskTip.warnings"
+        :legend-items="prescriptionRiskLegendItems"
+        :message="medicineRiskTip.message"
+        :suggestion="medicineRiskTip.suggestion"
+        :active-medicine-index="medicineRiskTip.activeMedicineIndex"
+        :hidden="!showMedicineRiskTip"
+        @close="hideMedicineRiskTip"
+      />
     </div>
-
-    <MedicineRiskTip
-      v-if="medicineRiskTip"
-      :title="medicineRiskTip.title"
-      :level="medicineRiskTip.level"
-      :level-label="medicineRiskTip.levelLabel"
-      :categories="medicineRiskTip.categories"
-      :message="medicineRiskTip.message"
-      :suggestion="medicineRiskTip.suggestion"
-      :active-medicine-index="medicineRiskTip.activeMedicineIndex"
-      :hidden="!showMedicineRiskTip"
-      @close="hideMedicineRiskTip"
-    />
+    </div>
 
     <div :class="['prescription-actions', { 'consultation-actions': consultation, 'prescription-actions--readonly': readonly }]">
       <span v-if="readonly" class="prescription-actions__hint">已封存，仅支持查看</span>
@@ -208,18 +235,30 @@
             @input="openPrescriptionRemark"
             @blur="deferClosePrescriptionRemark"
           />
-          <span class="prescription-remark-options" role="listbox" :hidden="!prescriptionRemarkOpen">
-            <button
-              v-for="option in filteredPrescriptionRemarkOptions"
-              :key="option"
-              class="prescription-remark-option"
-              type="button"
-              role="option"
-              :data-prescription-remark="option"
-              @pointerdown.prevent.stop="selectPrescriptionRemark(option)"
-            >
-              {{ option }}
-            </button>
+          <span
+            ref="prescriptionRemarkOptionsRoot"
+            class="prescription-remark-options jh-custom-scroll"
+            role="listbox"
+            :hidden="!prescriptionRemarkOpen"
+          >
+            <span class="jh-custom-scroll__viewport">
+              <span class="jh-custom-scroll__content">
+                <button
+                  v-for="option in filteredPrescriptionRemarkOptions"
+                  :key="option"
+                  class="prescription-remark-option"
+                  type="button"
+                  role="option"
+                  :data-prescription-remark="option"
+                  @pointerdown.prevent.stop="selectPrescriptionRemark(option)"
+                >
+                  {{ option }}
+                </button>
+              </span>
+            </span>
+            <span class="jh-custom-scroll__bar" aria-hidden="true">
+              <span class="jh-custom-scroll__thumb"></span>
+            </span>
           </span>
         </span>
       </label>
@@ -227,7 +266,7 @@
         <button v-if="readonly" class="jh-btn jh-btn--md jh-btn--primary prescription-history-open" type="button" @click="emit('open-history')">查看开方历史</button>
         <button v-else-if="consultation" class="jh-btn jh-btn--md jh-btn--primary end-consult-trigger consultation-complete-trigger" type="button" @click="store.consultConfirmKind = 'end'">完成问诊</button>
         <template v-else>
-          <button class="jh-btn jh-btn--md jh-btn--success end-consult-trigger" type="button" :disabled="!record?.prescriptionSubmitted" @click="store.consultConfirmKind = 'end'">结束问诊</button>
+          <button class="jh-btn jh-btn--md jh-btn--success end-consult-trigger" type="button" :disabled="!canEndConsultationEnabled" @click="store.consultConfirmKind = 'end'">结束问诊</button>
           <span v-if="isVideoSubmitLocked" class="video-prescription-submit-wrap">
             <span class="video-submit-countdown" data-video-submit-countdown :data-remaining="String(videoSubmitRemaining)" aria-live="polite">
               <el-icon class="video-submit-countdown__icon"><Clock /></el-icon>
@@ -243,10 +282,12 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onBeforeUnmount, ref, watch, watchEffect } from "vue";
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 import { Clock } from "@element-plus/icons-vue";
 import { videoPrescriptionSubmitLockSeconds } from "@/domain/consultationRules";
-import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLevels } from "@/domain/prescriptionRisk";
+import { getHighestMedicineRiskLevel, getMedicineRiskWarnings, prescriptionRiskLegendItems, prescriptionRiskLevels, getPrescriptionRiskCategoryLevel } from "@/domain/prescriptionRisk";
+import { canEndConsultation, hasUnresolvedMustPrescriptionWarnings } from "@/application/controllers/prescriptionController";
+import { resetFloatingScrollList, syncCustomScrollList, syncFloatingScrollList } from "@/presentation/ui/customScrollList.js";
 import { appService } from "@/services/appService";
 import { useAppStore } from "@/stores/app";
 import { MedicineRiskTip, assetUrl } from "@jiahong/ui";
@@ -294,6 +335,10 @@ const medicineRiskTipDismissed = ref(false);
 const videoSubmitRemaining = ref(0);
 const prescriptionRemark = ref("");
 const prescriptionRemarkOpen = ref(false);
+const diagnosisOptionsRoot = ref(null);
+const medicineOptionsRoot = ref(null);
+const medicineSearchInput = ref(null);
+const prescriptionRemarkOptionsRoot = ref(null);
 let diagnosisRequestSerial = 0;
 let medicineRequestSerial = 0;
 let videoSubmitTimer = 0;
@@ -333,28 +378,7 @@ const medicineFieldOptions = {
   frequency: ["1次/日", "2次/日", "3次/日", "4次/日", "1-2次/日", "2-3次/日", "每日早晚", "每晚1次", "饭前服用", "饭后服用", "必要时", "按需", "单次"],
   dose: ["0.25毫克", "0.5片", "1片", "2片", "1粒", "2粒", "0.5袋", "1袋", "2袋", "5ml", "10ml", "15ml", "1吸", "1滴", "适量", "薄涂", "每侧鼻孔2喷"]
 };
-const selectAUsagePopupOptions = [
-  "每日1次",
-  "1次每日",
-  "每天1次",
-  "1粒每天",
-  "每次1粒，每日1次",
-  "每次1片，每日1次",
-  "每晚1次",
-  "每晨1次",
-  "早餐后1次",
-  "晚餐后1次",
-  "睡前1次",
-  "空腹1次",
-  "饭后1次",
-  "饭前1次",
-  "每日固定时间1次",
-  "隔日1次",
-  "每周1次",
-  "每月1次",
-  "必要时1次",
-  "发作时1次"
-];
+const selectAUsageColumnSizes = [10, 10, 8];
 const prescriptionRemarkOptions = [
   "益生菌需与抗生素间隔两小时使用",
   "蒙脱石散需与其它药前后间隔两小时使用",
@@ -401,6 +425,39 @@ const filteredPrescriptionRemarkOptions = computed(() => {
   if (!keyword) return prescriptionRemarkOptions;
   return prescriptionRemarkOptions.filter((option) => option.includes(keyword));
 });
+
+function refreshOptionScrollbars() {
+  nextTick(() => {
+    syncCustomScrollList(diagnosisOptionsRoot.value);
+    if (medicineOpen.value && medicineOptions.value.length) {
+      syncFloatingScrollList(medicineOptionsRoot.value, medicineSearchInput.value, { gap: 4, width: 320 });
+    } else {
+      resetFloatingScrollList(medicineOptionsRoot.value);
+    }
+    syncCustomScrollList(prescriptionRemarkOptionsRoot.value);
+  });
+}
+
+watch(
+  [diagnosisOptions, diagnosisOpen, medicineOptions, medicineOpen, filteredPrescriptionRemarkOptions, prescriptionRemarkOpen],
+  refreshOptionScrollbars,
+  { deep: true }
+);
+
+onMounted(() => {
+  refreshOptionScrollbars();
+  window.addEventListener("resize", repositionOpenMedicineMenus);
+  document.addEventListener("scroll", repositionOpenMedicineMenus, true);
+});
+
+onBeforeUnmount(() => {
+  resetFloatingScrollList(medicineOptionsRoot.value);
+  window.removeEventListener("resize", repositionOpenMedicineMenus);
+  document.removeEventListener("scroll", repositionOpenMedicineMenus, true);
+});
+
+onBeforeUnmount(clearVideoSubmitTimer);
+
 const riskMedicines = computed(() => medicines.value.filter((medicine) => hasMedicineWarnings(medicine)));
 const defaultRiskMedicine = computed(() => riskMedicines.value[0] || null);
 const activeRiskMedicine = computed(() => {
@@ -415,13 +472,15 @@ const medicineRiskTip = computed(() => {
     title: `药品风险提示 · ${medicine.name || "当前药品"}`,
     level,
     levelLabel: prescriptionRiskLevels[level] || "",
-    categories: medicineWarningCategories(medicine),
+    warnings: getMedicineRiskWarnings(medicine),
     message: medicineWarningMessage(medicine),
     suggestion: medicineWarningSuggestion(medicine),
     activeMedicineIndex: medicine.index || ""
   };
 });
 const showMedicineRiskTip = computed(() => Boolean(medicineRiskTip.value && !medicineRiskTipDismissed.value));
+const hasMustRiskWarnings = computed(() => hasUnresolvedMustPrescriptionWarnings(props.record));
+const canEndConsultationEnabled = computed(() => canEndConsultation(props.record));
 const isVideoSubmitLocked = computed(() => Boolean(props.videoSubmitLock && !props.record?.prescriptionSubmitted && videoSubmitRemaining.value > 0));
 
 function clearVideoSubmitTimer() {
@@ -458,7 +517,6 @@ watch(
   { immediate: true }
 );
 
-onBeforeUnmount(clearVideoSubmitTimer);
 
 watch(
   () => props.record?.id,
@@ -552,7 +610,8 @@ function rebuildMedicineWarningsFromFields(medicine = {}, previousWarningColumns
   medicine.warningColumns = fields.reduce((columns, field) => {
     const column = warningFieldColumns[field];
     if (!column) return columns;
-    return { ...columns, [column]: previousWarningColumns[column] || "severe" };
+    const category = warningFieldCategories[field];
+    return { ...columns, [column]: previousWarningColumns[column] || getPrescriptionRiskCategoryLevel(category) };
   }, {});
   if (Array.isArray(medicine.riskWarnings)) {
     const remainingCategories = new Set(fields.map((field) => warningFieldCategories[field]).filter(Boolean));
@@ -614,8 +673,8 @@ function removeMedicine(medicine = {}) {
 }
 
 async function requestPrescriptionSubmit() {
-  if (riskMedicines.value.length) {
-    store.showToast("存在用药风险，请点击高亮药品行查看具体提示并完成修改");
+  if (hasMustRiskWarnings.value) {
+    store.showToast("存在必须处理的用药风险，请点击高亮药品行查看具体提示并完成修改");
     return;
   }
   await store.submitActivePrescription();
@@ -623,7 +682,10 @@ async function requestPrescriptionSubmit() {
 
 function warningClass(medicine, field) {
   if (field === "name") return "";
-  return warningFields(medicine).has(field) ? "medicine-warning-target" : "";
+  if (!warningFields(medicine).has(field)) return "";
+  const category = warningFieldCategories[field];
+  const level = getPrescriptionRiskCategoryLevel(category);
+  return `medicine-warning-target medicine-warning-target--${level}`;
 }
 
 function riskClass(risk) {
@@ -747,23 +809,128 @@ function addMedicine(medicine = {}) {
   medicineOptions.value = [];
 }
 
-function toggleUnitMenu(medicine, event) {
-  if (!medicine) return;
-  if (openUnitIndex.value === medicine.index) {
-    openUnitIndex.value = "";
-    return;
+function computeFixedMenuLeft(rect, menuWidth, align = "start") {
+  const padding = 8;
+  const maxLeft = Math.max(padding, window.innerWidth - menuWidth - padding);
+  if (align === "end") {
+    let left = rect.right - menuWidth;
+    if (left < padding) {
+      left = padding;
+    } else if (left > maxLeft) {
+      left = maxLeft;
+    }
+    return left;
   }
-  const rect = event.currentTarget.getBoundingClientRect();
+  if (align === "center") {
+    let left = rect.left + (rect.width - menuWidth) / 2;
+    if (left < padding) {
+      left = padding;
+    } else if (left + menuWidth > window.innerWidth - padding) {
+      left = Math.max(padding, window.innerWidth - menuWidth - padding);
+    }
+    return left;
+  }
+  return Math.max(padding, rect.left);
+}
+
+function computeMenuTop(rect, height) {
+  const below = rect.bottom + 4;
+  if (!height || below + height <= window.innerHeight - 8) return below;
+  const above = rect.top - 4 - height;
+  return above >= 8 ? above : Math.max(8, window.innerHeight - height - 8);
+}
+
+function correctMenuTopAfterRender(menuSelector, styleRef, topVarName, rect) {
+  nextTick(() => {
+    const menu = document.querySelector(menuSelector);
+    if (!menu || !menu.offsetHeight) return;
+    const next = `${computeMenuTop(rect, menu.offsetHeight)}px`;
+    if (styleRef.value[topVarName] !== next) {
+      styleRef.value = { ...styleRef.value, [topVarName]: next };
+    }
+  });
+}
+
+function estimateSelectAUnitMenuHeight() {
+  const rows = Math.ceil(medicineUnitOptions.length / 2);
+  return rows * 24 + (rows - 1) * 6 + 22;
+}
+
+function estimateSelectAFieldMenuHeight(field, optionCount) {
+  const columnCount = getSelectPresentationAColumnCount(field, optionCount);
+  const rows =
+    field === "usage" && optionCount === medicineFieldOptions.usage.length
+      ? Math.max(...selectAUsageColumnSizes)
+      : Math.ceil(optionCount / Math.max(1, columnCount));
+  return rows * 24 + 18;
+}
+
+function applyUnitMenuStyle(rect, measuredHeight = 0) {
   const menuWidth = props.selectPresentationVariant === "a" ? 156 : 64;
   const left = props.selectPresentationVariant
-    ? Math.min(rect.left, window.innerWidth - menuWidth - 8)
+    ? computeFixedMenuLeft(rect, menuWidth, "end")
     : Math.min(rect.right + 8, window.innerWidth - menuWidth - 8);
-  const top = props.selectPresentationVariant ? Math.max(8, rect.bottom + 4) : Math.max(8, rect.top - 8);
+  const height = props.selectPresentationVariant === "a" ? measuredHeight || estimateSelectAUnitMenuHeight() : 0;
+  const top = props.selectPresentationVariant ? computeMenuTop(rect, height) : Math.max(8, rect.top - 8);
   unitMenuStyle.value = {
     "--medicine-unit-menu-left": `${Math.max(8, left)}px`,
     "--medicine-unit-menu-top": `${top}px`,
     "--medicine-unit-menu-width": `${menuWidth}px`
   };
+  if (props.selectPresentationVariant && !measuredHeight) {
+    correctMenuTopAfterRender(".medicine-unit-options:not([hidden])", unitMenuStyle, "--medicine-unit-menu-top", rect);
+  }
+}
+
+function applyMedicineFieldMenuStyle(rect, field, optionCount, measuredHeight = 0) {
+  const menuWidth =
+    props.selectPresentationVariant === "a"
+      ? selectPresentationMenuWidth(field, optionCount)
+      : props.selectPresentationVariant === "b"
+        ? selectPresentationBMenuWidth(field)
+        : Math.max(112, rect.width);
+  const left =
+    props.selectPresentationVariant === "a"
+      ? computeFixedMenuLeft(rect, menuWidth, "start")
+      : Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
+  const columnCount = props.selectPresentationVariant === "a" ? getSelectPresentationAColumnCount(field, optionCount) : 1;
+  const height =
+    props.selectPresentationVariant === "a" ? measuredHeight || estimateSelectAFieldMenuHeight(field, optionCount) : 0;
+  const top = props.selectPresentationVariant === "a" ? computeMenuTop(rect, height) : Math.max(8, rect.bottom + 4);
+  medicineFieldMenuStyle.value = {
+    "--medicine-usage-menu-left": `${left}px`,
+    "--medicine-usage-menu-top": `${top}px`,
+    "--medicine-usage-menu-width": `${menuWidth}px`,
+    "--medicine-usage-menu-columns": String(columnCount)
+  };
+  if (props.selectPresentationVariant === "a" && !measuredHeight) {
+    correctMenuTopAfterRender(".medicine-usage-options:not([hidden])", medicineFieldMenuStyle, "--medicine-usage-menu-top", rect);
+  }
+}
+
+function repositionOpenMedicineMenus() {
+  const unitTrigger = document.querySelector('.medicine-unit-select[aria-expanded="true"]');
+  if (unitTrigger && openUnitIndex.value) {
+    const openUnitMenu = document.querySelector(".medicine-unit-options:not([hidden])");
+    applyUnitMenuStyle(unitTrigger.getBoundingClientRect(), openUnitMenu?.offsetHeight || 0);
+  }
+  const fieldInput = document.querySelector('.medicine-usage-input[aria-expanded="true"]');
+  if (fieldInput && openMedicineFieldKey.value) {
+    const field = fieldInput.dataset.medicineField || "usage";
+    const options = getMedicineFieldOptions(field, fieldInput.value);
+    const openFieldMenu = document.querySelector(".medicine-usage-options:not([hidden])");
+    applyMedicineFieldMenuStyle(fieldInput.getBoundingClientRect(), field, options.length, openFieldMenu?.offsetHeight || 0);
+  }
+}
+
+function toggleUnitMenu(medicine, event) {
+  if (!medicine) return;
+  openMedicineFieldKey.value = "";
+  if (openUnitIndex.value === medicine.index) {
+    openUnitIndex.value = "";
+    return;
+  }
+  applyUnitMenuStyle(event.currentTarget.getBoundingClientRect());
   openUnitIndex.value = medicine.index;
 }
 
@@ -783,39 +950,87 @@ function isMedicineFieldOpen(medicine, field) {
 
 function openMedicineFieldMenu(medicine, field, event) {
   if (!medicine || !field) return;
-  const rect = event.currentTarget.getBoundingClientRect();
+  openUnitIndex.value = "";
   openMedicineFieldKey.value = medicineFieldKey(medicine, field);
-  const menuWidth = props.selectPresentationVariant === "a"
-    ? selectPresentationMenuWidth(field)
-    : props.selectPresentationVariant === "b"
-      ? selectPresentationBMenuWidth(field)
-      : Math.max(112, rect.width);
-  const left = props.selectPresentationVariant === "a"
-    ? Math.max(8, Math.min(rect.left - selectPresentationMenuOffset(field), window.innerWidth - menuWidth - 8))
-    : Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
-  medicineFieldMenuStyle.value = {
-    "--medicine-usage-menu-left": `${left}px`,
-    "--medicine-usage-menu-top": `${Math.max(8, rect.bottom + 4)}px`,
-    "--medicine-usage-menu-width": `${menuWidth}px`
-  };
+  const options = getMedicineFieldOptions(field, medicine[field] || "");
+  applyMedicineFieldMenuStyle(event.currentTarget.getBoundingClientRect(), field, options.length);
 }
 
-function selectPresentationMenuWidth(field) {
-  return {
-    spec: 236,
-    usage: 272,
-    frequency: 236,
-    dose: 236
-  }[field] || 236;
+function getSelectPresentationAColumnCount(field, optionCount = 0) {
+  if (field === "usage") {
+    if (optionCount === medicineFieldOptions.usage.length) return 3;
+    if (optionCount > 12) return 3;
+    if (optionCount > 6) return 2;
+    return 1;
+  }
+  return optionCount > 12 ? 3 : 2;
 }
 
-function selectPresentationMenuOffset(field) {
-  return {
-    spec: 72,
-    usage: 120,
-    frequency: 80,
-    dose: 80
-  }[field] || 80;
+function getSelectPresentationAColumns(field, options = []) {
+  if (field === "usage") {
+    const fullList = medicineFieldOptions.usage;
+    const isFullList =
+      options.length === fullList.length && options.every((option, index) => option === fullList[index]);
+    if (isFullList) {
+      let start = 0;
+      return selectAUsageColumnSizes
+        .map((size) => {
+          const column = fullList.slice(start, start + size);
+          start += size;
+          return column;
+        })
+        .filter((column) => column.length);
+    }
+  }
+  const columnCount = getSelectPresentationAColumnCount(field, options.length);
+  const columnSize = Math.ceil(options.length / columnCount);
+  return Array.from({ length: columnCount }, (_, index) => options.slice(index * columnSize, (index + 1) * columnSize)).filter(
+    (column) => column.length
+  );
+}
+
+function selectPresentationMenuWidth(field, optionCount = 0) {
+  const columnCount = getSelectPresentationAColumnCount(field, optionCount);
+  return columnCount * 120 + Math.max(0, columnCount - 1) * 9 + 16;
+}
+
+function renderSelectPresentationAOption(option, value, medicine, field) {
+  return h(
+    "button",
+    {
+      class: ["medicine-usage-option", { "is-active": option === value }],
+      type: "button",
+      role: "option",
+      "aria-selected": option === value ? "true" : "false",
+      "data-medicine-option": option,
+      onPointerdown: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        selectMedicineFieldOption(medicine, field, option);
+      }
+    },
+    option
+  );
+}
+
+function renderSelectPresentationAOptions(field, options, value, medicine) {
+  const columns = getSelectPresentationAColumns(field, options);
+  if (field === "usage") {
+    return columns.flatMap((column, columnIndex) => {
+      const nodes = [
+        h(
+          "div",
+          { class: "medicine-usage-options__column" },
+          column.map((option) => renderSelectPresentationAOption(option, value, medicine, field))
+        )
+      ];
+      if (columnIndex < columns.length - 1) {
+        nodes.push(h("span", { class: "medicine-usage-options__divider", "aria-hidden": "true" }));
+      }
+      return nodes;
+    });
+  }
+  return options.map((option) => renderSelectPresentationAOption(option, value, medicine, field));
 }
 
 function selectPresentationBMenuWidth(field) {
@@ -839,9 +1054,11 @@ function selectMedicineFieldOption(medicine, field, option) {
 }
 
 function getMedicineFieldOptions(field, value = "") {
-  if (props.selectPresentationVariant === "a" && field === "usage") return selectAUsagePopupOptions;
   const keyword = String(value || "").trim();
   const baseOptions = medicineFieldOptions[field] || [];
+  if (props.selectPresentationVariant === "a") {
+    return baseOptions;
+  }
   return Array.from(new Set([keyword, ...baseOptions].filter(Boolean)));
 }
 
@@ -860,6 +1077,11 @@ const FieldCombobox = defineComponent({
         return h("span", { class: classes }, value);
       }
       const options = getMedicineFieldOptions(componentProps.field, value);
+      const menuClass = [
+        "medicine-usage-options",
+        props.selectPresentationVariant === "a" ? "medicine-usage-options--flat" : "",
+        `medicine-usage-options--${componentProps.field}`
+      ];
       return h("div", { class: "medicine-usage-control" }, [
         h("input", {
           class: ["table-input medicine-edit-field medicine-usage-input", warningClass(componentProps.medicine, componentProps.field)],
@@ -874,169 +1096,34 @@ const FieldCombobox = defineComponent({
           onInput: (event) => updateMedicineField(componentProps.medicine, componentProps.field, event.target.value),
           onBlur: closeMedicineFieldMenu
         }),
-        h("div", {
-          class: ["medicine-usage-options", `medicine-usage-options--${componentProps.field}`],
-          role: "listbox",
-          hidden: !isMedicineFieldOpen(componentProps.medicine, componentProps.field),
-          style: medicineFieldMenuStyle.value
-        }, options.map((option, index) =>
-          h("button", {
-            class: ["medicine-usage-option", { "is-active": option === value || (props.selectPresentationVariant === "a" && componentProps.field === "usage" && index === 0) }],
-            type: "button",
-            role: "option",
-            "aria-selected": option === value ? "true" : "false",
-            "data-medicine-option": option,
-            onPointerdown: (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              selectMedicineFieldOption(componentProps.medicine, componentProps.field, option);
-            }
-          }, option)
-        ))
+        h(
+          "div",
+          {
+            class: menuClass,
+            role: "listbox",
+            hidden: !isMedicineFieldOpen(componentProps.medicine, componentProps.field),
+            style: medicineFieldMenuStyle.value
+          },
+          props.selectPresentationVariant === "a"
+            ? renderSelectPresentationAOptions(componentProps.field, options, value, componentProps.medicine)
+            : options.map((option) =>
+                h("button", {
+                  class: ["medicine-usage-option", { "is-active": option === value }],
+                  type: "button",
+                  role: "option",
+                  "aria-selected": option === value ? "true" : "false",
+                  "data-medicine-option": option,
+                  onPointerdown: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    selectMedicineFieldOption(componentProps.medicine, componentProps.field, option);
+                  }
+                }, option)
+              )
+        )
       ]);
     };
   }
 });
 </script>
 
-<style scoped>
-.prescription-panel--select-a .medicine-usage-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(96px, 1fr));
-  gap: 6px 8px;
-  max-height: none;
-  padding: 10px;
-  overflow: visible;
-  border: 1px solid #d8dde1;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow:
-    0 18px 42px -18px rgba(16, 42, 67, 0.26),
-    0 8px 18px -10px rgba(16, 42, 67, 0.18);
-}
-
-.prescription-panel--select-a .medicine-usage-options--usage {
-  grid-auto-flow: column;
-  grid-template-columns: repeat(2, 120px);
-  grid-template-rows: repeat(10, 24px);
-  width: var(--medicine-usage-menu-width, 272px);
-  min-height: 254px;
-}
-
-.prescription-panel--select-a .medicine-usage-options--spec,
-.prescription-panel--select-a .medicine-usage-options--frequency,
-.prescription-panel--select-a .medicine-usage-options--dose {
-  width: var(--medicine-usage-menu-width, 236px);
-}
-
-.prescription-panel--select-a .medicine-usage-options--usage::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 136px;
-  width: 1px;
-  background: #e5e8eb;
-}
-
-.prescription-panel--select-a .medicine-unit-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(56px, 1fr));
-  gap: 6px;
-  width: var(--medicine-unit-menu-width, 156px);
-  max-height: none;
-  padding: 10px;
-  overflow: visible;
-  border: 1px solid #d8dde1;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow:
-    0 18px 42px -18px rgba(16, 42, 67, 0.26),
-    0 8px 18px -10px rgba(16, 42, 67, 0.18);
-}
-
-.prescription-panel--select-a .medicine-usage-option,
-.prescription-panel--select-a .medicine-unit-option {
-  justify-content: center;
-  min-width: 0;
-  min-height: 28px;
-  height: auto;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: #424751;
-  font-size: 12px;
-  line-height: 20px;
-  text-align: center;
-  white-space: normal;
-}
-
-.prescription-panel--select-a .medicine-usage-option.is-active,
-.prescription-panel--select-a .medicine-unit-option.is-active {
-  background: #0878ff;
-  color: #ffffff;
-}
-
-.prescription-panel--select-a .medicine-usage-option:hover,
-.prescription-panel--select-a .medicine-unit-option:hover {
-  background: #ebf3ff;
-  color: #006ef9;
-}
-
-.prescription-panel--select-a .medicine-usage-option.is-active:hover,
-.prescription-panel--select-a .medicine-unit-option.is-active:hover {
-  background: #0878ff;
-  color: #ffffff;
-}
-
-.prescription-panel--select-a .medicine-unit-option {
-  width: 100%;
-}
-
-.prescription-panel--select-b .medicine-usage-options {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-sizing: border-box;
-  max-height: 250px;
-  padding: 8px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  width: var(--medicine-usage-menu-width, 112px);
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow:
-    0 16px 40px -16px rgba(16, 42, 67, 0.14),
-    0 4px 8px -2px rgba(16, 42, 67, 0.08);
-}
-
-.prescription-panel--select-b .medicine-usage-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 24px;
-  height: auto;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: var(--jh-text-secondary);
-  font-size: 12px;
-  line-height: 20px;
-  text-align: center;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.prescription-panel--select-b .medicine-usage-option {
-  min-width: 0;
-}
-
-.prescription-panel--select-b .medicine-usage-option.is-active,
-.prescription-panel--select-b .medicine-usage-option.is-active:hover,
-.prescription-panel--select-b .medicine-usage-option.is-active:focus-visible {
-  background: #0878ff;
-  color: #ffffff;
-}
-</style>

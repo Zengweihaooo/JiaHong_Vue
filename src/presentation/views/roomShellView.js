@@ -50,6 +50,9 @@ export function renderTopbar() {
         <div class="user-chip">
           <button class="user-chip__body user-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
             <span>张医生</span>
+            <span class="user-chip__chevron" aria-hidden="true">
+              <img src="${assetUrl("assets/figma-consult/chevron-down.svg")}" alt="" />
+            </span>
           </button>
           ${renderUserMenu()}
         </div>

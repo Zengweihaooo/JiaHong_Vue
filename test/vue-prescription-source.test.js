@@ -17,6 +17,7 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
 
   assert.match(prescriptionPanel, /import \{ MedicineRiskTip, assetUrl \} from "@jiahong\/ui"/);
   assert.match(prescriptionPanel, /import \{ videoPrescriptionSubmitLockSeconds \} from "@\/domain\/consultationRules"/);
+  assert.match(prescriptionPanel, /prescription-panel__body/);
   assert.match(prescriptionPanel, /<MedicineRiskTip/);
   assert.match(prescriptionPanel, /const videoSubmitRemaining = ref\(0\)/);
   assert.match(prescriptionPanel, /const isVideoSubmitLocked = computed/);
@@ -43,7 +44,9 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(prescriptionPanel, /data-warning-level/);
   assert.match(prescriptionPanel, /getHighestMedicineRiskLevel/);
   assert.match(prescriptionPanel, /function requestPrescriptionSubmit/);
-  assert.match(prescriptionPanel, /store\.showToast\("存在用药风险，请点击高亮药品行查看具体提示并完成修改"\)/);
+  assert.match(prescriptionPanel, /canEndConsultationEnabled/);
+  assert.match(prescriptionPanel, /hasMustRiskWarnings/);
+  assert.match(prescriptionPanel, /store\.showToast\("存在必须处理的用药风险，请点击高亮药品行查看具体提示并完成修改"\)/);
   assert.match(prescriptionPanel, /store\.submitActivePrescription\(\)/);
   assert.doesNotMatch(prescriptionPanel, /中:\s*"jh-risk-tag--medium"/);
   assert.doesNotMatch(prescriptionPanel, /inline-risk-warning|data-inline-risk-warning|has-inline-risk-warning/);
@@ -55,13 +58,17 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(uiStyles, /\.medicine-risk-tip\s*\{/);
   assert.match(uiStyles, /\.medicine-risk-cell\s*\{/);
   assert.match(uiStyles, /\.medicine-scroll-area > \.medicine-search-combobox,\s*\.medicine-scroll-area > \.medicine-table\s*\{[\s\S]*?min-width: var\(--jh-table-width\);/);
-  assert.match(uiStyles, /\.medicine-table__row\s*\{[\s\S]*?display: grid;[\s\S]*?minmax\(0, 17fr\)[\s\S]*?minmax\(0, 103fr\)[\s\S]*?height: 56px;/);
+  assert.match(uiStyles, /\.medicine-table__row\s*\{[\s\S]*?display: grid;[\s\S]*?32px[\s\S]*?minmax\(0, 103fr\)[\s\S]*?height: 56px;/);
+  assert.match(uiStyles, /\.medicine-table__index--head\s*\{[\s\S]*?flex-direction: column;/);
   assert.match(uiStyles, /\.medicine-table__head\s*\{[\s\S]*?height: 64px;[\s\S]*?background: var\(--jh-table-head-bg\);/);
   assert.match(uiStyles, /\.medicine-table__row \+ \.medicine-table__row\s*\{[\s\S]*?border-top: 1px solid var\(--jh-table-row-border\);/);
   assert.match(uiStyles, /\.medicine-table__row--warning-active/);
   assert.match(uiStyles, /\.table-input\s*\{[\s\S]*?height: 40px;[\s\S]*?border: 1px solid var\(--jh-table-row-border\);/);
   assert.match(uiStyles, /\.medicine-usage-control,\s*\.medicine-unit-control\s*\{[\s\S]*?overflow: visible;/);
-  assert.match(uiStyles, /\.medicine-delete-btn\s*\{[\s\S]*?color: var\(--jh-text-tertiary\);[\s\S]*?transition: color 160ms ease;/);
+  assert.match(uiStyles, /\.medicine-delete-btn\s*\{[\s\S]*?justify-self: center;/);
+  assert.match(uiStyles, /\.medicine-table__head > span:nth-child\(10\),\s*\.medicine-table__head > span:nth-child\(11\)\s*\{[\s\S]*?text-align: center;/);
+  assert.match(uiStyles, /\.medicine-risk-cell\s*\{[\s\S]*?justify-self: center;/);
+  assert.match(uiStyles, /\.jh-btn--success:disabled,\s*\.jh-btn--success\[aria-disabled="true"\]\s*\{[\s\S]*?var\(--jh-btn-neutral-disabled-bg\)/);
   assert.doesNotMatch(uiStyles, /\.jh-risk-tag--medium/);
   assert.doesNotMatch(legacyStyles, /\.medicine-risk-tip\s*\{/);
   assert.doesNotMatch(legacyStyles, /\.medicine-table__row\s*\{[\s\S]*?grid-template-columns:/);
@@ -73,7 +80,7 @@ test("Vue prescription panel uses shared UI medicine risk tip with H5 row select
   assert.match(store, /updateConsultationStatus\(record\.id, "SUBMIT_PRESCRIPTION", record\)/);
   assert.doesNotMatch(store, /riskWarningRevealInlineOnClose/);
 
-  assert.match(consultBindings, /存在用药风险，请点击高亮药品行查看具体提示并完成修改/);
+  assert.match(consultBindings, /存在必须处理的用药风险，请点击高亮药品行查看具体提示并完成修改/);
   assert.doesNotMatch(consultBindings, /revealInlineOnClose|data-inline-risk-warning/);
 });
 
@@ -85,23 +92,29 @@ test("Vue prescription panel keeps H5 spacing through the shared UI stylesheet",
 
   for (const styles of [uiStyles]) {
     assert.match(styles, /\.prescription-panel\s*\{/);
+    assert.match(styles, /\.prescription-panel__body\s*\{[\s\S]*?overflow-y: auto;/);
     assert.match(styles, /\.patient-info\s*\{[\s\S]*?gap: 16px;[\s\S]*?margin: 10px 24px;[\s\S]*?padding: 16px 0;/);
     assert.match(styles, /\.patient-info__meta\s*\{[\s\S]*?line-height: 20px;/);
     assert.match(styles, /\.patient-info__grid\s*\{[\s\S]*?gap: 12px clamp\(32px, 7%, 72px\);[\s\S]*?line-height: 20px;/);
     assert.match(styles, /\.patient-info__field\s*\{[\s\S]*?gap: 12px;/);
     assert.match(styles, /\.patient-info__field-value\s*\{[\s\S]*?height: 34px;[\s\S]*?padding: 6px 12px;/);
     assert.match(styles, /\.diagnosis-input\s*\{[\s\S]*?flex-wrap: wrap;[\s\S]*?max-height: 84px;[\s\S]*?overflow-y: auto;/);
+    assert.match(styles, /\.jh-custom-scroll__bar\s*\{[\s\S]*?background: #eef1f4;/);
+    assert.match(styles, /\.jh-custom-scroll__viewport::-webkit-scrollbar\s*\{[\s\S]*?display: none;/);
     assert.match(styles, /\.diagnosis-tag\s*\{[\s\S]*?max-width: min\(220px, 100%\);/);
     assert.match(styles, /\.medicine-search-combobox\s*\{[\s\S]*?width: max\(100%, var\(--jh-table-width\)\);[\s\S]*?min-width: var\(--jh-table-width\);/);
   }
 
-  assert.match(uiStyles, /\.medicine-table__row > span\.medicine-warning-target\s*\{/);
+  assert.match(uiStyles, /\.medicine-risk-tip__legend-item--must i\s*\{/);
+  assert.match(uiStyles, /\.medicine-risk-tip__category--must[\s\S]*?background: #cb2c2c;[\s\S]*?color: #ffffff;/);
+  assert.match(uiStyles, /\.medicine-risk-tip__category--severe[\s\S]*?background: #e37318;/);
+  assert.match(uiStyles, /\.medicine-warning-target--severe[\s\S]*?border-color: #e37318 !important;/);
   assert.match(uiStyles, /\.medicine-table__row > span:nth-child\(8\),\s*\.medicine-table__row > input\[data-medicine-field="quantity"\]\s*\{[\s\S]*?text-align: center;/);
   assert.match(uiStyles, /\.medicine-delete-btn:hover,\s*\.medicine-delete-btn:focus-visible\s*\{[\s\S]*?color: var\(--jh-table-action\);/);
   assert.match(uiStyles, /\.consultation-panel \.diagnosis-section\s*\{[\s\S]*?gap: 16px;/);
   assert.match(uiStyles, /\.consultation-treatment-input\s*\{[\s\S]*?height: var\(--jh-input-field-height-lg\);[\s\S]*?white-space: nowrap;/);
   assert.match(uiStyles, /\.medicine-empty-state\s*\{[\s\S]*?height: 64px;[\s\S]*?border: 1px solid var\(--jh-table-border\);/);
-  assert.match(uiStyles, /\.prescription-actions\s*\{[\s\S]*?padding: 16px 24px 24px;[\s\S]*?border-top: 1px solid #e5e8eb;/);
+  assert.match(uiStyles, /\.prescription-actions\s*\{[\s\S]*?flex: 0 0 auto;[\s\S]*?padding: 16px 24px 24px;[\s\S]*?border-top: 1px solid #e5e8eb;/);
   assert.match(uiStyles, /\.jh-prescription-submit\s*\{[\s\S]*?width: 88px;[\s\S]*?font-weight: 700;/);
   assert.doesNotMatch(legacyStyles, /^\.prescription-panel\s*\{/m);
   assert.doesNotMatch(legacyStyles, /^\.patient-info\s*\{/m);

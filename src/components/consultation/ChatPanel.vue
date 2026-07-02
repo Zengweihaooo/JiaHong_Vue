@@ -13,16 +13,17 @@
       @toggle-microphone="toggleMicrophone"
     />
 
-    <ConsultInfoCard
-      v-if="consultInfoCard"
-      :key="record?.id"
-      :description="consultInfoCard.description"
-      :images="consultInfoCard.images"
-      :voices="consultInfoCard.voices"
-      @preview-image="openConsultAttachment"
-    />
+    <div class="chat-panel__body">
+      <ConsultInfoCard
+        v-if="consultInfoCard"
+        :key="record?.id"
+        :description="consultInfoCard.description"
+        :images="consultInfoCard.images"
+        :voices="consultInfoCard.voices"
+        @preview-image="openConsultAttachment"
+      />
 
-    <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
+      <div ref="chatThread" :class="video ? 'video-chat-thread' : 'chat-thread'">
       <p v-if="chat?.sessionDate" class="chat-date">{{ chat.sessionDate }}</p>
       <div
         v-for="(message, index) in chatMessages"
@@ -36,21 +37,33 @@
           :class="[
             'chat-bubble',
             `chat-bubble--${message.from === 'doctor' ? 'doctor' : 'patient'}`,
-            { 'chat-bubble--recalled': message.recalled, 'chat-bubble--actionable': message.from === 'doctor' }
+            {
+              'chat-bubble--recalled': message.recalled,
+              'chat-bubble--actionable': !message.recalled
+            }
           ]"
           :data-message-id="message.id"
-          :data-chat-context="message.from === 'doctor' ? 'doctor' : undefined"
+          :data-message-from="message.from"
+          :data-chat-context="message.from === 'doctor' ? 'doctor' : 'patient'"
           @contextmenu.prevent="openMessageMenu(message, $event)"
         >
-          <p>{{ message.recalled ? "您撤回了一条消息" : message.text }}</p>
+          <div v-if="message.quote?.text" class="chat-bubble__quote">
+            <span class="chat-bubble__quote-author">{{ message.quote.authorLabel }}</span>
+            <p class="chat-bubble__quote-text">{{ truncateChatPreview(message.quote.text, 120) }}</p>
+          </div>
+          <p v-if="message.recalled" class="chat-bubble__recalled">您撤回了一条消息</p>
+          <p v-else class="chat-bubble__text">{{ message.text }}</p>
+          <span v-if="!message.recalled && message.edited" class="chat-bubble__edited">已编辑</span>
         </div>
         <span v-if="message.from === 'doctor'" :class="['chat-message__read-state', `chat-message__read-state--${doctorReadState(index, message)}`]">
           {{ doctorReadState(index, message) === "read" ? "已读" : "未读" }}
         </span>
       </div>
+      </div>
     </div>
 
-    <div :class="{ 'video-input-wrap': video }">
+    <div class="chat-panel__composer">
+      <div :class="{ 'video-input-wrap': video }">
       <div
         v-if="smartReplyVariant !== 'c'"
         :class="[
@@ -60,65 +73,110 @@
         ]"
         :data-ai-reply-state="store.aiCollapsed ? 'collapsed' : 'expanded'"
       >
-        <div class="ai-reply__head">
-          <button
-            class="ai-reply__title ai-reply__toggle"
-            type="button"
-            :aria-label="store.aiCollapsed ? `展开${smartReplyButtonText}` : `${smartReplyTitle}已展开`"
-            :aria-expanded="!store.aiCollapsed"
-            @click="expandAiReply"
-          >
-            <span class="ai-spark" aria-hidden="true"></span>
-            <h3>{{ smartReplyTitle }}</h3>
-          </button>
-          <div class="ai-reply__actions">
-            <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
-              <el-icon><Refresh /></el-icon>
-              <span>换一批</span>
+        <div class="ai-reply__panel">
+          <div class="ai-reply__head">
+            <button
+              v-if="smartReplyVariant !== 'a'"
+              class="ai-reply__title ai-reply__toggle"
+              type="button"
+              :aria-label="store.aiCollapsed ? `展开${smartReplyButtonText}` : `${smartReplyTitle}已展开`"
+              :aria-expanded="!store.aiCollapsed"
+              @click="expandAiReply"
+            >
+              <span class="ai-spark" aria-hidden="true"></span>
+              <h3>{{ smartReplyTitle }}</h3>
             </button>
-            <button class="ai-reply__close" type="button" aria-label="关闭智能推荐回复" @click="collapseAiReply">
-              <el-icon><Close /></el-icon>
+            <span v-else class="ai-reply__title" @dblclick="toggleAiReplyForVariantA">
+              <span class="ai-spark" aria-hidden="true"></span>
+              <h3>{{ smartReplyTitle }}</h3>
+            </span>
+            <div class="ai-reply__actions">
+              <button class="ai-reply__refresh" type="button" aria-label="换一批智能推荐回复" @click="refreshAiOptions">
+                <el-icon><Refresh /></el-icon>
+                <span>换一批</span>
+              </button>
+              <button
+                v-if="smartReplyVariant !== 'a'"
+                class="ai-reply__close"
+                type="button"
+                aria-label="关闭智能推荐回复"
+                @click="collapseAiReply"
+              >
+                <el-icon><Close /></el-icon>
+              </button>
+            </div>
+          </div>
+          <div
+            :class="['ai-reply__options', { 'ai-reply__options--long': aiOptionsAreLong }]"
+            :data-layout-threshold="aiReplyLayoutTextThreshold"
+          >
+            <button
+              v-for="option in aiOptions"
+              :key="option.text"
+              class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill"
+              type="button"
+              :data-reply-text="option.text"
+              @click="draft = option.text"
+              @dblclick="sendAiOption(option.text, $event)"
+            >
+              <span class="jh-btn--ai-pill__text">
+                <template v-for="segment in aiReplyTextSegments(option)">
+                  <strong
+                    v-if="segment.highlight"
+                    :key="`${option.text}-${segment.index}-highlight`"
+                    class="jh-btn--ai-pill__keyword"
+                  >{{ segment.text }}</strong>
+                  <span v-else :key="`${option.text}-${segment.index}-text`">{{ segment.text }}</span>
+                </template>
+              </span>
+              <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>
             </button>
           </div>
+          <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
         </div>
-        <div
-          :class="['ai-reply__options', { 'ai-reply__options--long': aiOptionsAreLong }]"
-          :data-layout-threshold="aiReplyLayoutTextThreshold"
-        >
-          <button
-            v-for="option in aiOptions"
-            :key="option.text"
-            class="jh-btn jh-btn--md jh-btn--outline-primary jh-btn--ai-pill"
-            type="button"
-            :data-reply-text="option.text"
-            @click="draft = option.text"
-            @dblclick="sendAiOption(option.text, $event)"
-          >
-            <span class="jh-btn--ai-pill__text">
-              <template v-for="segment in aiReplyTextSegments(option)">
-                <strong
-                  v-if="segment.highlight"
-                  :key="`${option.text}-${segment.index}-highlight`"
-                  class="jh-btn--ai-pill__keyword"
-                >{{ segment.text }}</strong>
-                <span v-else :key="`${option.text}-${segment.index}-text`">{{ segment.text }}</span>
-              </template>
-            </span>
-            <span v-if="option.tag" class="jh-btn--ai-pill__tag">{{ option.tag }}</span>
-          </button>
-        </div>
-        <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
         <div class="jh-chat-input">
           <div class="jh-chat-input__top">
-            <div v-if="smartReplyVariant === 'b' && store.aiCollapsed" class="ab-reply-toolbar">
-              <button class="jh-btn jh-btn--sm jh-btn--outline-primary ab-smart-reply-trigger" type="button" @click="expandAiReply">智能回复</button>
+            <div v-if="composerEdit" class="chat-composer-edit">
+              <span class="chat-composer-edit__icon" aria-hidden="true"></span>
+              <span class="chat-composer-edit__label">编辑消息</span>
+              <button class="chat-composer-edit__close" type="button" aria-label="取消编辑" @click="clearComposerEdit">×</button>
+            </div>
+            <div v-if="composerQuote" class="chat-composer-quote">
+              <span class="chat-composer-quote__bar" aria-hidden="true"></span>
+              <div class="chat-composer-quote__body">
+                <span class="chat-composer-quote__author">{{ composerQuote.authorLabel }}</span>
+                <p class="chat-composer-quote__text">{{ truncateChatPreview(composerQuote.text) }}</p>
+              </div>
+              <button class="chat-composer-quote__close" type="button" aria-label="移除引用" @click="clearComposerQuote">×</button>
+            </div>
+            <div v-if="smartReplyVariant === 'b'" class="ab-reply-toolbar">
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary ab-smart-reply-trigger" type="button" @click="toggleAiReply">智能回复</button>
               <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
             </div>
-            <button v-else class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
-            <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
+            <div v-else-if="smartReplyVariant === 'a'" class="ab-reply-toolbar ab-reply-toolbar--quick-only">
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
+            </div>
+            <div v-else-if="smartReplyVariant !== 'c'" class="chat-reply-toolbar">
+              <button
+                class="jh-btn jh-btn--sm jh-btn--outline-primary smart-reply-trigger"
+                type="button"
+                :aria-label="store.aiCollapsed ? `展开${smartReplyButtonText}` : `收起${smartReplyButtonText}`"
+                :aria-expanded="!store.aiCollapsed"
+                @click="toggleAiReply"
+              >
+                {{ smartReplyButtonText }}
+              </button>
+              <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
+            </div>
+            <textarea
+              v-model="draft"
+              aria-label="回复内容"
+              :placeholder="composerEdit ? '编辑消息内容...' : '输入回复内容，或点击上方AI推荐快速填充...'"
+              @keydown.enter.exact.prevent="send"
+            ></textarea>
           </div>
           <div class="jh-chat-input__actions">
-            <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">发送</button>
+            <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">{{ composerEdit ? "保存" : "发送" }}</button>
           </div>
         </div>
       </div>
@@ -129,10 +187,28 @@
               <button class="jh-btn jh-btn--sm jh-btn--outline-primary ab-smart-reply-trigger" type="button" @click="openAiReplyPopup">智能回复</button>
               <button class="jh-btn jh-btn--sm jh-btn--outline-primary quick-reply-trigger" type="button" @click="openQuickReplyDialog">快捷回复</button>
             </div>
-            <textarea v-model="draft" aria-label="回复内容" placeholder="输入回复内容，或点击上方AI推荐快速填充..." @keydown.enter.exact.prevent="send"></textarea>
+            <div v-if="composerEdit" class="chat-composer-edit">
+              <span class="chat-composer-edit__icon" aria-hidden="true"></span>
+              <span class="chat-composer-edit__label">编辑消息</span>
+              <button class="chat-composer-edit__close" type="button" aria-label="取消编辑" @click="clearComposerEdit">×</button>
+            </div>
+            <div v-if="composerQuote" class="chat-composer-quote">
+              <span class="chat-composer-quote__bar" aria-hidden="true"></span>
+              <div class="chat-composer-quote__body">
+                <span class="chat-composer-quote__author">{{ composerQuote.authorLabel }}</span>
+                <p class="chat-composer-quote__text">{{ truncateChatPreview(composerQuote.text) }}</p>
+              </div>
+              <button class="chat-composer-quote__close" type="button" aria-label="移除引用" @click="clearComposerQuote">×</button>
+            </div>
+            <textarea
+              v-model="draft"
+              aria-label="回复内容"
+              :placeholder="composerEdit ? '编辑消息内容...' : '输入回复内容，或点击上方AI推荐快速填充...'"
+              @keydown.enter.exact.prevent="send"
+            ></textarea>
           </div>
           <div class="jh-chat-input__actions">
-            <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">发送</button>
+            <button class="jh-btn jh-btn--md jh-btn--primary" type="button" @click="send">{{ composerEdit ? "保存" : "发送" }}</button>
           </div>
         </div>
         <section v-if="aiReplyPopupVisible" class="ab-ai-popup" role="dialog" aria-modal="false" aria-labelledby="ab-ai-popup-title">
@@ -177,6 +253,7 @@
           <p class="ai-reply__notice">AI辅助内容基于患者档案与对话语境生成，仅供医生参考，发送前请核实。</p>
         </section>
       </div>
+      </div>
     </div>
   </section>
 </template>
@@ -185,6 +262,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Close, Refresh } from "@element-plus/icons-vue";
 import { getDoctorReadState } from "@/domain/chatReadState";
+import { truncateChatPreview } from "@/domain/chatComposer";
 import { useAppStore } from "@/stores/app";
 import { ConsultInfoCard, VideoCallWindow } from "@jiahong/ui";
 import {
@@ -229,6 +307,9 @@ const draft = computed({
 });
 const chat = computed(() => store.ongoingChats[props.record?.id] || null);
 const chatMessages = computed(() => chat.value?.messages || []);
+const activeChatComposer = computed(() => store.activeChatComposer);
+const composerQuote = computed(() => activeChatComposer.value.quote);
+const composerEdit = computed(() => activeChatComposer.value.edit);
 const consultInfoCard = computed(() => getConsultInfoCard(props.record));
 const baseAiOptions = computed(() => {
   if (props.record?.type === "consult") {
@@ -518,6 +599,20 @@ function expandAiReply(event) {
   store.aiCollapsed = false;
 }
 
+function toggleAiReply(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  if (props.smartReplyVariant === "a") return;
+  store.aiCollapsed = !store.aiCollapsed;
+}
+
+function toggleAiReplyForVariantA(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  if (props.smartReplyVariant !== "a") return;
+  store.aiCollapsed = !store.aiCollapsed;
+}
+
 function collapseAiReply(event) {
   event?.preventDefault();
   event?.stopPropagation();
@@ -540,10 +635,17 @@ watch(
 );
 
 watch(
+  () => store.aiCollapsed,
+  () => {
+    scrollChatThreadToBottom();
+  }
+);
+
+watch(
   () => props.smartReplyVariant,
   (value) => {
     if (!value) return;
-    store.aiCollapsed = true;
+    store.aiCollapsed = value !== "a";
     aiReplyPopupVisible.value = false;
   },
   { immediate: true }
@@ -623,32 +725,89 @@ async function scrollChatThreadToBottom() {
 }
 
 function openMessageMenu(message, event) {
-  if (message.from !== "doctor" || message.recalled) return;
+  if (message.recalled) return;
   store.openChatMessageMenu({
     messageId: message.id,
     text: message.text,
+    from: message.from,
     x: event.clientX + 4,
     y: event.clientY + 4
   });
 }
+
+function clearComposerQuote() {
+  store.clearChatQuote(props.record?.id);
+}
+
+function clearComposerEdit() {
+  store.clearChatEdit(props.record?.id);
+  if (props.record?.id) {
+    store.chatDrafts[props.record.id] = "";
+  }
+}
 </script>
 
 <style scoped>
-.ai-reply--ab-b.ai-reply--collapsed {
-  overflow: visible;
+.ai-reply--ab-a.ai-reply--collapsed {
+  gap: 8px;
+  min-height: auto;
+  padding: 0;
   border-color: transparent;
   background: transparent;
   box-shadow: none;
+}
+
+.ai-reply--ab-a.ai-reply--collapsed .ai-reply__options,
+.ai-reply--ab-a.ai-reply--collapsed .ai-reply__notice,
+.ai-reply--ab-a.ai-reply--collapsed .ai-reply__actions {
+  display: none;
+}
+
+.ai-reply--ab-a .ai-reply__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.ai-reply--ab-b {
+  gap: 12px;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ai-reply--ab-b.ai-reply--expanded .ai-reply__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #d1e5fe;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(90deg, rgba(239, 243, 255, 0.92), rgba(247, 242, 255, 0.92));
+  box-shadow: var(--jh-shadow);
+}
+
+.ai-reply--ab-b.ai-reply--collapsed {
+  overflow: visible;
 }
 
 .chat-panel--ab-smart-popup {
   overflow: visible;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__head {
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__panel > .ai-reply__head,
+.ai-reply--ab-b.ai-reply--collapsed .ai-reply__head {
   display: none;
 }
 
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__panel > .ai-reply__options,
+.ai-reply--ab-b.ai-reply--collapsed > .ai-reply__panel > .ai-reply__notice,
 .ai-reply--ab-b.ai-reply--collapsed > .ai-reply__options,
 .ai-reply--ab-b.ai-reply--collapsed > .ai-reply__notice {
   display: none;
@@ -665,7 +824,7 @@ function openMessageMenu(message, event) {
   box-shadow: none;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input,
+.ai-reply--ab-b .jh-chat-input,
 .ai-reply--ab-c .jh-chat-input {
   display: flex;
   position: relative;
@@ -678,7 +837,7 @@ function openMessageMenu(message, event) {
   background: #ffffff;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__top,
+.ai-reply--ab-b .jh-chat-input__top,
 .ai-reply--ab-c .jh-chat-input__top {
   display: flex;
   flex-direction: column;
@@ -708,21 +867,21 @@ function openMessageMenu(message, event) {
   height: 32px;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed textarea,
+.ai-reply--ab-b textarea,
 .ai-reply--ab-c textarea {
   width: 100%;
   min-height: 54px;
   padding-right: 120px;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__actions,
+.ai-reply--ab-b .jh-chat-input__actions,
 .ai-reply--ab-c .jh-chat-input__actions {
   position: absolute;
   right: 16px;
   bottom: 16px;
 }
 
-.ai-reply--ab-b.ai-reply--collapsed .jh-chat-input__actions .jh-btn,
+.ai-reply--ab-b .jh-chat-input__actions .jh-btn,
 .ai-reply--ab-c .jh-chat-input__actions .jh-btn {
   width: 88px;
   height: 40px;
