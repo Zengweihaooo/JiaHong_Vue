@@ -141,7 +141,7 @@ import guideScheduleStatusImage from "@/assets/ab/guide-schedule-status.png";
 import guideSchedulePunchLayoutImage from "@/assets/ab/guide-schedule-punch-layout.png";
 import guideAnnouncementPositionImage from "@/assets/ab/guide-announcement-position.png";
 import guideAnnouncementTimeImage from "@/assets/ab/guide-announcement-time.png";
-import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.png";
+import guideTagButtonStyleImage from "@/assets/ab/guide-tag-button-style.jpg";
 import guideSmartQuickReplyImage from "@/assets/ab/guide-smart-quick-reply.png";
 import guideSelectPresentationImage from "@/assets/ab/guide-select-presentation.png";
 import thumbTest1 from "@/assets/ab/thumb-test-1.png";
