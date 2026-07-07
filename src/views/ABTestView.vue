@@ -244,15 +244,15 @@ const guideMap = {
   },
   "tag-button-style": {
     name: "标签与按钮显现形式",
-    titleBefore: "请选择您认为",
+    titleBefore: "请选择您更容易识别",
     primary: "迎检与中药",
-    titleMiddle: "更像是",
-    secondary: "标签",
-    titleAfter: "而不是可点击按钮的页面",
-    desc: "进入测试页后，请比较问诊室顶部“迎检”和“中药”的视觉呈现是否更像状态标签。",
+    titleMiddle: "为",
+    secondary: "状态标签",
+    titleAfter: "的页面",
+    desc: "进入测试页后，请比较问诊室顶部“迎检”和“中药”的呈现，选择更不容易被误认为可点击按钮的方案。",
     options: [
-      { key: "a", label: "A", desc: "使用弱化填充的标签样式展示迎检与中药" },
-      { key: "b", label: "B", desc: "使用描边按钮样式展示迎检与中药" }
+      { key: "a", label: "A", desc: "使用弱化填充样式展示迎检与中药，强调状态信息" },
+      { key: "b", label: "B", desc: "使用描边样式展示迎检与中药，对比是否更像按钮" }
     ]
   },
   "smart-quick-reply-layout": {
@@ -271,13 +271,13 @@ const guideMap = {
   "select-presentation": {
     name: "选择框的呈现",
     titleBefore: "请选择您喜欢的",
-    primary: "下拉选择框",
+    primary: "选择框弹窗",
     titleMiddle: "",
     secondary: "呈现形式",
-    desc: "进入测试页后，请点击药品表格中的“用法”“服用频次”或“用量”输入框，比较两种选项呈现方式。",
+    desc: "进入测试页后，请点击药品表格中的“用法”“服用频次”或“用量”输入框，比较向下展开与向上弹窗两种选项呈现方式。",
     options: [
-      { key: "a", label: "A", desc: "模糊搜索时直接展开全部选项，不需要滚动" },
-      { key: "b", label: "B", desc: "模糊搜索时选项收纳在框内，需要滚动查看" }
+      { key: "a", label: "A", desc: "选项向下展开，直接展示更多内容，尽量减少滚动" },
+      { key: "b", label: "B", desc: "选项向上弹窗，利用上方空间展示，但可能遮挡上方内容" }
     ]
   }
 };

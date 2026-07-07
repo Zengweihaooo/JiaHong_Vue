@@ -840,11 +840,17 @@ function computeMenuTop(rect, height) {
   return above >= 8 ? above : Math.max(8, window.innerHeight - height - 8);
 }
 
-function correctMenuTopAfterRender(menuSelector, styleRef, topVarName, rect) {
+function computeMenuTopAbove(rect, height) {
+  const above = rect.top - 4 - height;
+  if (height && above >= 8) return above;
+  return computeMenuTop(rect, height);
+}
+
+function correctMenuTopAfterRender(menuSelector, styleRef, topVarName, rect, resolveTop = computeMenuTop) {
   nextTick(() => {
     const menu = document.querySelector(menuSelector);
     if (!menu || !menu.offsetHeight) return;
-    const next = `${computeMenuTop(rect, menu.offsetHeight)}px`;
+    const next = `${resolveTop(rect, menu.offsetHeight)}px`;
     if (styleRef.value[topVarName] !== next) {
       styleRef.value = { ...styleRef.value, [topVarName]: next };
     }
@@ -863,6 +869,10 @@ function estimateSelectAFieldMenuHeight(field, optionCount) {
       ? Math.max(...selectAUsageColumnSizes)
       : Math.ceil(optionCount / Math.max(1, columnCount));
   return rows * 24 + 18;
+}
+
+function estimateSelectBFieldMenuHeight(optionCount) {
+  return Math.min(250, Math.max(1, optionCount) * 24 + 16);
 }
 
 function applyUnitMenuStyle(rect, measuredHeight = 0) {
@@ -895,16 +905,26 @@ function applyMedicineFieldMenuStyle(rect, field, optionCount, measuredHeight = 
       : Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
   const columnCount = props.selectPresentationVariant === "a" ? getSelectPresentationAColumnCount(field, optionCount) : 1;
   const height =
-    props.selectPresentationVariant === "a" ? measuredHeight || estimateSelectAFieldMenuHeight(field, optionCount) : 0;
-  const top = props.selectPresentationVariant === "a" ? computeMenuTop(rect, height) : Math.max(8, rect.bottom + 4);
+    props.selectPresentationVariant === "a"
+      ? measuredHeight || estimateSelectAFieldMenuHeight(field, optionCount)
+      : props.selectPresentationVariant === "b"
+        ? measuredHeight || estimateSelectBFieldMenuHeight(optionCount)
+        : 0;
+  const top =
+    props.selectPresentationVariant === "a"
+      ? computeMenuTop(rect, height)
+      : props.selectPresentationVariant === "b"
+        ? computeMenuTopAbove(rect, height)
+        : Math.max(8, rect.bottom + 4);
   medicineFieldMenuStyle.value = {
     "--medicine-usage-menu-left": `${left}px`,
     "--medicine-usage-menu-top": `${top}px`,
     "--medicine-usage-menu-width": `${menuWidth}px`,
     "--medicine-usage-menu-columns": String(columnCount)
   };
-  if (props.selectPresentationVariant === "a" && !measuredHeight) {
-    correctMenuTopAfterRender(".medicine-usage-options:not([hidden])", medicineFieldMenuStyle, "--medicine-usage-menu-top", rect);
+  if ((props.selectPresentationVariant === "a" || props.selectPresentationVariant === "b") && !measuredHeight) {
+    const resolver = props.selectPresentationVariant === "b" ? computeMenuTopAbove : computeMenuTop;
+    correctMenuTopAfterRender(".medicine-usage-options:not([hidden])", medicineFieldMenuStyle, "--medicine-usage-menu-top", rect, resolver);
   }
 }
 
@@ -1080,6 +1100,7 @@ const FieldCombobox = defineComponent({
       const menuClass = [
         "medicine-usage-options",
         props.selectPresentationVariant === "a" ? "medicine-usage-options--flat" : "",
+        props.selectPresentationVariant === "b" ? "medicine-usage-options--up" : "",
         `medicine-usage-options--${componentProps.field}`
       ];
       return h("div", { class: "medicine-usage-control" }, [
@@ -1126,4 +1147,3 @@ const FieldCombobox = defineComponent({
   }
 });
 </script>
-
